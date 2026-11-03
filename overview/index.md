@@ -1,6 +1,6 @@
 # Introduction
 
-We build a system that lets a proactive smart-home agent operate controls that are not on the network: wall switches, push buttons, toggles, knobs and remotes. A camera finds the controls, the system works out which device each one operates, and routines can then use them. Wireless control (IR, Wi-Fi, Bluetooth) comes first. When a camera check shows that a wireless command failed, and a safety check has passed, a small robot arm presses the control.
+We build a system that lets a proactive smart-home agent operate controls that are not on the network: wall switches, push buttons, toggles, knobs and remotes. A camera finds the controls, the system works out which device each one operates, and routines can then use them. Wireless control (IR, Wi-Fi, Bluetooth) comes first. When a camera check shows that a wireless command failed, and a safety check has passed, a physical actuator (a small robot arm or a linear actuator) presses the control.
 
 ## Motivation
 
@@ -21,11 +21,16 @@ The client is the resident of a home with both connected devices and unconnected
 | N5 | Works with a simple robot arm now and with other robots later |
 | N6 | Acts before being asked and improves with use |
 
-## The robot arm
+## The hand
 
-A small robot arm is placed next to a switch panel, with a camera that sees both the panel and the arm. The arm receives a target position and an action, such as press or flip, and does nothing more. It sits behind a Robot Abstraction Layer (RAL), so a different arm, the Unity simulator or a simple script can be swapped in. One arm reaches a limited area, so we start with one arm per switch panel and treat a mobile robot as a later extension.
+The physical press is done by a simple "hand" next to a switch panel, with a camera that sees both the panel and the hand. The hand receives a target and an action, such as press or flip, and does nothing more. It sits behind a Robot Abstraction Layer (RAL), so either option, the Unity simulator or a simple script can be swapped in. For the prototype we choose one of two options:
 
-Finding the control, deciding how to operate it and checking the result are the work of the system, not of the arm.
+| Option | Hand | How it presses | Cost |
+|---|---|---|---|
+| A | SO-101 robot arm (LeRobot) | Moves to the control, found through ArUco markers and inverse kinematics, then presses | About 150,000 KRW |
+| B | Two linear actuators and a driver board | Each actuator is fixed in front of one control and pushes a rod straight out and back. No path to plan | About 70,000 KRW |
+
+One arm reaches a limited area, so we start with one hand per switch panel and treat a mobile robot as a later extension. Finding the control, deciding how to operate it and checking the result are the work of the system, not of the hand.
 
 ## The process
 
@@ -38,7 +43,7 @@ Seven stages in three phases. Every stage defines what goes in, what comes out, 
 | Setup | S3 Routine | A confirmed link becomes a routine, created from repeated habits or built by hand. The resident is told and can keep, change or remove it |
 | Runtime | S4 Trigger and intent | A sensor, a time or a routine starts a run. A cloud VLM works out the intent and the target device |
 | Runtime | S5 Wireless control | The system ranks the device's wireless channels by learned score, sends the command through the best one, and checks whether the device changed |
-| Runtime | S6 Physical fallback | If every wireless channel fails or none exists, CV finds the control, a motion planner plans the movement, the Safety Guard checks for people and obstacles, and the arm presses |
+| Runtime | S6 Physical fallback | If every wireless channel fails or none exists, CV finds the control, the system plans the press (a path for the arm, or the choice of actuator), the Safety Guard checks for people and obstacles, and the hand presses |
 | Learning | S7 Learn | Every run, even a cancelled one, updates channel scores, link confidence and routine usefulness |
 
 ## Autonomy by risk
@@ -49,7 +54,7 @@ What the system does depends on the risk of the device and on its confidence.
 |---|---|---|---|---|
 | Low | Lights, fans | Act, then tell the resident | Ask first | Only suggest |
 | Medium | TV, air purifier | Ask first | Ask first | Only suggest |
-| High | Heaters, power strips | Only suggest; the arm never presses | Only suggest | Only suggest |
+| High | Heaters, power strips | Only suggest; never pressed | Only suggest | Only suggest |
 
 The starting thresholds are 0.8 (high) and 0.5 (low). If the resident keeps rejecting a routine, its independence goes down one step.
 

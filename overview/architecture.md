@@ -4,12 +4,12 @@
 
 | Place | What runs there |
 |---|---|
-| Edge hub (inside the home, Python) | Camera and microphone capture, control detection, channel adapters (IR, Wi-Fi, Bluetooth), arm control through the Robot Abstraction Layer, Safety Guard. Video never leaves the hub |
+| Edge hub (inside the home, Python) | Camera and microphone capture, control detection, channel adapters (IR, Wi-Fi, Bluetooth), control of the hand through the Robot Abstraction Layer, Safety Guard. Video never leaves the hub |
 | Backend (AWS EC2, FastAPI) | Mapping Registry, routines and the log (SQLite in the prototype), VLM calls |
 | Cloud VLM (API) | Reads the type and state of a control, infers intent, answers yes-or-no questions when a result is checked |
 | Storage (AWS S3) | Photo dataset, trained detector, log backups |
 | Web app (React, TypeScript) | The resident's screens: mappings, routine feedback, log, notifications, emergency stop |
-| Robot arm or simulator | SO-101 with LeRobot, the Unity simulator or a simple script, behind the RAL |
+| Hand or simulator | Option A: SO-101 arm with LeRobot. Option B: two linear actuators on a driver board, commanded over USB. Or the Unity simulator or a simple script. All behind the RAL |
 
 Only small crops of controls and short notes go to the cloud.
 
@@ -24,9 +24,9 @@ Only small crops of controls and short notes go to the cloud.
 | Autonomy policy | Decides act, ask or suggest from risk and confidence | 6 |
 | Control Orchestrator | Looks up the mapping, ranks channels, sends commands, falls back to the arm | 7 |
 | State Verifier | Main check on the device, second checks on surroundings and sound | 8 |
-| Motion planner | Turns a control into an arm path; a script by default, a VLA model later | 9 |
+| Motion planner | Option A: turns a control into an arm path (script by default, a VLA model later). Option B: picks the actuator that faces the control | 9 |
 | Safety Guard | Checks people, pets, risk class and position before any movement; emergency stop | 10 |
-| Manipulator Adapter | Executes the press through the RAL | 11 |
+| Manipulator Adapter | Executes the press through the RAL, with the arm or an actuator | 11 |
 | Learning and log | Updates channel scores and link confidence; writes every run to the log | 12 |
 
 ## Main flow
@@ -40,7 +40,7 @@ trigger ──> Routine Engine ──> Control Orchestrator ─────┤
           (intent)            adapters        │          │
                                   │      motion planner  │
                                   ▼           ▼          │
-                               device <── arm (RAL) ─────┤
+                               device <── hand (RAL) ────┤
                                   │                      │
                                   └──> State Verifier ───┘
 ```
@@ -52,12 +52,12 @@ trigger ──> Routine Engine ──> Control Orchestrator ─────┤
 | Control | Type, how it looks now, what can be done with it, position on the panel, picture fingerprint |
 | Device | Name, type, room, risk, channels that can operate it |
 | Mapping | Control, device, confidence, status: `Pending`, `Verified`, `Rejected`, `Stale` |
-| Channel | For each device and channel (IR, Wi-Fi, Bluetooth, arm): how often it works and how fast it is |
+| Channel | For each device and channel (IR, Wi-Fi, Bluetooth, physical press): how often it works and how fast it is |
 | Routine | Habit, priority, how independently it acts |
 | Run | Trigger, intent, channel used, result, and the reason if it was cancelled |
 
 ## Interfaces
 
 - **App and backend.** The app asks for the lists of controls, mappings and routines, and sends the resident's choices: confirm or reject a mapping, feedback on a routine, and the emergency stop. The backend pushes live updates: a new control, a new routine, the progress of a run. See the [API reference](/api/backend-server).
-- **Arm.** One common interface: `move`, `press`, `release`, `stop`. The real arm, the Unity simulator or a simple script can be swapped in.
+- **Hand.** One common interface: `move` or `select`, `press`, `release`, `stop`. The SO-101 arm, the linear actuators, the Unity simulator or a simple script can be swapped in.
 - **Wireless channel.** Each adapter has two abilities: tell whether the device can be reached, and send a command.

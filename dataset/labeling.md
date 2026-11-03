@@ -2,7 +2,7 @@
 
 The switch-panel dataset trains the detector (FR-01) and has to let a model answer three questions from an image: **where** the control is, **how** to operate it, and **what** it turns on. One JSON record per image holds a list of controls.
 
-Photos show the mock panel from different angles and in different light. A tool (Grounding DINO or OWL-ViT) drafts the boxes first, and we correct them by hand. One whole photo session is kept aside for testing.
+Photos show real switches, buttons and dials in different places, from different angles and in different light. A tool (Grounding DINO or OWL-ViT) drafts the boxes first, and we correct them by hand. One whole photo session is kept aside for testing.
 
 ::: tip Rules
 - Write `null` for anything you do not know. Never guess a value.
@@ -92,10 +92,10 @@ Photos show the mock panel from different angles and in different light. A tool 
 | Field | Meaning |
 |---|---|
 | `kind` | The five detector classes: `switch`, `push_button`, `toggle`, `knob`, `remote` |
-| `press_action` | How the arm operates it: `press`, `flip`, `turn`. Press depth is set per kind |
+| `press_action` | How the hand operates it: `press`, `flip`, `turn`. Press depth is set per kind |
 | `press_point` | The point to press, as ratios 0 to 1 of the image |
 | `press_side` | `upper` or `lower` for a rocker, `cw` or `ccw` for a dial |
-| `reachable` | Whether the robot arm can reach it |
+| `reachable` | Whether the hand can reach it (an arm in reach, or an actuator mounted in front of it) |
 | `state` | `on`, `off`, `unknown` |
 
 ### What it controls

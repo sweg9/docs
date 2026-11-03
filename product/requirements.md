@@ -1,6 +1,6 @@
 # Requirements
 
-What the system must do, and how each requirement is built. The resident gives feedback on routines and has the final say. The robot arm presses controls when needed. The cloud VLM works out the intent. The smart-home hub sends IR, Wi-Fi and Bluetooth commands.
+What the system must do, and how each requirement is built. The resident gives feedback on routines and has the final say. A physical hand presses controls when needed: option A is the SO-101 arm, option B is two linear actuators. The cloud VLM works out the intent. The smart-home hub sends IR, Wi-Fi and Bluetooth commands.
 
 All numbers are **starting values** to be tuned after the first measurements. Keep them in settings files, not in code.
 
@@ -34,6 +34,7 @@ From the video, find switches, push buttons, toggles, knobs and remotes and deci
 | Type and state | Each crop goes to the VLM, which returns type, state (on or off) and whether the picture is clear enough |
 | Duplicate check | Fingerprint compared with saved ones; very similar means the same control |
 | Sound | If a microphone is present, a sound model notes clicks when a control is used |
+| Training photos | Real switches, buttons and dials in different places, angles and light. A tool drafts boxes, people correct them |
 | Test data | One whole photo session is kept aside for testing |
 
 ## FR-02 Device mapping
@@ -107,14 +108,15 @@ After each command, check whether the device really changed. The **main check** 
 
 ## FR-09 Arm motion planning
 
-Find the control again in the current image, starting from its saved position and fingerprint. If it cannot be found or its position is not reliable enough, cancel and tell the resident. A motion planner receives the control, its position and the expected effect, and returns a path and a way to press.
+Find the control again in the current image, starting from its saved position and fingerprint, and turn it into something the hand can act on. If it cannot be found or its position is not reliable enough, cancel and tell the resident. With the arm, a motion planner receives the control, its position and the expected effect, and returns a path and a way to press. With linear actuators, there is no path to plan.
 
 | How | Value |
 |---|---|
 | Re-finding | Fingerprint similarity at least 0.7 near the saved place, otherwise cancel |
-| Panel coordinates | Four ArUco markers at the panel corners; homography from image point to panel point, then the arm's kinematics give joint angles |
-| Press depth | Set per kind of control |
-| Planner | Simple script by default; a VLA model can replace it |
+| Option A, panel coordinates | Four ArUco markers at the panel corners; homography from image point to panel point, then the arm's kinematics give joint angles |
+| Option A, press depth | Set per kind of control |
+| Option A, planner | Simple script by default; a VLA model can replace it |
+| Option B, actuator choice | Each actuator is fixed in front of one control; the system looks up which actuator faces the control and how long to push |
 
 ## FR-10 Safety gate
 
@@ -122,18 +124,19 @@ Before any movement, check that no person or pet is near the path, that the risk
 
 | How | Value |
 |---|---|
-| People and pets | Camera model watches the work area before and during movement |
-| Motion | Inside the work area, at low speed |
-| Emergency stop | Button in the app or a key; turns off the arm motors at once. The power adapter can also be switched off by hand |
+| People and pets | Camera model watches the work area of the arm or the actuators, before and during movement |
+| Motion | The arm stays inside its work area at low speed; the linear actuators have a short stroke and a limited force |
+| Emergency stop | Button in the app or a key; turns off the motors of the arm or the actuators at once. The power adapter can also be switched off by hand |
 
 ## FR-11 Physical execution and result check
 
-The arm presses through the Manipulator Adapter and state verification runs again. If the intent is still not met, retry a limited number of times with the safety gate before each try, then cancel and tell the resident.
+The arm or the actuator presses through the Manipulator Adapter and state verification runs again. If the intent is still not met, retry a limited number of times with the safety gate before each try, then cancel and tell the resident.
 
 | How | Value |
 |---|---|
-| Motion | Move above the control, press, hold briefly, release, move back |
-| Executor | Real SO-101, Unity simulator or a simple script, chosen in a settings file |
+| Option A motion | Move above the control, press, hold briefly, release, move back |
+| Option B motion | Push out, hold briefly, pull back |
+| Executor | SO-101 arm, linear actuators, Unity simulator or a simple script, chosen in a settings file |
 | Tries | At most 2 |
 
 ## FR-12 Learning and log

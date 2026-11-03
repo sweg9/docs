@@ -158,7 +158,7 @@ paths:
     post:
       tags: [Safety]
       summary: Emergency stop
-      description: Turns off the arm motors at once and cancels the current run.
+      description: Turns off the motors of the arm or the actuators at once and cancels the current run.
       x-requirements: [FR-10]
       responses:
         '200':

@@ -1,6 +1,6 @@
 # docs
 
-Documentation for **Vision-Based Recognition and Actuation of Unconnected Home Controls**: a camera finds wall switches, push buttons, toggles, knobs and remotes, the system works out which device each one operates, and routines use them through wireless channels or, when those fail, a small robot arm. The reference document is the [proposal](public/papers/proposal.pdf).
+Documentation for **Vision-Based Recognition and Actuation of Unconnected Home Controls**: a camera finds wall switches, push buttons, toggles, knobs and remotes, the system works out which device each one operates, and routines use them through wireless channels or, when those fail, a physical press by a small robot arm or linear actuators. The reference document is the [proposal](public/papers/proposal.pdf).
 
 ## Wiki
 
@@ -32,8 +32,8 @@ Standards and skills are not stored here. The wiki copies them from [harness](ht
 | [dataset](https://github.com/sweg9/dataset) | Photos of switch panels and their labels for the detector |
 | [ai-engine](https://github.com/sweg9/ai-engine) | Detector, VLM calls, fingerprints, sound events, state check, motion planner |
 | [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend: Mapping Registry, routines, log, orchestrator, channel adapters, safety gate, learning |
-| [sim-demo](https://github.com/sweg9/sim-demo) | Unity simulator, an auxiliary tool for the rough demo and tests without the real arm |
-| [live-demo](https://github.com/sweg9/live-demo) | Front end used with the real camera and arm |
+| [sim-demo](https://github.com/sweg9/sim-demo) | Unity simulator, an auxiliary tool for the rough demo and tests without the real hardware |
+| [live-demo](https://github.com/sweg9/live-demo) | Front end used with the real camera and hand |
 | [docs](https://github.com/sweg9/docs) | This wiki |
 | [harness](https://github.com/sweg9/harness) | Standards, shared skills, CI/CD, and the test and evaluation harness |
 
