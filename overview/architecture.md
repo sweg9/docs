@@ -1,39 +1,63 @@
 # Architecture
 
-The system runs on four tiers. All robot functions pass through a Robot Abstraction Layer (RAL), and the level from the Capability Probe gates what the Control Orchestrator may do.
+## Where things run
 
-| Tier | Components |
+| Place | What runs there |
 |---|---|
-| Cloud | Intent Service (VLM), VLA Planner |
-| Edge (home hub) | Actuator Perception, Mapping Registry, Learning & Priority, Control Orchestrator, Routine Engine, trigger sources |
-| Robot | Vision Module (RGB-D), Capability Probe, Safety Guard, Manipulator Adapter (L3) |
-| Home | Smart devices (IR, Wi-Fi, BT), legacy controls (switch, button, dial) |
+| Edge hub (inside the home, Python) | Camera and microphone capture, control detection, channel adapters (IR, Wi-Fi, Bluetooth), arm control through the Robot Abstraction Layer, Safety Guard. Video never leaves the hub |
+| Backend (AWS EC2, FastAPI) | Mapping Registry, routines and the log (SQLite in the prototype), VLM calls |
+| Cloud VLM (API) | Reads the type and state of a control, infers intent, answers yes-or-no questions when a result is checked |
+| Storage (AWS S3) | Photo dataset, trained detector, log backups |
+| Web app (React, TypeScript) | The resident's screens: mappings, routine feedback, log, notifications, emergency stop |
+| Robot arm or simulator | SO-101 with LeRobot, the Unity simulator or a simple script, behind the RAL |
 
-Raw video is processed at the edge or below. The cloud only receives crops and metadata.
+Only small crops of controls and short notes go to the cloud.
+
+## Main parts
+
+| Part | Job | Requirement |
+|---|---|---|
+| Control recognition | Finds controls, reads type and state, keeps a fingerprint | 1 |
+| Mapping Registry | Stores which control operates which device, with confidence and status | 2 |
+| Channel adapters | One small adapter per wireless channel | 3, 7 |
+| Routine Engine | Creates routines from habits, handles feedback, starts runs | 4, 5 |
+| Autonomy policy | Decides act, ask or suggest from risk and confidence | 6 |
+| Control Orchestrator | Looks up the mapping, ranks channels, sends commands, falls back to the arm | 7 |
+| State Verifier | Main check on the device, second checks on surroundings and sound | 8 |
+| Motion planner | Turns a control into an arm path; a script by default, a VLA model later | 9 |
+| Safety Guard | Checks people, pets, risk class and position before any movement; emergency stop | 10 |
+| Manipulator Adapter | Executes the press through the RAL | 11 |
+| Learning and log | Updates channel scores and link confidence; writes every run to the log | 12 |
 
 ## Main flow
 
 ```text
-Vision Module ──frames──> Actuator Perception ──> Mapping Registry <──> Learning & Priority
-                                                        │                      │
-Trigger sources ──> Routine Engine <──> Control Orchestrator <─────────────────┘
-                         │                 │      │
-                  Intent Service       VLA Planner │
-                                                   ├──wireless command──> Smart devices
-                                                   └──> Safety Guard ──> Manipulator Adapter ──press──> Legacy controls
+camera, mic ──> recognition ──> Mapping Registry <──── learning
+                                    │                    ▲
+trigger ──> Routine Engine ──> Control Orchestrator ─────┤
+               │                    │        │           │
+          cloud VLM           channel     Safety Guard   │
+          (intent)            adapters        │          │
+                                  │      motion planner  │
+                                  ▼           ▼          │
+                               device <── arm (RAL) ─────┤
+                                  │                      │
+                                  └──> State Verifier ───┘
 ```
 
-## Data model
+## What the system remembers
 
-A **Mapping** links an **Actuator** to a **Device**. A device has one or more **ControlChannel**s, and every execution leaves an **ExecutionLog** entry, which makes a run traceable from S1 to S7.
-
-| Entity | Fields |
+| Record | Fields |
 |---|---|
-| Actuator | `actuator_id`, `kind`, `pose`, `embedding`, `affordance` |
-| Mapping | `mapping_id`, `status`, `confidence`, `verified_at` |
-| Device | `device_id`, `name`, `type`, `room`, `risk_class` |
-| Routine | `routine_id`, `trigger`, `condition`, `action`, `autonomy_level` |
-| ControlChannel | `channel_id`, `type`, `params`, `success_rate`, `latency` |
-| ExecutionLog | `log_id`, `channel`, `outcome`, `verify_result`, `reason`, `ts` |
+| Control | Type, how it looks now, what can be done with it, position on the panel, picture fingerprint |
+| Device | Name, type, room, risk, channels that can operate it |
+| Mapping | Control, device, confidence, status: `Pending`, `Verified`, `Rejected`, `Stale` |
+| Channel | For each device and channel (IR, Wi-Fi, Bluetooth, arm): how often it works and how fast it is |
+| Routine | Habit, priority, how independently it acts |
+| Run | Trigger, intent, channel used, result, and the reason if it was cancelled |
 
-Exact enumerations and rules are in [Data model](/standards/data-model).
+## Interfaces
+
+- **App and backend.** The app asks for the lists of controls, mappings and routines, and sends the resident's choices: confirm or reject a mapping, feedback on a routine, and the emergency stop. The backend pushes live updates: a new control, a new routine, the progress of a run. See the [API reference](/api/backend-server).
+- **Arm.** One common interface: `move`, `press`, `release`, `stop`. The real arm, the Unity simulator or a simple script can be swapped in.
+- **Wireless channel.** Each adapter has two abilities: tell whether the device can be reached, and send a command.

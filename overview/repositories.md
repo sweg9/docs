@@ -4,30 +4,27 @@ The project is split into seven repos in the [sweg9](https://github.com/sweg9) o
 
 | Repo | Role |
 |---|---|
-| [dataset](https://github.com/sweg9/dataset) | Data for training and evaluation: collection, cleaning, labeling |
-| [ai-engine](https://github.com/sweg9/ai-engine) | AI models: switch recognition, device mapping, intent inference, state check, manipulation planning |
-| [backend-server](https://github.com/sweg9/backend-server) | Server and Redis: API, mapping registry, routine engine, execution logs |
-| [sim-demo](https://github.com/sweg9/sim-demo) | Simulator demo in Unity: a robot in a house shows the whole process from recognition to learning |
-| [live-demo](https://github.com/sweg9/live-demo) | Demo front end that runs a real camera together with the AI |
-| [docs](https://github.com/sweg9/docs) | This wiki: plan, PRD, prompts, API specs, papers |
+| [dataset](https://github.com/sweg9/dataset) | Photos of switch panels and their labels for the detector: collection, drafting boxes, correction |
+| [ai-engine](https://github.com/sweg9/ai-engine) | Recognition and checking: YOLO detector, VLM calls, fingerprints (DINOv2), sound events (YAMNet), state check, motion planner |
+| [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend: Mapping Registry, routines, log, Control Orchestrator, channel adapters, safety gate, learning |
+| [sim-demo](https://github.com/sweg9/sim-demo) | Unity simulator, an auxiliary tool for the rough demo and for tests without the real arm |
+| [live-demo](https://github.com/sweg9/live-demo) | Front end used with the real camera and arm |
+| [docs](https://github.com/sweg9/docs) | This wiki |
 | [harness](https://github.com/sweg9/harness) | Standards, shared skills, CI/CD, and the test and evaluation harness |
 
 ## How they relate
 
 ```text
-dataset ──> ai-engine ──> backend-server ──> live-demo
-                │                 │
-                │                 └────────> sim-demo
-                └── prompts and evaluation criteria are managed in docs
-harness: build, test, evaluation and release gate for every repo
+dataset ──> ai-engine ──> backend-server ──> web app / live-demo
+                               ▲
+                               └── sim-demo (WebSocket, stands in for the arm)
+harness: build, test and release checks for every repo
 ```
 
-- Data from `dataset` is used to build and evaluate the models and prompts in `ai-engine`.
-- `backend-server` calls `ai-engine` and stores the results: mappings, channel ranking, execution logs.
-- `live-demo` processes a real camera stream through `backend-server` and shows the result.
-- `sim-demo` reproduces the same process inside Unity with rules. It is a showcase and runs on its own, without a server.
-- Every repo uses the requirement ids (FR, NFR) and metric ids (E1 to E10) defined in the [PRD](/sim-demo/PRD).
-- `harness` runs the tests and metric measurements for each requirement.
+- Photos and labels in `dataset` train and evaluate the detector in `ai-engine`.
+- `backend-server` calls `ai-engine` and the cloud VLM, and stores mappings, routines and the log.
+- `sim-demo` is meant to connect to the Python hub through a WebSocket and stand in for the real arm (see [Simulator](/product/simulator)).
+- Every repo uses the requirement numbers 1 to 12 from the [requirements](/product/requirements).
 
 ## Shared skills
 
