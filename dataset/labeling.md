@@ -115,5 +115,5 @@ Photos show the mock panel from different angles and in different light. A tool 
 
 ## Open items
 
-- The label schema and the control kinds in the harness standard (`per-repo.md`, `data-model.md`) still follow the old design. They have to be updated to this record before collection starts.
+- The harness standard (`per-repo.md`) summarizes this record. Change both together.
 - Without a depth camera, `height_m` is measured by hand or left `null`.
