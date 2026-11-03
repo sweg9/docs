@@ -1,44 +1,59 @@
 # docs
 
-카메라로 벽 스위치를 인식하고 로봇 팔로 조작해 선제적 홈 루틴에 연결하는 프로젝트의 문서 레포다. 프로젝트는 아래 7개 레포로 나뉜다.
+Documentation repo for a project that recognizes wall switches with a camera, operates them with a robot arm, and connects them to proactive home routines. The project is split into the seven repos below.
 
-## 레포 구성
+## Wiki
 
-| 레포 | 역할 |
+The documents are published as a development wiki at **https://sweg9.github.io/docs/**, with search, a PDF viewer and rendered API specs.
+
+```bash
+npm install
+npm run dev   # http://localhost:5173/docs/
+```
+
+See [contributing.md](contributing.md) for how to add pages, PDFs and API specs.
+
+## Repositories
+
+| Repo | Role |
 |---|---|
-| [dataset](https://github.com/sweg9/dataset) | 학습과 평가에 쓰는 데이터. 수집, 정제, 라벨링 |
-| [ai-engine](https://github.com/sweg9/ai-engine) | AI 모델 쪽. 스위치 인식, 기기 매핑, 의도 추론, 상태 확인, 조작 계획 |
-| [backend-server](https://github.com/sweg9/backend-server) | 서버와 Redis. API, 매핑 저장소, 루틴 엔진, 실행 로그 |
-| [sim-demo](https://github.com/sweg9/sim-demo) | 시뮬레이터 데모(Unity). 집 안 로봇이 인식부터 학습까지 전체 과정을 보여 줌 |
-| [live-demo](https://github.com/sweg9/live-demo) | 실제 카메라와 AI를 붙여 돌리는 데모 프론트 |
-| [docs](https://github.com/sweg9/docs) | 기획서, PRD, 프롬프트 관리 문서 (이 레포) |
-| [harness](https://github.com/sweg9/harness) | CI/CD와 테스트·평가 하네스 |
+| [dataset](https://github.com/sweg9/dataset) | Data for training and evaluation: collection, cleaning, labeling |
+| [ai-engine](https://github.com/sweg9/ai-engine) | AI models: switch recognition, device mapping, intent inference, state check, manipulation planning |
+| [backend-server](https://github.com/sweg9/backend-server) | Server and Redis: API, mapping registry, routine engine, execution logs |
+| [sim-demo](https://github.com/sweg9/sim-demo) | Simulator demo (Unity): a robot in a house shows the whole process from recognition to learning |
+| [live-demo](https://github.com/sweg9/live-demo) | Demo front end that runs a real camera together with the AI |
+| [docs](https://github.com/sweg9/docs) | Plan, PRD and prompt management (this repo) |
+| [harness](https://github.com/sweg9/harness) | Standards, skills, CI/CD, and the test and evaluation harness |
 
-## 관계
+## How they relate
 
 ```text
 dataset ──> ai-engine ──> backend-server ──> live-demo
                 │                 │
                 │                 └────────> sim-demo
-                └── 프롬프트·평가 기준은 docs 에서 관리
-harness: 모든 레포의 빌드, 테스트, 평가, 배포
+                └── prompts and evaluation criteria are managed in docs
+harness: build, test, evaluation and release gate for every repo
 ```
 
-- `dataset`의 데이터로 `ai-engine`의 모델과 프롬프트를 만들고 평가한다.
-- `backend-server`가 `ai-engine`을 호출하고 결과(매핑, 채널 순위, 실행 로그)를 저장한다.
-- `live-demo`는 `backend-server`를 통해 실제 카메라 영상을 처리하고 결과를 보여 준다.
-- `sim-demo`는 같은 과정을 Unity 안에서 규칙으로 재현하는 시연용 데모이며, 서버 없이 단독으로 돌아간다.
-- `docs`의 요구사항 번호(FR, NFR)와 지표 번호(E1~E10)를 모든 레포가 같이 쓴다.
-- `harness`가 요구사항별 테스트와 지표 측정을 자동으로 돌린다.
+- Data from `dataset` is used to build and evaluate the models and prompts in `ai-engine`.
+- `backend-server` calls `ai-engine` and stores the results (mappings, channel ranking, execution logs).
+- `live-demo` processes a real camera stream through `backend-server` and shows the result.
+- `sim-demo` reproduces the same process inside Unity with rules. It is a showcase and runs on its own, without a server.
+- Every repo uses the requirement ids (FR, NFR) and metric ids (E1 to E10) defined in `docs`.
+- `harness` runs the tests and metric measurements for each requirement automatically.
 
-## 문서
+## Documents
 
-| 위치 | 내용 |
+| Location | Content |
 |---|---|
-| [sim-demo/](sim-demo/) | 시뮬레이터 데모의 기획서, PRD, 프롬프트 관리 |
+| [sim-demo/](sim-demo/) | Plan, PRD and prompt management for the simulator demo |
 
-다른 레포의 문서도 같은 방식으로 폴더를 하나씩 추가한다.
+Documents for other repos are added the same way, one folder each.
 
 ## Standards
 
 Mandatory standards and shared skills live in [harness](https://github.com/sweg9/harness) (`standards/`). This repo does not mount them. Its rules are summarized in `CLAUDE.md`.
+
+## Language
+
+All documents and text in every repo are written in English. Code comments may be in Korean.
