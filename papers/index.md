@@ -2,7 +2,7 @@
 
 | Paper | Description |
 |---|---|
-| [Phase 2 design](./phase2-design) | End-to-end design of vision-based actuator recognition and proactive routine integration under constrained operation (IEEE format, 7 pages) |
+| [Proposal](./proposal) | Vision-Based Recognition and Actuation of Unconnected Home Controls. Motivation, client needs, related software, requirements, development environment and specifications (IEEE format, 8 pages). This is the reference document for the whole wiki |
 
 ## Add a paper
 
