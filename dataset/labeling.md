@@ -1,6 +1,8 @@
 # Labeling spec <Badge type="warning" text="draft" />
 
-The switch dataset has to let a model answer three questions from an image: **where** the control is, **how** to operate it, and **what** it turns on. One JSON record per image holds a list of controls.
+The switch-panel dataset trains the detector (FR-01) and has to let a model answer three questions from an image: **where** the control is, **how** to operate it, and **what** it turns on. One JSON record per image holds a list of controls.
+
+Photos show the mock panel from different angles and in different light. A tool (Grounding DINO or OWL-ViT) drafts the boxes first, and we correct them by hand. One whole photo session is kept aside for testing.
 
 ::: tip Rules
 - Write `null` for anything you do not know. Never guess a value.
@@ -13,7 +15,8 @@ The switch dataset has to let a model answer three questions from an image: **wh
 ```json
 {
   "image_id": "img_000123",
-  "room": "living",
+  "room_id": "house03_living",
+  "room_type": "living_room",
   "session": "s01",
   "consent": "c007",
   "capture": { "distance_m": 1.6, "view_angle_deg": 20, "lighting": "dim" },
@@ -27,13 +30,12 @@ The switch dataset has to let a model answer three questions from an image: **wh
       "gang_count": 2,
       "occluded": false,
       "height_m": 1.2,
-      "operation": "rocker",
+      "press_action": "press",
       "press_point": [0.655, 0.365],
       "press_side": "lower",
       "reachable": true,
       "state": "off",
       "context": {
-        "room_type": "living_room",
         "label_text": null,
         "icon": "bulb",
         "wall_position": "beside_door",
@@ -69,7 +71,9 @@ The switch dataset has to let a model answer three questions from an image: **wh
 | Field | Meaning |
 |---|---|
 | `image_id`, `consent` | Image id and the consent record behind it |
-| `room`, `session` | Used to split train and evaluation sets: one room or session never appears in both |
+| `room_id` | One specific room in one home, for example `house03_living`. Used to split train and test sets |
+| `room_type` | The kind of room, for example `living_room`. A hint for the model |
+| `session` | One photo session. A whole session is kept aside for testing, so one session never appears in both sets |
 | `capture.distance_m`, `view_angle_deg`, `lighting` | Shooting conditions, to see where recognition works and where it fails |
 | `status` | `draft`, `reviewed` or `frozen` |
 
@@ -87,8 +91,8 @@ The switch dataset has to let a model answer three questions from an image: **wh
 
 | Field | Meaning |
 |---|---|
-| `kind` | `switch`, `button`, `dial`, `remote` |
-| `operation` | `rocker`, `push`, `dial` |
+| `kind` | The five detector classes: `switch`, `push_button`, `toggle`, `knob`, `remote` |
+| `press_action` | How the arm operates it: `press`, `flip`, `turn`. Press depth is set per kind |
 | `press_point` | The point to press, as ratios 0 to 1 of the image |
 | `press_side` | `upper` or `lower` for a rocker, `cw` or `ccw` for a dial |
 | `reachable` | Whether the robot arm can reach it |
@@ -98,7 +102,7 @@ The switch dataset has to let a model answer three questions from an image: **wh
 
 | Group | Field | Why |
 |---|---|---|
-| Clue: room | `room_type` | Each room type has typical devices |
+| Clue: room | `room_type` (image level) | Each room type has typical devices |
 | Clue: plate | `label_text`, `icon` | Text or a symbol on the plate (bulb, fan) |
 | Clue: position | `wall_position`, `near_door`, `near_bed` | A switch beside the door usually runs the ceiling light |
 | Clue: surroundings | `nearby_objects`, `nearby_devices` | Visible lights, fans and outlets narrow the candidates |
@@ -111,5 +115,5 @@ The switch dataset has to let a model answer three questions from an image: **wh
 
 ## Open items
 
-- The label schema in the harness standard (`per-repo.md`) is one line per control. It has to be updated to this record before collection starts.
+- The label schema and the control kinds in the harness standard (`per-repo.md`, `data-model.md`) still follow the old design. They have to be updated to this record before collection starts.
 - Without a depth camera, `height_m` is measured by hand or left `null`.

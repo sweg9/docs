@@ -11,10 +11,11 @@ Each service keeps its API as an OpenAPI 3.1 file. This wiki renders the file as
 ## Rules
 
 - **One file per service** at `public/api/<service>.yaml`. The owning repo is the source; copy its spec here when it changes.
-- **Names follow the standards.** Field names and enumerations come from the [data model](/standards/data-model): `S1`..`S7`, `L0`..`L3`, `IR`, `WIFI`, `BT`, `PHYS`.
-- **Trace requirements.** Each operation lists the requirements it serves in `x-requirements`, for example `[FR-05]` (rule C-01).
+- **Names follow the proposal.** Records and states come from [Architecture](/overview/architecture): mapping status `Pending`, `Verified`, `Rejected`, `Stale`; channels `IR`, `WIFI`, `BT`, `ARM`; control kinds `switch`, `push_button`, `toggle`, `knob`, `remote`.
+- **Trace requirements.** Each operation lists the requirements it serves in `x-requirements`, for example `[FR-02]`, using the numbers in [Requirements](/product/requirements).
 - **Errors** use one shape: `{"code": "...", "message": "...", "reason": "..."}` with a human-readable `reason`.
 - **Times** are UTC ISO 8601. **Confidence** is a number from 0 to 1.
+- **Live updates** (a new control, a new routine, the progress of a run) are pushed to the app over a WebSocket.
 - **Status** goes in `info.x-status`: `draft`, `review` or `stable`.
 
 ## Add a spec
