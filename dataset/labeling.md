@@ -2,7 +2,7 @@
 
 The switch-panel dataset trains the detector (FR-01) and has to let a model answer three questions from an image: **where** the control is, **how** to operate it, and **what** it turns on. One JSON record per image holds a list of controls.
 
-Photos show real switches, buttons and dials in different places, from different angles and in different light. A tool (Grounding DINO or OWL-ViT) drafts the boxes first, and we correct them by hand. One whole photo session is kept aside for testing.
+Photos show real switches, buttons and dials in different places, from different angles and in different light. A tool (Grounding DINO or OWL-ViT) drafts the boxes first, and we correct them by hand. Each member keeps one separately shot session of about 10 photos aside for testing, on a subject that is not in the training set.
 
 ::: tip Rules
 - Write `null` for anything you do not know. Never guess a value.
@@ -71,9 +71,9 @@ Photos show real switches, buttons and dials in different places, from different
 | Field | Meaning |
 |---|---|
 | `image_id`, `consent` | Image id and the consent record behind it |
-| `room_id` | One specific room in one home, for example `house03_living`. Used to split train and test sets |
+| `room_id` | One specific room in one home, for example `house03_living` |
 | `room_type` | The kind of room, for example `living_room`. A hint for the model |
-| `session` | One photo session. A whole session is kept aside for testing, so one session never appears in both sets |
+| `session` | One photo session. Each member keeps one session of about 10 photos aside for testing, so one session never appears in both sets |
 | `capture.distance_m`, `view_angle_deg`, `lighting` | Shooting conditions, to see where recognition works and where it fails |
 | `status` | `draft`, `reviewed` or `frozen` |
 

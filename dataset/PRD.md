@@ -84,7 +84,7 @@ Detection results are matched as the same `kind` with IoU of at least 0.5 (propo
 
 ## 8. Open items
 
-- The team has decided to photograph appliances and light switches. The [labeling spec](./labeling) does not mention appliances yet, and it still keeps a single session aside for testing, until it is updated.
+- The team has decided to photograph appliances and light switches. The [labeling spec](./labeling) does not mention appliances yet.
 - The ratio of control kinds in the photos is not decided. A kind with few photos has a larger error.
 - Whether P-S4 needs its own intent cases is decided later.
 - The labeling tool is not decided.
