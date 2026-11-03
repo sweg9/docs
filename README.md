@@ -1,6 +1,6 @@
 # docs
 
-Documentation repo for a project that recognizes wall switches with a camera, operates them with a robot arm, and connects them to proactive home routines. The project is split into the seven repos below.
+Documentation for **Vision-Based Recognition and Actuation of Unconnected Home Controls**: a camera finds wall switches, push buttons, toggles, knobs and remotes, the system works out which device each one operates, and routines use them through wireless channels or, when those fail, a small robot arm. The reference document is the [proposal](public/papers/proposal.pdf).
 
 ## Wiki
 
@@ -13,46 +13,29 @@ npm run dev   # http://localhost:5173/docs/
 
 See [contributing.md](contributing.md) for how to add pages, PDFs and API specs.
 
+## Contents
+
+| Folder | Content |
+|---|---|
+| [overview/](overview/) | Introduction, architecture, related work, team, repositories |
+| [product/](product/) | Requirements 1 to 12, development environment, prompts, simulator |
+| [dataset/](dataset/) | Labeling spec for the switch-panel dataset |
+| [api/](api/) | API conventions and the draft backend spec (`public/api/`) |
+| [papers/](papers/) | The proposal (`public/papers/`) |
+
+Standards and skills are not stored here. The wiki copies them from [harness](https://github.com/sweg9/harness) at build time.
+
 ## Repositories
 
 | Repo | Role |
 |---|---|
-| [dataset](https://github.com/sweg9/dataset) | Data for training and evaluation: collection, cleaning, labeling |
-| [ai-engine](https://github.com/sweg9/ai-engine) | AI models: switch recognition, device mapping, intent inference, state check, manipulation planning |
-| [backend-server](https://github.com/sweg9/backend-server) | Server and Redis: API, mapping registry, routine engine, execution logs |
-| [sim-demo](https://github.com/sweg9/sim-demo) | Simulator demo (Unity): a robot in a house shows the whole process from recognition to learning |
-| [live-demo](https://github.com/sweg9/live-demo) | Demo front end that runs a real camera together with the AI |
-| [docs](https://github.com/sweg9/docs) | Plan, PRD and prompt management (this repo) |
-| [harness](https://github.com/sweg9/harness) | Standards, skills, CI/CD, and the test and evaluation harness |
-
-## How they relate
-
-```text
-dataset ──> ai-engine ──> backend-server ──> live-demo
-                │                 │
-                │                 └────────> sim-demo
-                └── prompts and evaluation criteria are managed in docs
-harness: build, test, evaluation and release gate for every repo
-```
-
-- Data from `dataset` is used to build and evaluate the models and prompts in `ai-engine`.
-- `backend-server` calls `ai-engine` and stores the results (mappings, channel ranking, execution logs).
-- `live-demo` processes a real camera stream through `backend-server` and shows the result.
-- `sim-demo` reproduces the same process inside Unity with rules. It is a showcase and runs on its own, without a server.
-- Every repo uses the requirement ids (FR, NFR) and metric ids (E1 to E10) defined in `docs`.
-- `harness` runs the tests and metric measurements for each requirement automatically.
-
-## Documents
-
-| Location | Content |
-|---|---|
-| [sim-demo/](sim-demo/) | Plan, PRD and prompt management for the simulator demo |
-
-Documents for other repos are added the same way, one folder each.
-
-## Standards
-
-Mandatory standards and shared skills live in [harness](https://github.com/sweg9/harness) (`standards/`). This repo does not mount them. Its rules are summarized in `CLAUDE.md`.
+| [dataset](https://github.com/sweg9/dataset) | Photos of switch panels and their labels for the detector |
+| [ai-engine](https://github.com/sweg9/ai-engine) | Detector, VLM calls, fingerprints, sound events, state check, motion planner |
+| [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend: Mapping Registry, routines, log, orchestrator, channel adapters, safety gate, learning |
+| [sim-demo](https://github.com/sweg9/sim-demo) | Unity simulator, an auxiliary tool for the rough demo and tests without the real arm |
+| [live-demo](https://github.com/sweg9/live-demo) | Front end used with the real camera and arm |
+| [docs](https://github.com/sweg9/docs) | This wiki |
+| [harness](https://github.com/sweg9/harness) | Standards, shared skills, CI/CD, and the test and evaluation harness |
 
 ## Language
 

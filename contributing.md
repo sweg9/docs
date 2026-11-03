@@ -14,15 +14,16 @@ npm run build     # static site in .vitepress/dist
 
 - **English only.** All pages and text are in English. Code comments may be in Korean.
 - **Standards are edited in harness.** Pages under Standards are copies. Change them in harness, and the next build picks them up.
-- **Stable ids.** FR, NFR, E and R ids are never renumbered. New ones are appended, old ones are marked deprecated.
-- **Targets are hypotheses.** Write numeric targets as targets, not as facts.
+- **The proposal is the reference.** Requirement numbers (FR-01 to FR-12) follow the paper. When the paper changes, update the pages to match.
+- **Stable ids.** Requirement ids are never renumbered. New ones are appended, old ones are marked deprecated.
+- **Starting values.** Numbers from the paper are starting values to be tuned, not facts.
 - **No tilde ranges.** Write `S1 to S3`, not `S1~S3`. Two tildes on a line turn into strikethrough on GitHub.
 
 ## Add a page
 
 1. Create a Markdown file in the matching folder, for example `api/live-demo.md`.
 2. Add it to the sidebar in `.vitepress/config.mts`.
-3. Link to other pages with absolute paths such as `/sim-demo/PRD`.
+3. Link to other pages with absolute paths such as `/product/requirements`.
 
 ## Components
 

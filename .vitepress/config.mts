@@ -15,12 +15,11 @@ function skillItems() {
 
 export default defineConfig({
   title: 'sweg9 Docs',
-  description: 'Development wiki for vision-guided manipulation of physical controls in the home',
+  description: 'Development wiki for vision-based recognition and actuation of unconnected home controls',
   base,
   cleanUrls: true,
   lastUpdated: true,
   srcExclude: ['README.md', 'CLAUDE.md', '.harness/**'],
-  rewrites: { 'sim-demo/README.md': 'sim-demo/index.md' },
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}logo.svg` }],
     ['meta', { name: 'theme-color', content: '#4552d6' }],
@@ -29,7 +28,7 @@ export default defineConfig({
     logo: '/logo.svg',
     nav: [
       { text: 'Overview', link: '/overview/', activeMatch: '/overview/' },
-      { text: 'Product', link: '/sim-demo/', activeMatch: '/sim-demo/' },
+      { text: 'Product', link: '/product/requirements', activeMatch: '/product/' },
       { text: 'Data', link: '/dataset/labeling', activeMatch: '/dataset/' },
       { text: 'API', link: '/api/', activeMatch: '/api/' },
       { text: 'Standards', link: '/standards/', activeMatch: '/standards/' },
@@ -40,17 +39,20 @@ export default defineConfig({
         text: 'Overview',
         items: [
           { text: 'Introduction', link: '/overview/' },
-          { text: 'Repositories', link: '/overview/repositories' },
           { text: 'Architecture', link: '/overview/architecture' },
+          { text: 'Related work', link: '/overview/related-work' },
+          { text: 'Team', link: '/overview/team' },
+          { text: 'Repositories', link: '/overview/repositories' },
         ],
       },
       {
-        text: 'Product: sim-demo',
+        text: 'Product',
         items: [
-          { text: 'Documents', link: '/sim-demo/' },
-          { text: 'Plan', link: '/sim-demo/PLAN' },
-          { text: 'PRD', link: '/sim-demo/PRD' },
-          { text: 'Prompts', link: '/sim-demo/PROMPTS' },
+          { text: 'Documents', link: '/product/' },
+          { text: 'Requirements', link: '/product/requirements' },
+          { text: 'Development environment', link: '/product/environment' },
+          { text: 'Prompts', link: '/product/prompts' },
+          { text: 'Simulator', link: '/product/simulator' },
         ],
       },
       {
@@ -84,7 +86,7 @@ export default defineConfig({
         text: 'Papers',
         items: [
           { text: 'All papers', link: '/papers/' },
-          { text: 'Phase 2 design', link: '/papers/phase2-design' },
+          { text: 'Proposal', link: '/papers/proposal' },
         ],
       },
       { text: 'Contributing', link: '/contributing' },
