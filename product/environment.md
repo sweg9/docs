@@ -9,7 +9,7 @@
 | Web app | TypeScript 5, React 18 | Runs in any browser; the resident installs nothing |
 | Simulator | Unity 6 LTS (C#) | Auxiliary only: switch panel and arm simulator for the rough demo and for tests without the real arm. Connects to the Python hub over a WebSocket |
 | Cloud | AWS EC2, AWS S3 | One small EC2 machine for the backend; a GPU machine rented only to tune the detector. S3 holds the dataset, the detector and log backups |
-| Tools | VS Code, GitHub, Overleaf, Claude | Claude helps draft and review code and documents. Members decide and test everything, and Claude is not part of the product |
+| Tools | VS Code, GitHub, Overleaf, Claude Opus 5.5 | Claude Opus 5.5, an AI model from Anthropic, helps draft and review code and documents. Members decide and test everything, and Claude is not part of the product |
 
 ## Software in use
 
@@ -39,13 +39,14 @@ Fine-tuning runs on a rented cloud GPU. The small detector is expected to run on
 
 | Item | Purpose | Cost |
 |---|---|---|
+| Laptops (4 members, 2,000,000 each) | Development and tests | 8,000,000 |
 | Option A: SO-101 robot arm kit | Physical press (S6) | 150,000 |
 | Option B: two linear actuators and a driver board | Physical press (S6) | 70,000 |
 | USB camera with microphone | Video and sound | 30,000 |
 | Wi-Fi plug, IR blaster | Wireless channels | 40,000 |
 | Cloud use | AWS (EC2, S3), VLM API calls, GPU time | 100,000 |
 | Software | VS Code, GitHub, Overleaf, Unity (free plans) | 0 |
-| **Total with option A** | | **about 320,000** |
-| **Total with option B** | | **about 240,000** |
+| **Total with option A** | | **about 8,320,000** |
+| **Total with option B** | | **about 8,240,000** |
 
-We choose one of the two actuator options, so each total counts only one of them. The SO-101 price follows its listed base kit, about 100 USD at about 1,400 KRW per dollar. The linear actuator price is our own estimate.
+Each of the four members counts one laptop of 2,000,000 KRW. We choose one of the two actuator options, so each total counts only one of them. The SO-101 price follows its listed base kit, about 100 USD at about 1,400 KRW per dollar. The linear actuator price is our own estimate.

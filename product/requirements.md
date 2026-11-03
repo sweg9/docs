@@ -35,7 +35,10 @@ From the video, find switches, push buttons, toggles, knobs and remotes and deci
 | Duplicate check | Fingerprint compared with saved ones; very similar means the same control |
 | Sound | If a microphone is present, a sound model notes clicks when a control is used |
 | Training photos | Real switches, buttons and dials in different places, angles and light. A tool drafts boxes, people correct them |
-| Test data | One whole photo session is kept aside for testing |
+| Sessions | A session is one visit to one place at one time of day, with its own light and angles |
+| Split | 80% of the photos revise the prompts and labels; 20% are kept for evaluation only and never used for revision |
+| Evaluation set | Every session gives 20% of its own photos, so the evaluation set has the same mix of places and light as all the data. Photos taken within a few seconds of each other go to the same side |
+| Measured on the 20% | For example, how many controls are found with the right type and state |
 
 ## FR-02 Device mapping
 
