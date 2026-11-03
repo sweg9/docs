@@ -1,0 +1,235 @@
+openapi: 3.1.0
+info:
+  title: backend-server
+  version: 0.1.0
+  x-status: draft
+  description: Mapping registry, routine engine and execution logs. Draft derived from the data model and FR-01 to FR-16.
+servers:
+  - url: http://localhost:8080
+    description: local
+tags:
+  - name: Mappings
+    description: Links between a recognized control and a device (S2).
+  - name: Routines
+    description: Proposals and approved routines (S3, S4).
+  - name: Execution
+    description: Stage records that make a run traceable (FR-16).
+  - name: Capability
+    description: Current capability level from the Capability Probe (FR-15).
+paths:
+  /mappings:
+    get:
+      tags: [Mappings]
+      summary: List mappings
+      x-requirements: [FR-05]
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/MappingStatus' }
+          description: Filter by status.
+        - name: device_id
+          in: query
+          schema: { type: string }
+          description: Filter by device.
+      responses:
+        '200':
+          description: Mappings
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Mapping' } }
+    post:
+      tags: [Mappings]
+      summary: Create a candidate mapping
+      x-requirements: [FR-02, FR-03]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MappingCreate' }
+      responses:
+        '201':
+          description: Created as candidate
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mapping' }
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /mappings/{mapping_id}/verify:
+    post:
+      tags: [Mappings]
+      summary: Verify a mapping with a test pulse
+      description: Sends a test command and checks the expected state change with CV. A mapping becomes verified only on a seen change (C-08).
+      x-requirements: [FR-04]
+      parameters:
+        - name: mapping_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Verification' }
+        '404':
+          description: Unknown mapping
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /routines:
+    get:
+      tags: [Routines]
+      summary: List routines and proposals
+      x-requirements: [FR-14]
+      responses:
+        '200':
+          description: Routines
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Routine' } }
+  /routines/{routine_id}/approve:
+    post:
+      tags: [Routines]
+      summary: Approve a proposed routine
+      x-requirements: [FR-14]
+      parameters:
+        - name: routine_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Approved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Routine' }
+        '409':
+          description: Uses a mapping that is not confirmed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /runs/{run_id}/records:
+    get:
+      tags: [Execution]
+      summary: Get the stage records of a run
+      x-requirements: [FR-16]
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Records in stage and time order
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/StageRecord' } }
+    post:
+      tags: [Execution]
+      summary: Append a stage record
+      description: Records are append-only and never edited (L-02).
+      x-requirements: [FR-16]
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StageRecord' }
+      responses:
+        '201':
+          description: Stored
+        '400':
+          description: Does not match the execution-log standard
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /capability:
+    get:
+      tags: [Capability]
+      summary: Current capability level
+      x-requirements: [FR-15]
+      responses:
+        '200':
+          description: Level and the measurements behind it
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Capability' }
+components:
+  schemas:
+    MappingStatus:
+      type: string
+      enum: [candidate, verified, confirmed, rejected]
+    Mapping:
+      type: object
+      required: [mapping_id, actuator_id, device_id, status, confidence]
+      properties:
+        mapping_id: { type: string }
+        actuator_id: { type: string }
+        device_id: { type: string }
+        status: { $ref: '#/components/schemas/MappingStatus' }
+        confidence: { type: number, description: 0 to 1 }
+        verified_at: { type: string, format: date-time, description: Required when confirmed }
+    MappingCreate:
+      type: object
+      required: [actuator_id, device_id]
+      properties:
+        actuator_id: { type: string }
+        device_id: { type: string }
+        confidence: { type: number, description: 0 to 1 }
+        reason: { type: string, description: One sentence }
+    Verification:
+      type: object
+      required: [mapping_id, verify_result]
+      properties:
+        mapping_id: { type: string }
+        verify_result: { type: string, enum: [changed, unchanged, uncertain, not_checked] }
+        channel: { type: string, enum: [IR, WIFI, BT, PHYS] }
+        confidence: { type: number, description: 0 to 1 }
+        reason: { type: string }
+    Routine:
+      type: object
+      required: [routine_id, trigger, action, autonomy_level]
+      properties:
+        routine_id: { type: string }
+        trigger: { type: string, description: Time, sensor or routine event }
+        condition: { type: string }
+        action: { type: string, description: 'For example "device dev_lamp_01 on"' }
+        autonomy_level: { type: string, enum: [suggest, ask, auto] }
+        approved: { type: boolean }
+    StageRecord:
+      type: object
+      description: One record per stage per run per component. See the execution-log standard.
+      required: [run_id, stage, component, status, ts, latency_ms]
+      properties:
+        run_id: { type: string }
+        scenario: { type: integer, enum: [1, 2, 3], description: Null outside evaluation }
+        stage: { type: string, enum: [S1, S2, S3, S4, S5, S6, S7] }
+        component: { type: string }
+        status: { type: string, enum: [ok, fail, skipped] }
+        ts: { type: string, format: date-time }
+        latency_ms: { type: integer }
+        reason: { type: string, description: Required when status is fail or skipped }
+        channel: { type: string, enum: [IR, WIFI, BT, PHYS] }
+        confidence: { type: number }
+        verify_result: { type: string, enum: [changed, unchanged, uncertain, not_checked] }
+    Capability:
+      type: object
+      required: [level, measured_at]
+      properties:
+        level: { type: string, enum: [L0, L1, L2, L3] }
+        measured_at: { type: string, format: date-time }
+        measurements: { type: object, description: Values per level, for example press success for L3 }
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        reason: { type: string }

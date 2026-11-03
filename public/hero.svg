@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 36 200 236" width="400" height="472" fill="none">
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e9ebf8"/>
+    </linearGradient>
+    <linearGradient id="rocker" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#dfe2f5"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4552d6"/>
+      <stop offset="1" stop-color="#7c5cf0"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#2a2f7a" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <!-- switch plate -->
+  <rect x="95" y="70" width="130" height="180" rx="22" fill="url(#plate)" filter="url(#shadow)"/>
+  <rect x="95.5" y="70.5" width="129" height="179" rx="21.5" stroke="#c9cdf0"/>
+  <!-- two rockers -->
+  <rect x="117" y="96" width="38" height="128" rx="10" fill="url(#rocker)" stroke="#cdd1ee"/>
+  <rect x="165" y="96" width="38" height="128" rx="10" fill="url(#rocker)" stroke="#cdd1ee"/>
+  <rect x="121" y="100" width="30" height="56" rx="7" fill="#f6f7ff"/>
+  <rect x="169" y="164" width="30" height="56" rx="7" fill="#f6f7ff"/>
+  <circle cx="136" cy="112" r="3" fill="url(#accent)"/>
+  <!-- detection box -->
+  <g stroke="url(#accent)" stroke-width="4" stroke-linecap="round">
+    <path d="M108 100v-14h14"/>
+    <path d="M150 86h14v14"/>
+    <path d="M164 220v14h-14"/>
+    <path d="M122 234h-14v-14"/>
+  </g>
+  <!-- label -->
+  <rect x="106" y="58" width="104" height="22" rx="6" fill="url(#accent)"/>
+  <text x="158" y="73" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" font-weight="700" fill="#fff">switch · 0.97</text>
+  <!-- press point -->
+  <circle cx="136" cy="190" r="13" stroke="#7c5cf0" stroke-width="2" stroke-dasharray="3 4" opacity=".7"/>
+  <circle cx="136" cy="190" r="4.5" fill="#7c5cf0"/>
+</svg>
