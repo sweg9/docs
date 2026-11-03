@@ -16,7 +16,7 @@
 |---|---|---|---|
 | S1 | Recognize | Edge hub, cloud VLM | Boxes, type, state and whether the picture is clear |
 | S2 | Map | Edge hub, cloud VLM, backend | Candidate devices, confidence, status (`Pending`, `Verified`, `Rejected`, `Stale`) |
-| S3 | Routines | Backend | The proposed routine, with accept and reject, and saved routines, with change and remove |
+| S3 | Routines | Backend | The added routine, with keep, change and remove |
 | S4 | Trigger and intent | Backend, cloud VLM | Trigger, intent, target device, confidence |
 | S5 | Wireless control | Backend, edge hub | Channel order, result per channel, main and second checks |
 | S6 | Arm press | Edge hub, arm | Safety gate result, press, tries, reason for a cancellation |
@@ -33,7 +33,7 @@ Priority is M (must), S (should) or C (could).
 | LD-03 | Show candidate mappings with confidence, and let the resident confirm or reject them | M | S2 | FR-02 | Scenario test |
 | LD-04 | Show when a mapping becomes `Stale` and is checked again | S | S2 | FR-02, FR-12 | Move a control |
 | LD-05 | Ask the resident to pick a method or check the device after failed registration tests | M | Setup | FR-03 | Failed registration test |
-| LD-06 | Show each proposed routine, let the resident accept or reject it, and let the resident change or remove saved routines | M | S3 | FR-04 | Scenario test |
+| LD-06 | Show each added routine at once, and let the resident keep, change or remove it | M | S3 | FR-04 | Scenario 1 |
 | LD-07 | Let the resident build a routine by hand from a verified control | M | S3 | FR-04 | Scenario 1 |
 | LD-08 | Let the resident set how independently a routine acts: do it and tell, ask first, or only suggest | M | S3 | FR-04, FR-06 | Scenario test |
 | LD-09 | Let the presenter start sensor, time and routine triggers by hand | M | S4 | FR-05 | Event injection test |
@@ -72,7 +72,7 @@ The proposal gives starting values, not success targets, so the demo reports wha
 | Time from trigger to checked result | FR-05, FR-07, FR-08 | Log |
 | Share of runs that reach the arm, and why | FR-07 | Log. Failures created on purpose are counted separately |
 | Arm press result | FR-11 | Repeat scenario 3 |
-| Routine feedback | FR-04 | Share of proposals accepted, and of routines changed or removed |
+| Routine feedback | FR-04 | Share of routines kept, changed or removed |
 
 ## 6. Behavior rules
 
@@ -80,7 +80,7 @@ The proposal gives starting values, not success targets, so the demo reports wha
 |---|---|
 | Source of values | Every value on screen comes from a server response. The front end does not create or change results |
 | Fake responses | For development only, always marked on screen when on, and never measured |
-| Routines | The system proposes a routine to the resident, and the resident can also add one by hand |
+| Routines | The system adds a routine without approval and shows it at once, and the resident can also add one by hand (FR-04) |
 | Low-risk devices (lights, fans) | Act and tell at high confidence, ask first at medium, otherwise only suggest (FR-06) |
 | Medium-risk devices (TV, air purifier) | Always ask first, if confidence is not too low (FR-06) |
 | High-risk devices (heaters, power strips) | Only suggest, with no action button. The arm never presses them (FR-06, FR-10) |
@@ -98,8 +98,6 @@ The proposal gives starting values, not success targets, so the demo reports wha
 
 ## 8. Open items
 
-- The final demo devices are not fixed.
-- The team has agreed that routines are proposed to the resident. FR-04 and the proposal still say they are registered without approval until they are updated.
-- The hand is not decided: option A is the SO-101 arm, and option B is two linear actuators. Only one is used.
+- The final demo devices are not fixed.- The hand is not decided: option A is the SO-101 arm, and option B is two linear actuators. Only one is used.
 - The relation between `live-demo` and the resident's web app is not settled. The [repository page](/overview/repositories) lists them together, and these documents treat them as the same front end.
 - The number of repeated runs per scenario is decided once the hardware is ready.
