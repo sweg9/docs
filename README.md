@@ -39,12 +39,6 @@ cicd-harness: 모든 레포의 빌드, 테스트, 평가, 배포
 
 다른 레포의 문서도 같은 방식으로 폴더를 하나씩 추가한다.
 
-## Skills and standards
+## Standards
 
-`skills/` is a git submodule of [cicd-harness](https://github.com/sweg9/cicd-harness). It holds the shared standards and skills for this project. Claude Code finds the skills through `.claude/skills`.
-
-```bash
-git clone --recurse-submodules <this repo>
-git submodule update --init            # in a repo that is already cloned
-git submodule update --remote skills   # move to the latest skills, then commit
-```
+Mandatory standards and shared skills live in [cicd-harness](https://github.com/sweg9/cicd-harness) (`standards/`). This repo does not mount them. Its rules are summarized in `CLAUDE.md`.

@@ -1,9 +1,9 @@
 # Project rules
 
-This repo (docs) follows the mandatory standards in `skills/standards/`.
+This repo (docs) follows the mandatory standards of the project, kept in https://github.com/sweg9/cicd-harness under `standards/`.
 
-- Before changing code, prompts, data or docs, read `skills/standards/per-repo.md` (section for docs) and `skills/standards/common.md`.
-- Use the stage, level, channel and control-kind names exactly as in `skills/standards/data-model.md`.
-- Cite rule ids (C-xx, A-xx, L-xx) in reviews. Safety (C-04) and privacy (C-05) have no exceptions.
-- Before merging, run the `release-gate` skill.
-- `skills/` is the cicd-harness repo. Change standards and skills there, not here.
+- Read `standards/per-repo.md` (section for docs) and `standards/common.md` before changing the PRD, the plan or the prompt files.
+- Requirement, metric and risk ids (FR, NFR, E, R) are never renumbered. New ones are appended, old ones are marked deprecated (C-01).
+- Numeric targets are written as hypotheses (C-12).
+- A change to a prompt follows the prompt rules in `sim-demo/PROMPTS.md` and `standards/ai-output.md`.
+- Standards and skills are changed in cicd-harness, not here.
