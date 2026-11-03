@@ -1,67 +1,67 @@
-# 기획서
+# Plan
 
-## 1. 한 줄 정의
+## 1. One-line definition
 
-네트워크에 연결되지 않은 벽 스위치, 버튼, 다이얼을 카메라로 찾아 어떤 기기를 켜고 끄는지 확인하고, 무선 제어가 되면 무선으로, 안 되면 로봇 팔이 직접 눌러서 루틴에 편입한 뒤 결과로 학습하는 전체 과정을 보여 준다.
+The demo shows the whole process for wall switches, push buttons and dials that are not connected to any network: find them with a camera, confirm which device each one controls, use a wireless channel when it works, let a robot arm press the control when it does not, put it into a routine, and learn from the result.
 
-## 2. 배경과 문제
+## 2. Background and problem
 
-- 집에는 네트워크에 연결되지 않은 스위치가 많다. 스마트홈 루틴은 이런 기기를 쓰려면 사용자가 기기를 하나씩 직접 등록해야 한다.
-- 로봇이 무엇을 어디까지 처리할 수 있는지 외부에서는 알 수 없다. 그래서 단계마다 가능한 만큼만 하고, 안 되는 부분은 낮은 단계로 물러나도록 설계한다.
-- 이 데모는 이 과정 전체를 한 화면에서 처음부터 끝까지 보여 주는 것이 목적이다. 개별 기술의 성능을 겨루지 않는다.
+- Many homes have switches that are not connected to a network. To use them in a smart-home routine, a person has to register each device by hand.
+- From the outside we do not know how much a robot can do. The design therefore does only as much as each level allows and steps down to a lower level when something is not possible.
+- The goal of this demo is to show the whole process on one screen, from start to end. It does not compete on the performance of any single technology.
 
-## 3. 목표
+## 3. Goals
 
-| 구분 | 내용 |
+| Item | Content |
 |---|---|
-| 보여 줄 것 | S1 인식, S2 매핑과 검증, S3 루틴 제안, S4 트리거, S5 무선 제어, S6 물리 조작, S7 학습의 7단계 |
-| 보여 줄 때 중요한 것 | 실패했을 때의 동작(무선 실패 후 물리 조작, 위험 감지 시 취소)을 정상 동작만큼 분명하게 보여 준다 |
-| 하지 않을 것 | 실제 로봇 제어, 실제 인식 모델 학습. 데모는 시뮬레이션이며 인식 결과와 검증 값은 규칙으로 만든다 |
+| What to show | Seven stages: S1 recognize, S2 map and verify, S3 propose a routine, S4 trigger, S5 wireless control, S6 physical operation, S7 learn |
+| What matters in the show | Failure behavior (physical fallback after a wireless failure, cancel on a hazard) is shown as clearly as normal behavior |
+| What not to do | No real robot control and no training of a real recognition model. The demo is a simulation, and recognition results and verification values are produced by rules |
 
-## 4. 사용자와 이해관계자
+## 4. Users and stakeholders
 
-| 역할 | 하는 일 |
+| Role | What they do |
 |---|---|
-| 거주자 | 루틴 제안을 승인하거나 거절한다. 최종 책임자다 |
-| 로봇 | 관찰, 이동, 조작을 맡는다 |
-| 클라우드 VLM | 상황에서 의도와 대상 기기를 추론한다 |
-| 스마트홈 허브 | IR, Wi-Fi, Bluetooth 명령을 보낸다 |
+| Resident | Approves or rejects routine proposals. Ultimately responsible |
+| Robot | Provides observation, movement and manipulation |
+| Cloud VLM | Infers intent and target device from the situation |
+| Smart-home hub | Sends IR, Wi-Fi and Bluetooth commands |
 
-## 5. 데모 구성
+## 5. Demo setup
 
-- 현대식 집 한 채(거실, 주방, 복도, 침실)와 스위치 5개, 조작 대상이 아닌 온도조절기 1개(오인식 유도용 미끼).
-- 로봇은 직접 조종하거나(WASD, 바닥 클릭) 자동 시연으로 움직인다. 길찾기는 A*를 쓴다.
-- 화면에는 집, 로봇 카메라 영상(인식 박스와 신뢰도), 미니맵, 단계별 로그가 같이 나온다.
+- A modern house (living room, kitchen, hall, bedroom) with 5 switches and 1 thermostat that is not an operable control (a decoy to test false recognition).
+- The robot is driven by hand (WASD, click on the floor) or moves on its own in the auto demo. Path finding uses A*.
+- The screen shows the house, the robot camera feed (detection boxes and confidence), a minimap and a log per stage.
 
-## 6. 시나리오
+## 6. Scenarios
 
-| No. | 상황 | 단계 | 성공 기준 |
+| No. | Situation | Stages | Success criterion |
 |---|---|---|---|
-| 1 | 무선이 된다 | S4, S5, S7 | 램프가 켜지고 CV가 5초 안에 확인한다 |
-| 2 | 무선이 실패해 물리 조작으로 넘어간다 | S4~S7 | 스위치를 누르고 CV로 확인한다. 경로에 장애물(사람)이 있으면 조작을 취소한다 |
-| 3 | 새 스위치를 루틴으로 | S1\~S3 (이어서 S4\~S7) | 매핑이 검증되고 루틴이 승인되어 한 번 실행된다 |
+| 1 | Wireless works | S4, S5, S7 | The lamp turns on and CV confirms it within 5 s |
+| 2 | Wireless fails and the robot falls back to physical operation | S4 to S7 | The switch is pressed and CV confirms it. If an obstacle (a person) is on the path, the action is cancelled |
+| 3 | A new switch becomes a routine | S1 to S3 (then S4 to S7) | The mapping is verified, the routine is approved and runs once |
 
-3번 시나리오 뒤에 2번을 같은 스위치에 이어서 돌리는 것이 전체 end-to-end 시연이다. 시뮬레이터에서는 `R`(저녁 루틴), `G`(취침 루틴), `H`(위험 주입), `Space`(자동 시연)로 이 흐름을 재현한다.
+Running scenario 2 on the same switch right after scenario 3 is the full end-to-end demo. In the simulator, `R` (evening routine), `G` (goodnight routine), `H` (inject a hazard) and `Space` (auto demo) reproduce this flow.
 
-## 7. 범위
+## 7. Scope
 
-| 포함 | 제외 |
+| In scope | Out of scope |
 |---|---|
-| 단계 S1~S7의 시각화, 채널 선택과 폴백, 안전 가드, 학습 | 실제 하드웨어 연동, 실사용 데이터 수집 |
-| 세 가지 시나리오와 지표 표시 | 다수 가구, 다수 사용자 |
-| 실사용 데모(실제 카메라 + AI)는 별도 레포 | 이 레포에서는 다루지 않음 |
+| Visualization of stages S1 to S7, channel selection and fallback, safety guard, learning | Real hardware integration, real data collection |
+| Three scenarios and metric display | Multiple homes, multiple users |
+| The demo with a real camera and AI is a separate repo | Not covered in this repo |
 
-## 8. 일정 (4회 반복)
+## 8. Schedule (four iterations)
 
-| 회차 | 내용 |
+| Iteration | Content |
 |---|---|
-| 1 | 기반 환경과 S1 (집, 로봇, 인식 화면) |
-| 2 | S2, S3와 매핑 저장소 |
-| 3 | S4~S6과 안전 가드 |
-| 4 | S7, 전체 end-to-end 실행과 평가 |
+| 1 | Base environment and S1 (house, robot, recognition view) |
+| 2 | S2, S3 and the mapping registry |
+| 3 | S4 to S6 and the safety guard |
+| 4 | S7, full end-to-end runs and evaluation |
 
-각 회차는 해당 회차의 요구사항에 대한 테스트로 끝낸다.
+Each iteration ends with tests for the requirements it covers.
 
-## 9. 성공 판단
+## 9. Success criteria
 
-PRD의 지표 E1~E10을 기준으로 한다. 핵심은 시나리오별 end-to-end 성공률 90 / 80 / 70 %와 어느 단계도 80% 아래로 내려가지 않는 것이다.
+Metrics E1 to E10 in the PRD are the basis. The key points are an end-to-end success rate per scenario of 90 / 80 / 70 % and no stage below 80 %.

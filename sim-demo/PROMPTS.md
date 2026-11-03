@@ -1,93 +1,93 @@
-# 프롬프트 관리
+# Prompt management
 
-AI가 판단하는 단계(S1, S2, S4, S5, S6)마다 프롬프트를 하나씩 둔다. 이 문서는 목록, 관리 규칙, 템플릿 초안이다. 아래 템플릿은 초안이며 실제 모델과 데이터로 검증하기 전까지 확정이 아니다.
+Each stage where an AI makes a judgment (S1, S2, S4, S5, S6) has one prompt. This document is the list, the management rules and the template drafts. The templates are drafts and are not final until they are checked with real models and data.
 
-## 1. 목록
+## 1. List
 
-| ID | 단계 | 입력 | 출력 | 연결 요구사항 |
+| ID | Stage | Input | Output | Requirement |
 |---|---|---|---|---|
-| P-S1 | 인식 | 카메라 프레임 | 제어 장치 목록(유형, 위치, 신뢰도) | FR-01 |
-| P-S2 | 매핑 | 공간 맥락, 관찰된 행동, 후보 기기 | 후보 매핑(Top-k, 근거) | FR-02 |
-| P-S4 | 의도 | 트리거, 시간, 센서, 최근 행동 | 의도, 대상 기기, 신뢰도 | FR-07 |
-| P-S5 | 상태 확인 | 명령 전후 이미지 | 기대 상태 변화 여부(예/아니오/불확실) | FR-04 |
-| P-S6 | 조작 계획 | 제어 장치 위치, 장애물 정보 | 접근 경로, 조작 동작 | FR-10 |
+| P-S1 | Recognize | Camera frame | List of controls (type, position, confidence) | FR-01 |
+| P-S2 | Map | Spatial context, observed actions, candidate devices | Candidate mappings (top-k, reasons) | FR-02 |
+| P-S4 | Intent | Trigger, time, sensors, recent actions | Intent, target device, confidence | FR-07 |
+| P-S5 | State check | Images before and after a command | Whether the expected change happened (yes, no, uncertain) | FR-04 |
+| P-S6 | Manipulation plan | Control position, obstacle information | Approach path, manipulation | FR-10 |
 
-## 2. 관리 규칙
+## 2. Management rules
 
-1. 프롬프트는 `prompts/<ID>/v<번호>.md` 한 파일에 하나씩 두고, 쓰던 파일은 고치지 않고 새 버전을 만든다.
-2. 파일 맨 위에 모델 이름, 작성일, 변경 이유, 평가 결과(지표와 값)를 적는다.
-3. 출력은 항상 JSON이고 스키마를 같이 둔다. 스키마에 맞지 않으면 코드에서 거부하고 한 번만 다시 시도한다.
-4. 모든 출력에는 `confidence`(0~1)와 `reason`(한 문장)을 넣는다. 자동 동작의 로그(NFR-08)에 그대로 쓴다.
-5. 확신이 없으면 추측하지 않고 `"uncertain"`을 반환하게 한다. 이 경우 사용자에게 묻는다(R2).
-6. 프롬프트에는 개인 식별 정보를 넣지 않는다. 이미지는 잘라낸 것만 쓴다(NFR-05).
-7. 새 버전을 쓰기 전에 고정된 평가 세트로 돌려 이전 버전보다 나빠지지 않았는지 확인한다.
-8. 실패 사례는 평가 세트에 추가한다.
+1. Keep one prompt per file at `prompts/<ID>/v<number>.md`. Do not edit a file that has been used; make a new version.
+2. Put the model name, date, reason for the change and evaluation result (metric and value) at the top of the file.
+3. The output is always JSON, and the schema is stored with it. Output that does not match the schema is rejected in code and retried once.
+4. Every output has `confidence` (0 to 1) and `reason` (one sentence). They go straight into the log of an automatic action (NFR-08).
+5. When unsure, the model returns `"uncertain"` and does not guess. The user is then asked (R2).
+6. No personally identifiable information in prompts. Only cropped images are used (NFR-05).
+7. Before a new version is adopted, run it on the fixed evaluation set and check that it is not worse than the previous version.
+8. Failure cases are added to the evaluation set.
 
-## 3. 템플릿 초안
+## 3. Template drafts
 
-### P-S1 인식
-
-```text
-역할: 집 안 카메라 이미지에서 사람이 조작하는 제어 장치를 찾는다.
-대상 유형: switch, button, dial, remote
-규칙:
-- 보이는 것만 답한다. 가려졌거나 흐리면 confidence를 낮춘다.
-- 온도조절기, 콘센트, 장식물은 대상이 아니다.
-- 좌표는 이미지 크기 대비 0~1 비율로 쓴다.
-출력(JSON): {"controls":[{"type":"","bbox":[x,y,w,h],"confidence":0.0,"reason":""}]}
-```
-
-### P-S2 매핑
+### P-S1 Recognize
 
 ```text
-역할: 제어 장치가 어떤 기기를 켜고 끄는지 후보를 정한다.
-입력: 제어 장치 위치, 같은 방의 기기 목록, 최근 관찰된 사용자 행동
-규칙:
-- 같은 방의 기기를 우선하고, 근거를 한 문장으로 적는다.
-- 후보는 신뢰도 순으로 최대 3개까지 쓴다.
-- 확실한 후보가 없으면 "uncertain"을 반환한다.
-출력(JSON): {"candidates":[{"device":"","confidence":0.0,"reason":""}]}
+Role: find the controls a person operates in an image from a camera in the home.
+Types: switch, button, dial, remote
+Rules:
+- Answer only with what is visible. If a control is hidden or blurry, lower the confidence.
+- Thermostats, outlets and decorations are not targets.
+- Write coordinates as ratios from 0 to 1 of the image size.
+Output (JSON): {"controls":[{"type":"","bbox":[x,y,w,h],"confidence":0.0,"reason":""}]}
 ```
 
-### P-S4 의도
+### P-S2 Map
 
 ```text
-역할: 현재 상황에서 사용자가 원할 가능성이 높은 동작을 정한다.
-입력: 트리거(시간, 센서, 루틴), 현재 시각, 방, 최근 행동
-규칙:
-- 위험 등급이 높은 기기(가열, 전열)는 자동 동작 대상으로 올리지 않는다.
-- 최근에 거절된 제안과 같은 동작은 내지 않는다.
-출력(JSON): {"intent":"","device":"","action":"on|off","confidence":0.0,"reason":""}
+Role: decide which device a control turns on and off.
+Input: position of the control, devices in the same room, recently observed user actions
+Rules:
+- Prefer devices in the same room and give the reason in one sentence.
+- List at most 3 candidates in order of confidence.
+- If there is no clear candidate, return "uncertain".
+Output (JSON): {"candidates":[{"device":"","confidence":0.0,"reason":""}]}
 ```
 
-### P-S5 상태 확인
+### P-S4 Intent
 
 ```text
-역할: 명령 전후 이미지를 비교해 기대한 상태 변화가 일어났는지 판단한다.
-입력: 전 이미지, 후 이미지, 기대 변화(예: 램프 꺼짐 -> 켜짐)
-규칙:
-- 밝기나 불빛의 변화를 근거로 든다.
-- 판단이 어려우면 "uncertain"으로 답한다.
-출력(JSON): {"changed":"yes|no|uncertain","confidence":0.0,"reason":""}
+Role: decide the action the user is most likely to want in the current situation.
+Input: trigger (time, sensor, routine), current time, room, recent actions
+Rules:
+- Do not raise devices with a high risk class (heating) as targets of automatic action.
+- Do not propose the same action as a recently rejected proposal.
+Output (JSON): {"intent":"","device":"","action":"on|off","confidence":0.0,"reason":""}
 ```
 
-### P-S6 조작 계획
+### P-S5 State check
 
 ```text
-역할: 로봇 팔이 제어 장치를 안전하게 누르는 동작을 계획한다.
-입력: 제어 장치의 3D 위치와 유형, 주변 장애물, 사람 위치
-규칙:
-- 사람이나 장애물이 경로에 있으면 계획을 만들지 않고 {"abort":true}를 반환한다.
-- 장치 유형별 동작: rocker는 한 번 누르기, push는 짧게 누르기, dial은 돌리기.
-출력(JSON): {"abort":false,"approach":[[x,y,z]],"action":"press|turn","reason":""}
+Role: compare the images before and after a command and decide whether the expected change happened.
+Input: image before, image after, expected change (for example lamp off -> on)
+Rules:
+- Base the answer on a change in brightness or light.
+- If it is hard to tell, answer "uncertain".
+Output (JSON): {"changed":"yes|no|uncertain","confidence":0.0,"reason":""}
 ```
 
-## 4. 평가
+### P-S6 Manipulation plan
 
-| 프롬프트 | 지표 | 목표 |
+```text
+Role: plan how the robot arm presses a control safely.
+Input: 3D position and type of the control, nearby obstacles, position of people
+Rules:
+- If a person or an obstacle is on the path, do not make a plan and return {"abort":true}.
+- Motion by control type: press a rocker once, press a push button briefly, turn a dial.
+Output (JSON): {"abort":false,"approach":[[x,y,z]],"action":"press|turn","reason":""}
+```
+
+## 4. Evaluation
+
+| Prompt | Metric | Target |
 |---|---|---|
-| P-S1 | E5 정밀도 / 재현율 | 0.90 / 0.85 |
-| P-S2 | E6 Top-1 정확도 | 80% 이상 |
-| P-S4 | E9 오작동 트리거율 | 10% 미만 |
-| P-S5 | E7 상태 확인 정확도 | 95% 이상 |
-| P-S6 | E8 조작 성공률 | 90% 이상 |
+| P-S1 | E5 precision / recall | 0.90 / 0.85 |
+| P-S2 | E6 Top-1 accuracy | 80% or more |
+| P-S4 | E9 false-trigger rate | under 10% |
+| P-S5 | E7 state-check accuracy | 95% or more |
+| P-S6 | E8 press success rate | 90% or more |

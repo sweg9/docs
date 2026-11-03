@@ -1,108 +1,108 @@
 # PRD
 
-## 1. 요약
+## 1. Summary
 
-| 항목 | 내용 |
+| Item | Content |
 |---|---|
-| 제품 | 카메라와 로봇 팔로 연결되지 않은 스위치를 인식하고 조작해 선제적 홈 루틴에 편입하는 시스템. 이 레포의 산출물은 그 과정을 보여 주는 시뮬레이터 데모 |
-| 문제 | 연결되지 않은 스위치는 루틴에서 쓰려면 사람이 하나씩 등록해야 한다 |
-| 해결 | 인식, 매핑 검증, 루틴 제안, 무선 제어와 물리 폴백, 결과 학습을 한 흐름으로 묶는다 |
-| 기준 | 요구사항은 ISO/IEC/IEEE 29148 방식으로 쓴다. 하나의 요구사항은 하나의 사항만 말하고, 검증할 수 있고, 추적할 수 있어야 한다 |
+| Product | A system that recognizes unconnected switches with a camera, operates them with a robot arm, and brings them into proactive home routines. The deliverable of this repo is a simulator demo that shows that process |
+| Problem | To use an unconnected switch in a routine, a person has to register it by hand, one by one |
+| Solution | Join recognition, mapping verification, routine proposal, wireless control with a physical fallback, and learning from results into one flow |
+| Basis | Requirements are written in the style of ISO/IEC/IEEE 29148: each requirement states one thing, can be verified, and can be traced |
 
-## 2. 프로세스 단계
+## 2. Process stages
 
-| 단계 | 이름 | 하는 일 | 데모에서 보이는 것 |
+| Stage | Name | What it does | What the demo shows |
 |---|---|---|---|
-| S1 | 인식 | 영상에서 스위치, 버튼, 다이얼, 리모컨을 찾고 유형을 분류 | 카메라 화면의 인식 박스, 신뢰도, 오인식 거부 |
-| S2 | 매핑과 검증 | 스위치와 기기를 연결하고 시험 신호로 확인 | 시험 펄스 후 밝기 변화(CV) 확인 |
-| S3 | 루틴 편입 | 검증된 매핑을 루틴으로 제안하고 승인되면 추가 | 제안 창(자동 모드에서는 자동 승인) |
-| S4 | 트리거와 의도 | 시간, 센서, 루틴 이벤트를 받아 의도와 대상 기기를 추론 | 트리거 로그, 의도와 신뢰도 |
-| S5 | 무선 제어 | 채널 계획대로 명령을 보내고 CV로 상태를 확인 | 채널 순위와 성공 여부 |
-| S6 | 물리 폴백 | 무선이 실패하면 안전 확인 후 로봇 팔이 직접 누름 | 안전 가드, 경로 계획, 팔 동작 |
-| S7 | 학습 | 결과로 채널 우선순위와 매핑 신뢰도를 갱신 | 채널 성공 확률 변화 |
+| S1 | Recognize | Find switches, buttons, dials and remotes in video and classify the type | Detection boxes in the camera view, confidence, rejection of decoys |
+| S2 | Map and verify | Link a switch to a device and confirm it with a test signal | Brightness change (CV) after a test pulse |
+| S3 | Integrate | Propose a verified mapping as a routine and add it on approval | Proposal dialog (auto-approved in auto mode) |
+| S4 | Trigger and intent | Receive time, sensor and routine events and infer intent and target device | Trigger log, intent and confidence |
+| S5 | Wireless control | Send the command by the channel plan and check the state with CV | Channel ranking and result |
+| S6 | Physical fallback | If wireless fails, run the safety check, then the robot arm presses the control | Safety guard, path planning, arm motion |
+| S7 | Learn | Update channel priority and mapping confidence from the result | Change in channel success estimates |
 
-## 3. 기능 요구사항
+## 3. Functional requirements
 
-우선순위는 M(필수), S(권장), C(선택)이다.
+Priority is M (must), S (should) or C (could).
 
-| ID | 요구사항 | 우선순위 | 단계 | 구성요소 | 검증 |
+| ID | Requirement | Priority | Stage | Component | Verification |
 |---|---|---|---|---|---|
-| FR-01 | 영상에서 제어 장치(스위치, 버튼, 다이얼, 리모컨)를 찾고 유형을 분류한다 | M | S1 | Actuator Perception | 라벨 데이터의 정밀도와 재현율 |
-| FR-02 | 공간 맥락과 관찰된 사용자 행동으로 제어 장치와 대상 기기의 후보 매핑을 만든다 | M | S2 | Mapping Builder | Top-1 매핑 정확도 |
-| FR-03 | 기기마다 제어 방식(IR, Wi-Fi, BT, 물리)을 등록한다 | M | S2 | Control Orchestrator | 등록 시나리오 테스트 |
-| FR-04 | 명령을 보낸 뒤 기대한 상태 변화를 CV로 확인하고, 실패하면 재등록을 요청한다 | M | S2, S5 | State Verifier | 상태 판정 정확도 |
-| FR-05 | 검증된 매핑을 저장하고 조작 전에 조회한다 | M | S2, S5 | Mapping Registry | 단위 테스트 |
-| FR-06 | 센서, 시간, 루틴 이벤트를 상황 트리거로 받는다 | M | S4 | Routine Engine | 이벤트 주입 테스트 |
-| FR-07 | 클라우드 VLM으로 의도와 대상 기기를 추출한다 | M | S4 | Intent Service | 의도 정확도, 지연 |
-| FR-08 | 등록되지 않은 기기는 조작 전에 사전 매핑을 안내한다 | S | S2, S5 | Mapping Builder | 시나리오 테스트 |
-| FR-09 | 무선 검증이 실패하면 CV로 제어 장치 위치를 찾는다 | M | S6 | Actuator Perception | 위치 오차 |
-| FR-10 | VLA 모델로 접근 경로와 조작을 계획한다 | S (L3) | S6 | VLA Planner | 계획 성공률 |
-| FR-11 | 장애물과 위험을 확인하고, 실패하면 취소하고 사용자에게 알린다 | M | S6 | Safety Guard | 위험 주입 테스트 |
-| FR-12 | 물리 조작 후 결과를 CV로 확인한다 | M (L3) | S6 | Manipulator Adapter | 조작 성공률 |
-| FR-13 | 결과로 채널 우선순위와 매핑 신뢰도를 갱신한다 | S | S7 | Learning & Priority | 갱신 규칙 단위 테스트 |
-| FR-14 | 검증된 매핑을 루틴으로 제안하고 승인되면 추가한다 | M | S3 | Routine Engine | 제안·승인 시나리오 |
-| FR-15 | Capability Probe로 능력을 측정하고 수준(L0~L3)에 따라 단계를 제한한다 | M | 전체 | Capability Probe | 수준 하향 테스트 |
-| FR-16 | 모든 단계의 결과와 지연을 기록해 실행을 처음부터 끝까지 추적할 수 있게 한다 | M | 전체 | 전체 | end-to-end 실행 |
+| FR-01 | Detect controls (switch, button, dial, remote) in video and classify their type | M | S1 | Actuator Perception | Precision and recall on a labeled set |
+| FR-02 | Generate candidate mappings between a control and a target device from spatial context and observed user actions | M | S2 | Mapping Builder | Top-1 mapping accuracy |
+| FR-03 | Register a control method (IR, Wi-Fi, BT or physical) per device | M | S2 | Control Orchestrator | Registration scenario test |
+| FR-04 | After sending a command, check the expected state change with CV; on failure, ask for re-registration | M | S2, S5 | State Verifier | State-judgment accuracy |
+| FR-05 | Store verified mappings durably and look them up before acting | M | S2, S5 | Mapping Registry | Unit tests |
+| FR-06 | Receive sensor, time and routine events as situation triggers | M | S4 | Routine Engine | Event-injection test |
+| FR-07 | Extract intent and target device with the cloud VLM | M | S4 | Intent Service | Intent accuracy, latency |
+| FR-08 | For an unregistered device, guide the user through pre-mapping before acting | S | S2, S5 | Mapping Builder | Scenario test |
+| FR-09 | When wireless verification fails, locate the control with CV | M | S6 | Actuator Perception | Localization error |
+| FR-10 | Plan the approach path and the manipulation with a VLA model | S (L3) | S6 | VLA Planner | Plan success rate |
+| FR-11 | Check for obstacles and hazards; if the check fails, cancel and notify the user | M | S6 | Safety Guard | Hazard-injection test |
+| FR-12 | After a physical action, verify the result with CV | M (L3) | S6 | Manipulator Adapter | Action success rate |
+| FR-13 | Update channel priority and mapping confidence from results | S | S7 | Learning & Priority | Update-rule unit tests |
+| FR-14 | Propose a verified mapping as a routine and add it on approval | M | S3 | Routine Engine | Proposal-approval scenario |
+| FR-15 | Measure capability with the Capability Probe and gate stages by level (L0 to L3) | M | all | Capability Probe | Level-downgrade test |
+| FR-16 | Log the outcome and latency of every stage so that a run can be traced end to end | M | all | All components | End-to-end scenario runs |
 
-## 4. 비기능 요구사항 (목표값)
+## 4. Non-functional requirements (targets)
 
-| ID | 요구사항 |
+| ID | Requirement |
 |---|---|
-| NFR-01 | 성능: 트리거부터 검증된 무선 명령까지 중앙값 5초 이하 |
-| NFR-02 | 인식: 테스트 룸에서 제어 장치 검출 정밀도 0.90 이상, 재현율 0.85 이상 |
-| NFR-03 | 정확도: 확정된 매핑 중 잘못된 동작을 일으키는 비율 1% 이하 |
-| NFR-04 | 안전: 안전 확인에 실패하면 물리 동작을 하지 않는다. L3 이상에서는 정지 명령 후 1초 안에 멈춘다 |
-| NFR-05 | 개인정보: 원본 영상은 집 밖으로 나가지 않고, 잘라낸 이미지와 메타데이터만 나간다 |
-| NFR-06 | 가용성: 로봇이나 클라우드가 실패하면 낮은 수준으로 내려간다. 수동 조작은 영향을 받지 않는다 |
-| NFR-07 | 확장성: 새 제어 채널은 코어를 바꾸지 않고 어댑터로 추가한다 |
-| NFR-08 | 설명 가능성: 자동 동작마다 의도, 신뢰도, 채널, 이유를 로그로 남긴다 |
-| NFR-09 | 사용자 통제: 선제 기능은 한 번에 멈추거나 기능별로 끌 수 있다 |
+| NFR-01 | Performance: median time from trigger to a verified wireless command is 5 s or less |
+| NFR-02 | Recognition: control detection precision 0.90 or higher and recall 0.85 or higher in the test room |
+| NFR-03 | Accuracy: confirmed mappings that cause a wrong action are 1% or fewer |
+| NFR-04 | Safety: no physical action after a failed safety check; at L3 or above, motion stops within 1 s of a stop command |
+| NFR-05 | Privacy: no raw video leaves the home; only crops and metadata go out |
+| NFR-06 | Availability: if the robot or cloud fails, drop to a lower level; manual control is never affected |
+| NFR-07 | Extensibility: a new control channel is added as an adapter without changing the core |
+| NFR-08 | Explainability: every automatic action keeps its intent, confidence, channel and reason in a log |
+| NFR-09 | User control: proactive features can be paused at once or switched off one by one |
 
-## 5. 평가 지표
+## 5. Evaluation metrics
 
-실패한 실행은 FR-16 로그로 처음 실패한 단계에 귀속한다.
+A failed run is attributed to the first stage that failed, using the FR-16 logs.
 
-| 지표 | 정의 | 목표 |
+| Metric | Definition | Target |
 |---|---|---|
-| E1 | 시나리오별 end-to-end 성공률 | 90 / 80 / 70 % (시나리오 1 / 2 / 3) |
-| E2 | 단계(S1~S7)별 성공률 | 어느 단계도 80% 미만 없음 |
-| E3 | 단계별 지연, 트리거부터 검증까지 총 지연 | 5초 이하 (시나리오 1) |
-| E4 | S6까지 가는 실행의 비율과 원인 | 보고만 함 |
-| E5 | 제어 장치 검출 정밀도 / 재현율 (S1) | 0.90 / 0.85 |
-| E6 | 후보 매핑 Top-1 정확도 (S2) | 80% 이상 |
-| E7 | CV 상태 확인 정확도 (S5) | 95% 이상 |
-| E8 | 물리 조작 성공률 (S6, L3) | 90% 이상 |
-| E9 | 제안 수락률 / 오작동 트리거율 (S3, S4) | 70% / 10% 미만 |
-| E10 | 기기 등록 시간, 수동 등록 대비 | 수동보다 짧음 |
+| E1 | End-to-end success rate per scenario | 90 / 80 / 70 % (scenario 1 / 2 / 3) |
+| E2 | Success rate of each stage S1 to S7 | No stage below 80% |
+| E3 | Latency per stage, and total from trigger to verified | 5 s or less (scenario 1) |
+| E4 | Share of runs that reach S6, with causes | Report only |
+| E5 | Control detection precision / recall (S1) | 0.90 / 0.85 |
+| E6 | Top-1 accuracy of candidate mappings (S2) | 80% or more |
+| E7 | CV state-check accuracy (S5) | 95% or more |
+| E8 | Physical action success rate (S6, L3) | 90% or more |
+| E9 | Proposal acceptance / false-trigger rate (S3, S4) | 70% / under 10% |
+| E10 | Time to register a device, compared with manual | Shorter than manual |
 
-E10의 기준선은 수동 등록이다.
+Manual registration is the baseline for E10.
 
-## 6. 시뮬레이터 데모의 동작 규칙
+## 6. Behavior rules of the simulator demo
 
-데모는 실제 모델을 쓰지 않고 아래 규칙으로 값을 만든다. 규칙을 바꿀 때는 이 표를 같이 고친다.
+The demo does not use real models. It produces values with the rules below. When a rule changes, this table is updated with it.
 
-| 항목 | 규칙 |
+| Item | Rule |
 |---|---|
-| 인식 신뢰도 | 시야 안 여부, 가려짐(Linecast), 거리와 각도로 계산. 온도조절기 같은 미끼는 거부 |
-| 채널 순서 | 채널별 성공 확률 p에서 비용을 뺀 값이 큰 순서로 시도 |
-| 채널 강등 | p가 0.40 아래로 내려가면 채널 순위를 낮춘다 |
-| 학습 | 성공 여부로 지수이동평균(EMA, α=0.32)을 갱신 |
-| 위험 주입 | `H` 키로 스위치 근처에 사람이 있는 상황을 만들면 S6에서 조작을 취소 |
-| 길찾기 | 0.1 m 격자 A*, 로봇 반경 0.40 m, 막히면 다시 계획 |
+| Recognition confidence | Computed from whether the control is in view, occlusion (Linecast), and distance and angle. Decoys such as a thermostat are rejected |
+| Channel order | Channels are tried in descending order of success probability p minus cost |
+| Channel demotion | A channel whose p falls below 0.40 is moved down the ranking |
+| Learning | Success or failure updates an exponential moving average (EMA, alpha 0.32) |
+| Hazard injection | The `H` key puts a person near the switch, and S6 cancels the action |
+| Path finding | A* on a 0.1 m grid, robot radius 0.40 m, replan when blocked |
 
-## 7. 위험
+## 7. Risks
 
-| ID | 위험 | 대응 |
+| ID | Risk | Mitigation |
 |---|---|---|
-| R1 | 로봇 API나 SDK를 쓸 수 없다 | 웹캠이나 시뮬레이터로 대체. L0~L2부터 한다 |
-| R2 | VLM이 잘못 읽거나 느리다 | 구조화된 출력을 검증하고, 사용자에게 묻고, 결과를 캐시한다 |
-| R3 | 집 안 영상의 개인정보 | 엣지 처리, 잘라낸 이미지만 업로드, 옵트인 |
-| R4 | 물리 조작의 안전 | Safety Guard, 고위험 기기는 조작하지 않음, 수준 하향 |
-| R5 | 기기의 IR 코드를 모른다 | 학습형 IR 허브, 물리 폴백 |
-| R6 | 잘못된 선제 동작 | 위험 등급 정책, 거절이 쌓이면 자율도를 낮춘다 |
-| R7 | 한 단계가 실패하면 전체 데모가 멈춘다 | 단계별 로그, 재시도, 폴백, 녹화본 백업 |
+| R1 | No access to a robot API or SDK | Stand in with a webcam or simulator; do L0 to L2 first |
+| R2 | The VLM misreads or is slow | Validate structured output; ask the user; cache results |
+| R3 | Privacy of home video | Edge processing, crop-only upload, opt-in |
+| R4 | Safety of physical action | Safety Guard; no action on high-risk devices; level drop |
+| R5 | A device has no known IR code | Learning IR hub; physical fallback |
+| R6 | Wrong proactive action | Risk-class policy; lower autonomy after rejections |
+| R7 | One failing stage stops the end-to-end demo | Stage-wise logs, retries and fallbacks; a recorded run as backup |
 
-## 8. 미정 사항
+## 8. Open items
 
-- 실제 데모에 쓸 기기와 환경은 확정되지 않았다.
-- 위 목표값은 가설이다. 테스트 환경에서 조정한다.
+- The devices and environment for the real demo are not fixed.
+- The targets above are hypotheses and are adjusted in the test environment.
