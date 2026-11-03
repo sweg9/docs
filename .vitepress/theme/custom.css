@@ -1,0 +1,110 @@
+:root {
+  --vp-c-brand-1: #4552d6;
+  --vp-c-brand-2: #5a66e0;
+  --vp-c-brand-3: #4552d6;
+  --vp-c-brand-soft: rgba(69, 82, 214, 0.12);
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #4552d6 10%, #7c5cf0 55%, #2fa3c7 95%);
+  --vp-home-hero-image-background-image: radial-gradient(circle at 40% 40%, rgba(124, 92, 240, 0.35), rgba(47, 163, 199, 0.18) 45%, transparent 70%);
+  --vp-home-hero-image-filter: blur(56px);
+
+  --vp-button-brand-bg: #4552d6;
+  --vp-button-brand-hover-bg: #3a46c4;
+  --vp-button-brand-active-bg: #323db0;
+}
+
+.dark {
+  --vp-c-brand-1: #9aa3ff;
+  --vp-c-brand-2: #828cf5;
+  --vp-c-brand-3: #5a66e0;
+  --vp-c-brand-soft: rgba(130, 140, 245, 0.16);
+  --vp-button-brand-bg: #4f5bd8;
+  --vp-button-brand-hover-bg: #5a66e0;
+}
+
+/* tighter, calmer reading */
+.vp-doc h1 {
+  letter-spacing: -0.02em;
+}
+.vp-doc h2 {
+  letter-spacing: -0.01em;
+  border-top: none;
+  margin-top: 40px;
+  padding-top: 0;
+}
+.vp-doc p,
+.vp-doc li {
+  line-height: 1.75;
+}
+.vp-doc table {
+  font-size: 14px;
+}
+.vp-doc th {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.vp-doc tr:nth-child(2n) {
+  background: transparent;
+}
+.vp-doc td,
+.vp-doc th {
+  padding: 9px 14px;
+}
+
+/* status badges inside headings and tables */
+.vp-doc .VPBadge {
+  font-weight: 600;
+}
+
+/* home */
+.VPHero .name {
+  letter-spacing: -0.03em;
+}
+.VPHero .tagline {
+  max-width: 560px;
+}
+.VPFeature {
+  border: 1px solid var(--vp-c-divider);
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.VPFeature.link:hover {
+  border-color: var(--vp-c-brand-1);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -18px rgba(69, 82, 214, 0.55);
+}
+.VPFeature .icon {
+  background: var(--vp-c-brand-soft) !important;
+}
+
+/* sidebar */
+.VPSidebarItem.level-0 > .item > .text {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--vp-c-text-3);
+}
+
+/* hero mark */
+.hero-mark {
+  width: 220px;
+  height: 220px;
+}
+.VPFeature .icon {
+  color: var(--vp-c-brand-1);
+}
+.VPFeature .icon svg {
+  width: 24px;
+  height: 24px;
+}
+@media (min-width: 960px) {
+  .VPHero .image-src {
+    max-width: 360px;
+    max-height: 380px;
+  }
+}
+/* keep short id columns (C-01, FR-01, S1) on one line */
+.vp-doc td:first-child {
+  min-width: 76px;
+}

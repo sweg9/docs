@@ -1,0 +1,18 @@
+{
+  "name": "sweg9-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "node scripts/sync-harness.mjs",
+    "dev": "npm run sync && vitepress dev",
+    "build": "npm run sync && vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "1.6.3"
+  },
+  "dependencies": {
+    "js-yaml": "4.1.0",
+    "pdfjs-dist": "4.10.38"
+  }
+}
