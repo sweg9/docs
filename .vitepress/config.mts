@@ -20,6 +20,10 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
   srcExclude: ['README.md', 'CLAUDE.md', '.harness/**'],
+  rewrites: {
+    'live-demo/README.md': 'live-demo/index.md',
+    'dataset/README.md': 'dataset/index.md',
+  },
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}logo.svg` }],
     ['meta', { name: 'theme-color', content: '#4552d6' }],
@@ -57,7 +61,22 @@ export default defineConfig({
       },
       {
         text: 'Data',
-        items: [{ text: 'Labeling spec', link: '/dataset/labeling' }],
+        items: [
+          { text: 'Documents', link: '/dataset/' },
+          { text: 'Plan', link: '/dataset/PLAN' },
+          { text: 'PRD', link: '/dataset/PRD' },
+          { text: 'Prompts', link: '/dataset/PROMPTS' },
+          { text: 'Labeling spec', link: '/dataset/labeling' },
+        ],
+      },
+      {
+        text: 'Live demo',
+        items: [
+          { text: 'Documents', link: '/live-demo/' },
+          { text: 'Plan', link: '/live-demo/PLAN' },
+          { text: 'PRD', link: '/live-demo/PRD' },
+          { text: 'Prompts', link: '/live-demo/PROMPTS' },
+        ],
       },
       {
         text: 'API',
