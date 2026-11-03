@@ -1,93 +1,71 @@
-# Prompt management
+# Prompts
 
-Each stage where an AI makes a judgment (S1, S2, S4, S5, S6) has one prompt. This document is the list, the management rules and the template drafts. The templates are drafts and are not final until they are checked with real models and data.
+The cloud VLM is used in four places. Each has one prompt. This page lists them, the rules for managing them, and template drafts. The templates are drafts until they are checked with the chosen VLM and real photos.
 
-## 1. List
+## List
 
-| ID | Stage | Input | Output | Requirement |
+| ID | Stage | Requirement | Input | Output |
 |---|---|---|---|---|
-| P-S1 | Recognize | Camera frame | List of controls (type, position, confidence) | FR-01 |
-| P-S2 | Map | Spatial context, observed actions, candidate devices | Candidate mappings (top-k, reasons) | FR-02 |
-| P-S4 | Intent | Trigger, time, sensors, recent actions | Intent, target device, confidence | FR-07 |
-| P-S5 | State check | Images before and after a command | Whether the expected change happened (yes, no, uncertain) | FR-04 |
-| P-S6 | Manipulation plan | Control position, obstacle information | Approach path, manipulation | FR-10 |
+| P-S1 | S1 Recognize | FR-01 | Crop of one detected control | Type, state, whether the picture is clear enough |
+| P-S2 | S2 Map | FR-02 | Before and after crops of a candidate device, the control's type | Whether the change fits the device |
+| P-S4 | S4 Intent | FR-05 | Situation (time, room, nearby device states) and up to 3 crops | Intent, target device, confidence |
+| P-S5 | S5, S6 Verify | FR-08 | Crop of the device after the command, and the expected effect | Yes, no or unsure |
 
-## 2. Management rules
+The motion planner (FR-09) is a script or a VLA model, not a prompt.
 
-1. Keep one prompt per file at `prompts/<ID>/v<number>.md`. Do not edit a file that has been used; make a new version.
-2. Put the model name, date, reason for the change and evaluation result (metric and value) at the top of the file.
-3. The output is always JSON, and the schema is stored with it. Output that does not match the schema is rejected in code and retried once.
-4. Every output has `confidence` (0 to 1) and `reason` (one sentence). They go straight into the log of an automatic action (NFR-08).
-5. When unsure, the model returns `"uncertain"` and does not guess. The user is then asked (R2).
-6. No personally identifiable information in prompts. Only cropped images are used (NFR-05).
-7. Before a new version is adopted, run it on the fixed evaluation set and check that it is not worse than the previous version.
-8. Failure cases are added to the evaluation set.
+## Rules
 
-## 3. Template drafts
+1. Keep one prompt per file at `prompts/<ID>/v<number>.md`. Do not edit a used file; make a new version.
+2. Put the model name, date, reason for the change and evaluation result at the top of the file.
+3. The output is always JSON with a stored schema. Output that does not match is rejected in code and retried once.
+4. Every output has `confidence` (0 to 1) and `reason` (one sentence). They feed the log and the plain-language explanations (FR-12).
+5. When unsure, the model answers `unsure` and does not guess.
+6. Only crops of controls and devices are sent, never full frames, and no personal information.
+7. Respect the time limit of the stage, for example about 8 s for P-S4. On timeout the system only suggests.
+8. Before a new version is adopted, run it on a fixed set of photos and check it is not worse than the previous one. Add failure cases to that set.
 
-### P-S1 Recognize
+## Template drafts
+
+### P-S1 Read a control
 
 ```text
-Role: find the controls a person operates in an image from a camera in the home.
-Types: switch, button, dial, remote
+Role: read one control in a crop from a camera next to a switch panel.
+Types: switch, push_button, toggle, knob, remote
 Rules:
-- Answer only with what is visible. If a control is hidden or blurry, lower the confidence.
-- Thermostats, outlets and decorations are not targets.
-- Write coordinates as ratios from 0 to 1 of the image size.
-Output (JSON): {"controls":[{"type":"","bbox":[x,y,w,h],"confidence":0.0,"reason":""}]}
+- Answer only from what is visible.
+- If the crop is blurry, cut off or hidden, set clear to false.
+Output (JSON): {"type":"","state":"on|off|unknown","clear":true,"confidence":0.0,"reason":""}
 ```
 
-### P-S2 Map
+### P-S2 Check a mapping
 
 ```text
-Role: decide which device a control turns on and off.
-Input: position of the control, devices in the same room, recently observed user actions
+Role: decide whether a change seen after a control was used belongs to this device.
+Input: device crop before, device crop after, device type, control type
 Rules:
-- Prefer devices in the same room and give the reason in one sentence.
-- List at most 3 candidates in order of confidence.
-- If there is no clear candidate, return "uncertain".
-Output (JSON): {"candidates":[{"device":"","confidence":0.0,"reason":""}]}
+- Base the answer on the device itself, such as light or movement.
+- If the change could come from something else, answer "unsure".
+Output (JSON): {"fits":"yes|no|unsure","confidence":0.0,"reason":""}
 ```
 
-### P-S4 Intent
+### P-S4 Infer intent
 
 ```text
-Role: decide the action the user is most likely to want in the current situation.
-Input: trigger (time, sensor, routine), current time, room, recent actions
+Role: decide what the resident most likely wants now.
+Input: trigger, time, room, states of nearby devices, up to 3 crops
 Rules:
-- Do not raise devices with a high risk class (heating) as targets of automatic action.
-- Do not propose the same action as a recently rejected proposal.
+- Name one target device from the given list.
+- Do not propose an action the resident rejected recently.
 Output (JSON): {"intent":"","device":"","action":"on|off","confidence":0.0,"reason":""}
 ```
 
-### P-S5 State check
+### P-S5 Verify a result
 
 ```text
-Role: compare the images before and after a command and decide whether the expected change happened.
-Input: image before, image after, expected change (for example lamp off -> on)
+Role: answer one yes-or-no question about a device after a command.
+Input: device crop after the command, expected effect (for example "the lamp is on")
 Rules:
-- Base the answer on a change in brightness or light.
-- If it is hard to tell, answer "uncertain".
-Output (JSON): {"changed":"yes|no|uncertain","confidence":0.0,"reason":""}
+- Look at the device itself first.
+- If it is hard to tell, answer "unsure".
+Output (JSON): {"answer":"yes|no|unsure","confidence":0.0,"reason":""}
 ```
-
-### P-S6 Manipulation plan
-
-```text
-Role: plan how the robot arm presses a control safely.
-Input: 3D position and type of the control, nearby obstacles, position of people
-Rules:
-- If a person or an obstacle is on the path, do not make a plan and return {"abort":true}.
-- Motion by control type: press a rocker once, press a push button briefly, turn a dial.
-Output (JSON): {"abort":false,"approach":[[x,y,z]],"action":"press|turn","reason":""}
-```
-
-## 4. Evaluation
-
-| Prompt | Metric | Target |
-|---|---|---|
-| P-S1 | E5 precision / recall | 0.90 / 0.85 |
-| P-S2 | E6 Top-1 accuracy | 80% or more |
-| P-S4 | E9 false-trigger rate | under 10% |
-| P-S5 | E7 state-check accuracy | 95% or more |
-| P-S6 | E8 press success rate | 90% or more |

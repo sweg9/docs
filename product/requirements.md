@@ -1,108 +1,147 @@
-# PRD
+# Requirements
 
-## 1. Summary
+What the system must do, and how each requirement is built. The resident gives feedback on routines and has the final say. The robot arm presses controls when needed. The cloud VLM works out the intent. The smart-home hub sends IR, Wi-Fi and Bluetooth commands.
 
-| Item | Content |
-|---|---|
-| Product | A system that recognizes unconnected switches with a camera, operates them with a robot arm, and brings them into proactive home routines. The deliverable of this repo is a simulator demo that shows that process |
-| Problem | To use an unconnected switch in a routine, a person has to register it by hand, one by one |
-| Solution | Join recognition, mapping verification, routine proposal, wireless control with a physical fallback, and learning from results into one flow |
-| Basis | Requirements are written in the style of ISO/IEC/IEEE 29148: each requirement states one thing, can be verified, and can be traced |
+All numbers are **starting values** to be tuned after the first measurements. Keep them in settings files, not in code.
 
-## 2. Process stages
+## Summary
 
-| Stage | Name | What it does | What the demo shows |
+| ID | Requirement | Stage | Owner |
 |---|---|---|---|
-| S1 | Recognize | Find switches, buttons, dials and remotes in video and classify the type | Detection boxes in the camera view, confidence, rejection of decoys |
-| S2 | Map and verify | Link a switch to a device and confirm it with a test signal | Brightness change (CV) after a test pulse |
-| S3 | Integrate | Propose a verified mapping as a routine and add it on approval | Proposal dialog (auto-approved in auto mode) |
-| S4 | Trigger and intent | Receive time, sensor and routine events and infer intent and target device | Trigger log, intent and confidence |
-| S5 | Wireless control | Send the command by the channel plan and check the state with CV | Channel ranking and result |
-| S6 | Physical fallback | If wireless fails, run the safety check, then the robot arm presses the control | Safety guard, path planning, arm motion |
-| S7 | Learn | Update channel priority and mapping confidence from the result | Change in channel success estimates |
+| FR-01 | Control recognition | S1 | Geonhak Lee |
+| FR-02 | Device mapping | S2 | Jiwon Han |
+| FR-03 | Control-method registration | Setup | Jemin An |
+| FR-04 | Routine registration and feedback | S3 | Jiwon Han |
+| FR-05 | Trigger and intent | S4 | Jiwon Han |
+| FR-06 | Autonomy by risk | Runtime | Jemin An |
+| FR-07 | Channel selection and wireless command | S5 | Jemin An |
+| FR-08 | State verification | S5, S6 | Geonhak Lee |
+| FR-09 | Arm motion planning | S6 | Geonhak Lee |
+| FR-10 | Safety gate | S6 | Jemin An |
+| FR-11 | Physical execution and result check | S6 | Jemin An |
+| FR-12 | Learning and log | S7 | Jiwon Han (log), Jemin An and Jiwon Han (learning) |
 
-## 3. Functional requirements
+`FR-xx` is requirement *xx* of the paper. The web app screens (Hyunseo Choi) serve FR-02, FR-04, FR-10 and FR-12.
 
-Priority is M (must), S (should) or C (could).
+## FR-01 Control recognition
 
-| ID | Requirement | Priority | Stage | Component | Verification |
-|---|---|---|---|---|---|
-| FR-01 | Detect controls (switch, button, dial, remote) in video and classify their type | M | S1 | Actuator Perception | Precision and recall on a labeled set |
-| FR-02 | Generate candidate mappings between a control and a target device from spatial context and observed user actions | M | S2 | Mapping Builder | Top-1 mapping accuracy |
-| FR-03 | Register a control method (IR, Wi-Fi, BT or physical) per device | M | S2 | Control Orchestrator | Registration scenario test |
-| FR-04 | After sending a command, check the expected state change with CV; on failure, ask for re-registration | M | S2, S5 | State Verifier | State-judgment accuracy |
-| FR-05 | Store verified mappings durably and look them up before acting | M | S2, S5 | Mapping Registry | Unit tests |
-| FR-06 | Receive sensor, time and routine events as situation triggers | M | S4 | Routine Engine | Event-injection test |
-| FR-07 | Extract intent and target device with the cloud VLM | M | S4 | Intent Service | Intent accuracy, latency |
-| FR-08 | For an unregistered device, guide the user through pre-mapping before acting | S | S2, S5 | Mapping Builder | Scenario test |
-| FR-09 | When wireless verification fails, locate the control with CV | M | S6 | Actuator Perception | Localization error |
-| FR-10 | Plan the approach path and the manipulation with a VLA model | S (L3) | S6 | VLA Planner | Plan success rate |
-| FR-11 | Check for obstacles and hazards; if the check fails, cancel and notify the user | M | S6 | Safety Guard | Hazard-injection test |
-| FR-12 | After a physical action, verify the result with CV | M (L3) | S6 | Manipulator Adapter | Action success rate |
-| FR-13 | Update channel priority and mapping confidence from results | S | S7 | Learning & Priority | Update-rule unit tests |
-| FR-14 | Propose a verified mapping as a routine and add it on approval | M | S3 | Routine Engine | Proposal-approval scenario |
-| FR-15 | Measure capability with the Capability Probe and gate stages by level (L0 to L3) | M | all | Capability Probe | Level-downgrade test |
-| FR-16 | Log the outcome and latency of every stage so that a run can be traced end to end | M | all | All components | End-to-end scenario runs |
+From the video, find switches, push buttons, toggles, knobs and remotes and decide the type of each one. Save a record per control with the type, the visible state, the possible actions, its position and a picture fingerprint (embedding), so the same control is recognized later and no duplicate is created. A control that cannot be told clearly is skipped until a clearer frame is available.
 
-## 4. Non-functional requirements (targets)
-
-| ID | Requirement |
+| How | Value |
 |---|---|
-| NFR-01 | Performance: median time from trigger to a verified wireless command is 5 s or less |
-| NFR-02 | Recognition: control detection precision 0.90 or higher and recall 0.85 or higher in the test room |
-| NFR-03 | Accuracy: confirmed mappings that cause a wrong action are 1% or fewer |
-| NFR-04 | Safety: no physical action after a failed safety check; at L3 or above, motion stops within 1 s of a stop command |
-| NFR-05 | Privacy: no raw video leaves the home; only crops and metadata go out |
-| NFR-06 | Availability: if the robot or cloud fails, drop to a lower level; manual control is never affected |
-| NFR-07 | Extensibility: a new control channel is added as an adapter without changing the core |
-| NFR-08 | Explainability: every automatic action keeps its intent, confidence, channel and reason in a log |
-| NFR-09 | User control: proactive features can be paused at once or switched off one by one |
+| Detector | Small YOLO model fine-tuned on our photos, five classes: switch, push button, toggle, knob, remote |
+| Frame rate | Every fifth frame |
+| Type and state | Each crop goes to the VLM, which returns type, state (on or off) and whether the picture is clear enough |
+| Duplicate check | Fingerprint compared with saved ones; very similar means the same control |
+| Sound | If a microphone is present, a sound model notes clicks when a control is used |
+| Test data | One whole photo session is kept aside for testing |
 
-## 5. Evaluation metrics
+## FR-02 Device mapping
 
-A failed run is attributed to the first stage that failed, using the FR-16 logs.
+Suggest which device each control operates, by **watching** (the resident uses a control and a nearby device changes, seen or heard) or by **testing** (operate it through a registered channel and compare before and after). Each candidate starts as `Pending` with a confidence value. It becomes `Verified` only when the change is clear and the VLM agrees. The resident can reject a mapping at any time (`Rejected`). If a control looks different or has moved, its mapping becomes `Stale` and is verified again before use.
 
-| Metric | Definition | Target |
-|---|---|---|
-| E1 | End-to-end success rate per scenario | 90 / 80 / 70 % (scenario 1 / 2 / 3) |
-| E2 | Success rate of each stage S1 to S7 | No stage below 80% |
-| E3 | Latency per stage, and total from trigger to verified | 5 s or less (scenario 1) |
-| E4 | Share of runs that reach S6, with causes | Report only |
-| E5 | Control detection precision / recall (S1) | 0.90 / 0.85 |
-| E6 | Top-1 accuracy of candidate mappings (S2) | 80% or more |
-| E7 | CV state-check accuracy (S5) | 95% or more |
-| E8 | Physical action success rate (S6, L3) | 90% or more |
-| E9 | Proposal acceptance / false-trigger rate (S3, S4) | 70% / under 10% |
-| E10 | Time to register a device, compared with manual | Shorter than manual |
-
-Manual registration is the baseline for E10.
-
-## 6. Behavior rules of the simulator demo
-
-The demo does not use real models. It produces values with the rules below. When a rule changes, this table is updated with it.
-
-| Item | Rule |
+| How | Value |
 |---|---|
-| Recognition confidence | Computed from whether the control is in view, occlusion (Linecast), and distance and angle. Decoys such as a thermostat are rejected |
-| Channel order | Channels are tried in descending order of success probability p minus cost |
-| Channel demotion | A channel whose p falls below 0.40 is moved down the ranking |
-| Learning | Success or failure updates an exponential moving average (EMA, alpha 0.32) |
-| Hazard injection | The `H` key puts a person near the switch, and S6 cancels the action |
-| Path finding | A* on a 0.1 m grid, robot radius 0.40 m, replan when blocked |
+| Watch window | About 3 s of pictures and sound after the resident uses a control |
+| Ranking hints | Same room, short distance in the picture, VLM thinks the change fits the device |
 
-## 7. Risks
+## FR-03 Control-method registration
 
-| ID | Risk | Mitigation |
+For each device, register the methods that might work: IR, Wi-Fi, Bluetooth, or a press by the arm. Send a test command by each wireless method and keep it only if state verification confirms the change. A device with no working wireless method is saved as an arm target.
+
+| How | Value |
+|---|---|
+| IR | Wi-Fi IR blaster |
+| Wi-Fi | Smart plug or bulb |
+| Bluetooth | Python Bluetooth library |
+| Wait per test | Up to about 5 s |
+| Retries | Up to 3, then the app asks the resident to pick a method or check the device |
+
+## FR-04 Routine registration and feedback
+
+A verified mapping can become a routine without waiting for approval. When the system notices a repeated habit it registers a routine and tells the resident what was added. The resident can also build one by hand. The resident can keep, change or remove a routine, or change how independently it acts. Often-rejected routines get lower priority, accepted ones higher.
+
+| How | Value |
+|---|---|
+| Habit | Same device and action at about the same time of day, within a 30-minute window, on at least 3 days |
+| Independence | Do it and tell, ask first, or only suggest |
+| Demotion | Rejected 3 times in a row, one step less independent |
+
+## FR-05 Trigger and intent
+
+Accept sensor, time and routine events as triggers and attach the situation: time, room, state of nearby devices. Each trigger starts one run with its own ID. The Routine Engine sends the situation and crops of the relevant controls to the cloud VLM, which returns the intent, the target device and a confidence value. If the cloud cannot be reached, the system does not act and only suggests.
+
+| How | Value |
+|---|---|
+| Duplicate merge | Same event twice within 10 s counts once |
+| VLM input | Situation description and up to 3 crops |
+| VLM timeout | About 8 s |
+| Final confidence | Mix of VLM confidence, trigger reliability, and how often the resident accepted this routine |
+
+## FR-06 Autonomy by risk
+
+| Risk | Devices | Policy |
 |---|---|---|
-| R1 | No access to a robot API or SDK | Stand in with a webcam or simulator; do L0 to L2 first |
-| R2 | The VLM misreads or is slow | Validate structured output; ask the user; cache results |
-| R3 | Privacy of home video | Edge processing, crop-only upload, opt-in |
-| R4 | Safety of physical action | Safety Guard; no action on high-risk devices; level drop |
-| R5 | A device has no known IR code | Learning IR hub; physical fallback |
-| R6 | Wrong proactive action | Risk-class policy; lower autonomy after rejections |
-| R7 | One failing stage stops the end-to-end demo | Stage-wise logs, retries and fallbacks; a recorded run as backup |
+| Low | Lights, fans | High confidence: act and tell. Medium: ask first. Low: only suggest |
+| Medium | TV, air purifier | Always ask first, if confidence is not too low |
+| High | Heaters, power strips | Only suggest; never act alone; the arm never presses |
 
-## 8. Open items
+Thresholds start at 0.8 (high) and 0.5 (low). The risk sorting lives in a settings file.
 
-- The devices and environment for the real demo are not fixed.
-- The targets above are hypotheses and are adjusted in the test environment.
+## FR-07 Channel selection and wireless command
+
+The Control Orchestrator looks up the target in the Mapping Registry. Without a verified mapping the system does not act, unless the resident agrees to map the device first. It ranks the wireless channels, preferring ones that often worked and are fast, sends through the best one, and tries the next if verification fails. The arm is used only when the device has no wireless channel or every channel failed.
+
+| How | Value |
+|---|---|
+| Time per channel | Up to 5 s, then the result is checked |
+
+## FR-08 State verification
+
+After each command, check whether the device really changed. The **main check** looks at the device itself (a lit lamp, a spinning fan, a lit display). **Second checks** look at the surroundings (the room getting brighter) and, with a microphone, at sound (a fan hum, a click). The main check decides; second checks decide only when it is unsure. Disagreements are logged. The result is `success`, `failure` or `unsure`. Unsure counts as failure for high-risk devices and is shown to the resident for others.
+
+| How | Value |
+|---|---|
+| Main check | VLM answers a yes-or-no question on the device crop ("is the lamp on?"), plus a before and after comparison |
+| Wait for effect | Up to 3 s |
+
+## FR-09 Arm motion planning
+
+Find the control again in the current image, starting from its saved position and fingerprint. If it cannot be found or its position is not reliable enough, cancel and tell the resident. A motion planner receives the control, its position and the expected effect, and returns a path and a way to press.
+
+| How | Value |
+|---|---|
+| Re-finding | Fingerprint similarity at least 0.7 near the saved place, otherwise cancel |
+| Panel coordinates | Four ArUco markers at the panel corners; homography from image point to panel point, then the arm's kinematics give joint angles |
+| Press depth | Set per kind of control |
+| Planner | Simple script by default; a VLA model can replace it |
+
+## FR-10 Safety gate
+
+Before any movement, check that no person or pet is near the path, that the risk class allows a press, and that the control's position is reliable. If any check fails, cancel and tell the resident why. Heaters and power strips are never pressed.
+
+| How | Value |
+|---|---|
+| People and pets | Camera model watches the work area before and during movement |
+| Motion | Inside the work area, at low speed |
+| Emergency stop | Button in the app or a key; turns off the arm motors at once. The power adapter can also be switched off by hand |
+
+## FR-11 Physical execution and result check
+
+The arm presses through the Manipulator Adapter and state verification runs again. If the intent is still not met, retry a limited number of times with the safety gate before each try, then cancel and tell the resident.
+
+| How | Value |
+|---|---|
+| Motion | Move above the control, press, hold briefly, release, move back |
+| Executor | Real SO-101, Unity simulator or a simple script, chosen in a settings file |
+| Tries | At most 2 |
+
+## FR-12 Learning and log
+
+After each run, update how often the used channel worked and how fast it was, weighting recent results more. A mapping loses confidence when a later check disagrees, gains it when one agrees, and becomes `Stale` if confidence gets too low or the resident rejects the result. Every run, including a cancelled one, writes a log entry: trigger, intent, confidence, channel, result of each stage, main and second checks, and the reason for any cancellation. The resident can read the intent, channel and reason of any automatic action in plain language.
+
+| How | Value |
+|---|---|
+| Channel score | Running average; the newest result counts 30% |
+| Link confidence | +0.05 when a later check agrees, down when it disagrees; `Stale` below 0.2 |
+| Explanations | Fixed sentence templates, for example "I switched on the fan at 21:05 by IR because of your evening routine. Checked: it worked." |

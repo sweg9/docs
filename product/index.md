@@ -1,11 +1,10 @@
-# sim-demo documents
-
-Planning documents for the simulator demo: a camera-and-arm home robot that recognizes wall switches and operates them as part of a proactive routine. The implementation is in the [sim-demo](https://github.com/sweg9/sim-demo) repo.
+# Product documents
 
 | Document | Content |
 |---|---|
-| [PLAN.md](PLAN.md) | Plan: purpose, users, demo scenarios, scope, schedule |
-| [PRD.md](PRD.md) | Product requirements: functional and non-functional requirements, metrics, risks |
-| [PROMPTS.md](PROMPTS.md) | Prompt management: prompt list per stage, rules, template drafts |
+| [Requirements](./requirements) | Requirements 1 to 12: what the system must do and how each one is built, with starting values |
+| [Development environment](./environment) | Platforms, languages, cloud, tools, software in use, versions and cost |
+| [Prompts](./prompts) | The VLM prompts per stage, management rules and template drafts |
+| [Simulator](./simulator) | The Unity simulator: what it is for and how it connects |
 
-The reference document is the Phase 2 design paper. Requirement ids (FR, NFR), metric ids (E1 to E10) and risk ids (R1 to R7) are the same as in the paper. All numbers in these documents are targets (hypotheses) and are adjusted in the test environment.
+The reference is the [proposal](/papers/proposal). Requirement numbers are the same as in the paper. Numbers in these documents are first proposals that are tuned after the first measurements.
