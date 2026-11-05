@@ -18,7 +18,7 @@
 | 3 | Draft boxes | Grounding DINO or OWL-ViT drafts the boxes | Draft records (`draft`) |
 | 4 | Label | Correct the boxes by hand and fill in the fields | Label files |
 | 5 | Check | Another member checks the labels and masking | Checked records (`reviewed`) |
-| 6 | Fix | Keep the test sessions aside and fix the version | Fixed records (`frozen`) |
+| 6 | Fix | Keep the test photos aside and fix the version | Fixed records (`frozen`) |
 
 ## 3. Data requirements
 
@@ -35,7 +35,7 @@ Priority is M (must), S (should) or C (could).
 | DS-07 | On and off photos of the same device, angle and light can be paired, and the pair is recorded in `evidence` | M | FR-02, FR-08 | Count pairs |
 | DS-08 | `evidence` is never a model input when training or predicting a role | M | FR-02 | Input check |
 | DS-09 | Unknown values are `null`, never guessed | M | Labeling spec | Cross-check |
-| DS-10 | Each member keeps one separately shot session of about 10 photos for testing, on a subject that is not in the development set. A session or subject never appears in both sets | M | FR-01 | Split check |
+| DS-10 | Every session gives 20% of its own photos to the test set, which is never used for revision. Photos taken within a few seconds of each other go to the same side | M | FR-01 | Split check |
 | DS-11 | Fixed records are not edited. A change makes a new version | M | Prompt rule 8 | Hash comparison |
 | DS-12 | Failure cases from tests and the demo can be added to the next version | C | Prompt rule 8 | Addition history |
 
@@ -55,7 +55,7 @@ Priority is M (must), S (should) or C (could).
 | Development | About 80% | About 160 to 240 photos | Fine-tuning and prompt revision |
 | Test | About 20% | About 40 to 60 photos | Version comparison and results |
 
-The test set is about 10 photos per member, or about 40 in total, with more if the total goes above 200 so it stays near 20%. About 10 photos cannot cover all 16 condition combinations, so each member spreads them across the conditions.
+The test set is 20% of the photos of each session, or about 40 to 60 photos in total. That is about 10 photos per member, which cannot cover all 16 condition combinations, so the test photos are spread across the conditions.
 
 The test set is small, so the error is large. Treating 50 photos as independent samples, the 95% confidence interval is about ±6% near 95% accuracy and about ±11% near 80% accuracy. Photos of the same control resemble each other, so the real error is larger. The results show direction and do not prove performance.
 

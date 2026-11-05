@@ -14,7 +14,7 @@ Create a small labeled set of photos, taken by the 4 team members, to fine-tune 
 
 | Category | Content |
 |---|---|
-| What to make | About 200 to 300 labeled photos, with about 10 separately shot photos per member kept aside for testing |
+| What to make | About 200 to 300 labeled photos, with 20% of the photos from each session kept aside for testing |
 | What matters | A rough test to check direction. If the results are good, this scale carries through to the final presentation |
 | What not to do | Large-scale collection, strict statistical validation, model training or prompt writing (`ai-engine`) |
 
@@ -61,7 +61,7 @@ Arm planning (FR-09) and physical execution (FR-11) are measured in [real runs](
 | About 200 to 300 photos and labels from the 4 members | Public data and simulator images |
 | All five control kinds, with a box on each control, including light switches and controls on appliances | Boxes around a whole appliance. Appliances are recorded by name only |
 | Drafted boxes corrected by hand, cross-checks, personal information checks | Large-scale collection |
-| Fixing the test session and version management | Automated measurement (`harness`) |
+| Fixing the test photos and version management | Automated measurement (`harness`) |
 
 ## 8. Schedule (proposed)
 
@@ -69,7 +69,7 @@ Arm planning (FR-09) and physical execution (FR-11) are measured in [real runs](
 |---|---|---|
 | 1 | Agree on photo criteria, and try the labeling spec | One member has labeled a few photos |
 | 2 | The 4 members take photos and correct labels | About 200 to 300 photos are collected |
-| 3 | Cross-check, personal information check, keep the test sessions aside | Version `v1` is `frozen` |
+| 3 | Cross-check, personal information check, keep the test photos aside | Version `v1` is `frozen` |
 | 4 | Rough test | Per-stage results are in. If they are good, this scale carries through to the final presentation |
 
 ## 9. Success criteria

@@ -65,7 +65,7 @@ The proposal gives starting values, not success targets, so the demo reports wha
 
 | Item | Requirement | Method |
 |---|---|---|
-| Control detection | FR-01 | Results on the kept-aside photo session (see the [dataset PRD](/dataset/PRD)) and on the live view |
+| Control detection | FR-01 | Results on the kept-aside test photos (see the [dataset PRD](/dataset/PRD)) and on the live view |
 | Mapping result | FR-02 | Share of mappings that reach `Verified` and are correct |
 | Registration time | FR-03 | Compare with registering the same device by hand |
 | Run result per stage | FR-12 | Log of repeated runs. A failed run counts against the first stage that failed |

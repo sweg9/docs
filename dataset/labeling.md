@@ -2,7 +2,7 @@
 
 The switch-panel dataset trains the detector (FR-01) and has to let a model answer three questions from an image: **where** the control is, **how** to operate it, and **what** it turns on. One JSON record per image holds a list of controls.
 
-Photos show real switches, buttons and dials in different places, from different angles and in different light. A tool (Grounding DINO or OWL-ViT) drafts the boxes first, and we correct them by hand. Each member keeps one separately shot session of about 10 photos aside for testing, on a subject that is not in the training set.
+Photos show real switches, buttons and dials in different places, from different angles and in different light. A tool (Grounding DINO or OWL-ViT) drafts the boxes first, and we correct them by hand. Photos are taken in sessions, and every session gives 20% of its photos to the evaluation set.
 
 ::: tip Rules
 - Write `null` for anything you do not know. Never guess a value.
@@ -18,6 +18,8 @@ Photos show real switches, buttons and dials in different places, from different
   "room_id": "house03_living",
   "room_type": "living_room",
   "session": "s01",
+  "split": "revise",
+  "burst": "b0042",
   "consent": "c007",
   "capture": { "distance_m": 1.6, "view_angle_deg": 20, "lighting": "dim" },
   "controls": [
@@ -73,7 +75,9 @@ Photos show real switches, buttons and dials in different places, from different
 | `image_id`, `consent` | Image id and the consent record behind it |
 | `room_id` | One specific room in one home, for example `house03_living` |
 | `room_type` | The kind of room, for example `living_room`. A hint for the model |
-| `session` | One photo session. Each member keeps one session of about 10 photos aside for testing, so one session never appears in both sets |
+| `session` | One visit to one place at one time of day. Every session gives 20% of its photos to the evaluation set |
+| `split` | `revise` (80%: revising prompts and labels) or `eval` (20%: measuring only) |
+| `burst` | Photos taken within a few seconds of each other share a burst id and always share a split |
 | `capture.distance_m`, `view_angle_deg`, `lighting` | Shooting conditions, to see where recognition works and where it fails |
 | `status` | `draft`, `reviewed` or `frozen` |
 
