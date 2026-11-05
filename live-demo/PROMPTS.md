@@ -26,7 +26,7 @@ The motion planner (FR-09) is a script or a VLA model, not a prompt.
 | Answer | Screen | Next step |
 |---|---|---|
 | Normal | Show the values and `reason` | Next stage |
-| `unsure` from P-S5 | Show it to the resident. For a high-risk device, show it as a failure | Follows FR-08 |
+| `unsure` from P-S5 | Check once more without operating the device. If it is still unsure, stop and let the resident choose | Follows FR-08 |
 | `clear: false` from P-S1 | Show the control as not clear yet | Skipped until a clearer frame is available |
 | Schema error | Show that the server is retrying once | A second failure counts as a failure of that stage |
 | Timeout or no cloud | Show the cause | The system only suggests |

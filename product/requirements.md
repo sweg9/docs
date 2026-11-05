@@ -102,12 +102,13 @@ The Control Orchestrator looks up the target in the Mapping Registry. Without a 
 
 ## FR-08 State verification
 
-After each command, check whether the device really changed. The **main check** looks at the device itself (a lit lamp, a spinning fan, a lit display). **Second checks** look at the surroundings (the room getting brighter) and, with a microphone, at sound (a fan hum, a click). The main check decides; second checks decide only when it is unsure. Disagreements are logged. The result is `success`, `failure` or `unsure`. Unsure counts as failure for high-risk devices and is shown to the resident for others.
+After each command, check whether the device really changed. The **main check** looks at the device itself (a lit lamp, a spinning fan, a lit display). **Second checks** look at the surroundings (the room getting brighter) and, with a microphone, at sound (a fan hum, a click). The main check decides; second checks decide only when it is unsure. Disagreements are logged. The result is `success`, `failure` or `unsure`. Failure moves on to the next channel or, when no wireless channel is left, to the arm. An unsure result is checked once more after a short wait, without operating the device again. If it is still unsure, the run stops, and the resident gets a picture of the device and chooses whether to try again or leave it as it is.
 
 | How | Value |
 |---|---|
 | Main check | VLM answers a yes-or-no question on the device crop ("is the lamp on?"), plus a before and after comparison |
 | Wait for effect | Up to 3 s |
+| Second look after unsure | About 3 s more, without operating the device |
 
 ## FR-09 Arm motion planning
 
@@ -133,7 +134,7 @@ Before any movement, check that no person or pet is near the path, that the risk
 
 ## FR-11 Physical execution and result check
 
-The arm or the actuator presses through the Manipulator Adapter and state verification runs again. If the intent is still not met, retry a limited number of times with the safety gate before each try, then cancel and tell the resident.
+The arm or the actuator presses through the Manipulator Adapter and state verification runs again. If the check reports a failure, retry a limited number of times with the safety gate before each try, then cancel and tell the resident. An unsure result is handled as in FR-08 and never leads to another press.
 
 | How | Value |
 |---|---|
