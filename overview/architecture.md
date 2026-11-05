@@ -9,7 +9,7 @@
 | Cloud VLM (API) | Reads the type and state of a control, infers intent, answers yes-or-no questions when a result is checked |
 | Private GitHub repository | Photo dataset, trained detector |
 | Web app (React, TypeScript) | The resident's screens: mappings, routine feedback, log, notifications, emergency stop |
-| Hand or simulator | Option A: SO-101 arm with LeRobot. Option B: two linear actuators on a driver board, commanded over USB. Or the Unity simulator or a simple script. All behind the RAL |
+| Hand or simulator | In the prototype, the hand is on a wheeled cart that a team member pushes to each spot. Option A: SO-101 arm with LeRobot. Option B: two linear actuators on a driver board, commanded over USB. Or the Unity simulator or a simple script. All behind the RAL |
 
 Only small crops of controls and short notes go to the cloud.
 
@@ -49,9 +49,9 @@ trigger ──> Routine Engine ──> Control Orchestrator ─────┤
 
 | Record | Fields |
 |---|---|
-| Control | Type, how it looks now, what can be done with it, position on the panel, picture fingerprint |
+| Control | Type, how it looks now, what can be done with it, position on the panel, picture fingerprint, the spot where the robot stands to press it |
 | Device | Name, type, room, risk, channels that can operate it |
-| Mapping | Control, device, confidence, status: `Pending`, `Verified`, `Rejected`, `Stale` |
+| Mapping | Control, device, the spot from which the robot saw the device change, confidence, status: `Pending`, `Verified`, `Rejected`, `Stale` |
 | Channel | For each device and channel (IR, Wi-Fi, Bluetooth, physical press): how often it works and how fast it is |
 | Routine | Habit, priority, how independently it acts |
 | Run | Trigger, intent, channel used, result, and the reason if it was cancelled |
@@ -59,5 +59,5 @@ trigger ──> Routine Engine ──> Control Orchestrator ─────┤
 ## Interfaces
 
 - **App and backend.** The app asks for the lists of controls, mappings and routines, and sends the resident's choices: confirm or reject a mapping, feedback on a routine, and the emergency stop. The backend pushes live updates: a new control, a new routine, the progress of a run. See the [API reference](/api/backend-server).
-- **Hand.** One common interface: `move` or `select`, `press`, `release`, `stop`. The SO-101 arm, the linear actuators, the Unity simulator or a simple script can be swapped in.
+- **Hand.** One common interface: `go_to_spot`, `press`, `release`, `stop`. In the prototype, `go_to_spot` asks a team member to push the cart there. The SO-101 arm, the linear actuators, the Unity simulator or a simple script can be swapped in.
 - **Wireless channel.** Each adapter has two abilities: tell whether the device can be reached, and send a command.

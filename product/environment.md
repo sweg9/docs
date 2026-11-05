@@ -24,7 +24,7 @@ We reuse existing software and build only the parts that connect it.
 | YAMNet | Audio event classifier for clicks and fan hum |
 | OpenCV | Capture, ArUco markers, homography from image to panel |
 | LeRobot, SO-101 (option A) | Arm control and inverse kinematics for the motion script |
-| Linear actuators and a driver board (option B) | Two actuators, each fixed in front of one control, driven by a small controller board that takes `push` and `release` from the Python hub over USB. No joints, so nothing to plan: the system chooses the actuator and how long to push |
+| Linear actuators and a driver board (option B) | Two actuators, mounted side by side on the cart so that one of them faces the control, driven by a small controller board that takes `push` and `release` from the Python hub over USB. No joints, so nothing to plan: the system chooses the actuator and how long to push |
 | VLA models (RT-2, OpenVLA, π0) | Candidates to replace the motion script later |
 | FastAPI, SQLite | Backend framework and database for the registry, routines and log in the prototype |
 | React | Web app UI |
@@ -42,11 +42,12 @@ Fine-tuning runs on a rented cloud GPU. The small detector is expected to run on
 | Laptops (4 members, 2,000,000 each) | Development and tests | 8,000,000 |
 | Option A: SO-101 robot arm kit | Physical press (S6) | 150,000 |
 | Option B: two linear actuators and a driver board | Physical press (S6) | 70,000 |
+| Wheeled cart | Carries the hand, as a stand-in for the mobile base | 30,000 |
 | USB camera with microphone | Video and sound | 30,000 |
 | Wi-Fi plug, IR blaster | Wireless channels | 40,000 |
 | Cloud use | AWS (EC2), VLM API calls, GPU time | 100,000 |
 | Software | VS Code, GitHub, Overleaf, Unity (free plans) | 0 |
-| **Total with option A** | | **about 8,320,000** |
-| **Total with option B** | | **about 8,240,000** |
+| **Total with option A** | | **about 8,350,000** |
+| **Total with option B** | | **about 8,270,000** |
 
 Each of the four members counts one laptop of 2,000,000 KRW. We choose one of the two actuator options, so each total counts only one of them. The SO-101 price follows its listed base kit, about 100 USD at about 1,400 KRW per dollar. The linear actuator price is our own estimate.
