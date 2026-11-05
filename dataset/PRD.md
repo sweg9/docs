@@ -44,7 +44,7 @@ Priority is M (must), S (should) or C (could).
 | ID | Rule |
 |---|---|
 | DS-N1 | Privacy: fill `consent` for every image. Mask people before upload. Mask or remove documents, screens and addresses, and delete GPS metadata |
-| DS-N2 | Storage: photos go in AWS S3, not in git. Git holds labels, manifests and code |
+| DS-N2 | Storage: photos go in the private dataset repository on GitHub, with their labels, manifests and code |
 | DS-N3 | Cloud: only crops of controls and devices that have been cleaned and checked are sent to the VLM |
 | DS-N4 | Reproducibility: the same data can be retrieved by version and hash |
 

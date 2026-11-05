@@ -7,7 +7,7 @@
 | Edge hub (inside the home, Python) | Camera and microphone capture, control detection, channel adapters (IR, Wi-Fi, Bluetooth), control of the hand through the Robot Abstraction Layer, Safety Guard. Video never leaves the hub |
 | Backend (AWS EC2, FastAPI) | Mapping Registry, routines and the log (SQLite in the prototype), VLM calls |
 | Cloud VLM (API) | Reads the type and state of a control, infers intent, answers yes-or-no questions when a result is checked |
-| Storage (AWS S3) | Photo dataset, trained detector, log backups |
+| Private GitHub repository | Photo dataset, trained detector |
 | Web app (React, TypeScript) | The resident's screens: mappings, routine feedback, log, notifications, emergency stop |
 | Hand or simulator | Option A: SO-101 arm with LeRobot. Option B: two linear actuators on a driver board, commanded over USB. Or the Unity simulator or a simple script. All behind the RAL |
 
