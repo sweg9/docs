@@ -7,7 +7,7 @@ Photos show real switches, buttons and dials in different places, from different
 ::: tip Rules
 - Write `null` for anything you do not know. Never guess a value.
 - A plate with several switches gets one entry per switch, ordered by `gang_index` from 0.
-- Mask people before upload and always fill `consent` (rule C-05).
+- Before upload, mask anything that identifies a person, such as a face, and always fill `consent` (rule C-05). A reflection or a body part that identifies no one may stay.
 :::
 
 ## Record
