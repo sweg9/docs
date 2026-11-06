@@ -4,7 +4,7 @@ Unity 6 LTS is an **auxiliary tool**, not the main result of the project. It sim
 
 ## How it fits
 
-- It stands behind the Robot Abstraction Layer like the real hand, with the same interface: `move` or `select`, `press`, `release`, `stop`.
+- It stands behind the Robot Abstraction Layer like the real hand, with the same interface: `go_to_spot`, `press`, `release`, `stop`.
 - It connects to the Python hub over a WebSocket.
 - The executor (SO-101 arm, linear actuators, simulator or a simple script) is chosen in a settings file (FR-11).
 

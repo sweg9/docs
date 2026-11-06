@@ -14,7 +14,7 @@
 | Stage | Name | What it does | Output |
 |---|---|---|---|
 | 1 | Photograph | Take photos per condition, including before and after pairs | Originals |
-| 2 | Clean | Remove blurry photos, delete metadata, mask people | Cleaned photos |
+| 2 | Clean | Remove blurry photos, delete metadata, mask what identifies a person | Cleaned photos |
 | 3 | Draft boxes | Grounding DINO or OWL-ViT drafts the boxes | Draft records (`draft`) |
 | 4 | Label | Correct the boxes by hand and fill in the fields | Label files |
 | 5 | Check | Another member checks the labels and masking | Checked records (`reviewed`) |
@@ -43,8 +43,8 @@ Priority is M (must), S (should) or C (could).
 
 | ID | Rule |
 |---|---|
-| DS-N1 | Privacy: fill `consent` for every image. Mask people before upload. Mask or remove documents, screens and addresses, and delete GPS metadata |
-| DS-N2 | Storage: photos go in AWS S3, not in git. Git holds labels, manifests and code |
+| DS-N1 | Privacy: fill `consent` for every image. Before upload, mask anything that identifies a person, such as a face; a reflection or a body part that identifies no one may stay. Mask or remove documents, screens and addresses, and delete GPS metadata |
+| DS-N2 | Storage: photos go in the private dataset repository on GitHub, with their labels, manifests and code |
 | DS-N3 | Cloud: only crops of controls and devices that have been cleaned and checked are sent to the VLM |
 | DS-N4 | Reproducibility: the same data can be retrieved by version and hash |
 

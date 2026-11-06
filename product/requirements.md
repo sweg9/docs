@@ -25,7 +25,7 @@ All numbers are **starting values** to be tuned after the first measurements. Ke
 
 ## FR-01 Control recognition
 
-From the video, find switches, push buttons, toggles, knobs and remotes and decide the type of each one. Save a record per control with the type, the visible state, the possible actions, its position and a picture fingerprint (embedding), so the same control is recognized later and no duplicate is created. A control that cannot be told clearly is skipped until a clearer frame is available.
+From the robot's camera feed, find switches, push buttons, toggles, knobs and remotes and decide the type of each one. Save a record per control with the type, the visible state, the possible actions, its position and a picture fingerprint (embedding), so the same control is recognized later and no duplicate is created. A control that cannot be told clearly is skipped until a clearer frame is available.
 
 | How | Value |
 |---|---|
@@ -42,12 +42,13 @@ From the video, find switches, push buttons, toggles, knobs and remotes and deci
 
 ## FR-02 Device mapping
 
-Suggest which device each control operates, by **watching** (the resident uses a control and a nearby device changes, seen or heard) or by **testing** (operate it through a registered channel and compare before and after). Each candidate starts as `Pending` with a confidence value. It becomes `Verified` only when the change is clear and the VLM agrees. The resident can reject a mapping at any time (`Rejected`). If a control looks different or has moved, its mapping becomes `Stale` and is verified again before use.
+Suggest which device each control operates, by **watching** (the resident uses a control and a nearby device changes, seen or heard) or by **testing** (the robot presses the control and the system compares the device before and after, by camera and by sound). Each candidate starts as `Pending` with a confidence value. It becomes `Verified` only when the change is clear and the VLM agrees. The resident can reject a mapping at any time (`Rejected`). If a control looks different or has moved, its mapping becomes `Stale` and is verified again before use.
 
 | How | Value |
 |---|---|
 | Watch window | About 3 s of pictures and sound after the resident uses a control |
 | Ranking hints | Same room, short distance in the picture, VLM thinks the change fits the device |
+| Saved spot | When a mapping becomes `Verified`, the spot from which the robot saw the change is saved with it |
 
 ## FR-03 Control-method registration
 
@@ -102,38 +103,40 @@ The Control Orchestrator looks up the target in the Mapping Registry. Without a 
 
 ## FR-08 State verification
 
-After each command, check whether the device really changed. The **main check** looks at the device itself (a lit lamp, a spinning fan, a lit display). **Second checks** look at the surroundings (the room getting brighter) and, with a microphone, at sound (a fan hum, a click). The main check decides; second checks decide only when it is unsure. Disagreements are logged. The result is `success`, `failure` or `unsure`. Unsure counts as failure for high-risk devices and is shown to the resident for others.
+After each command, check whether the device really changed. The **main check** looks at the device itself (a lit lamp, a spinning fan, a lit display): unless the device is already in view, the robot goes to the spot saved with the mapping. **Second checks** look at the surroundings (the room getting brighter) and, with a microphone, at sound (a fan hum, a click). The main check decides; second checks decide only when it is unsure. Disagreements are logged. The result is `success`, `failure` or `unsure`. Failure moves on to the next channel or, when no wireless channel is left, to the arm. An unsure result is checked once more after a short wait, without operating the device again. If it is still unsure, the run stops, and the resident gets a picture of the device and chooses whether to try again or leave it as it is.
 
 | How | Value |
 |---|---|
 | Main check | VLM answers a yes-or-no question on the device crop ("is the lamp on?"), plus a before and after comparison |
 | Wait for effect | Up to 3 s |
+| Second look after unsure | About 3 s more, without operating the device |
 
 ## FR-09 Arm motion planning
 
-Find the control again in the current image, starting from its saved position and fingerprint, and turn it into something the hand can act on. If it cannot be found or its position is not reliable enough, cancel and tell the resident. With the arm, a motion planner receives the control, its position and the expected effect, and returns a path and a way to press. With linear actuators, there is no path to plan.
+The robot first moves to the control's saved press spot, where the control is visible and within reach of the hand. Find the control again in the current image, starting from its saved position and fingerprint, and turn it into something the hand can act on. If it cannot be found or its position is not reliable enough, cancel and tell the resident. With the arm, a motion planner receives the control, its position and the expected effect, and returns a path and a way to press. With linear actuators, there is no path to plan.
 
 | How | Value |
 |---|---|
+| Getting there | In the prototype, the hand is on a wheeled cart that stands in for a mobile base, and a team member pushes it to the spot |
 | Re-finding | Fingerprint similarity at least 0.7 near the saved place, otherwise cancel |
 | Option A, panel coordinates | Four ArUco markers at the panel corners; homography from image point to panel point, then the arm's kinematics give joint angles |
 | Option A, press depth | Set per kind of control |
 | Option A, planner | Simple script by default; a VLA model can replace it |
-| Option B, actuator choice | Each actuator is fixed in front of one control; the system looks up which actuator faces the control and how long to push |
+| Option B, actuator choice | The cart is placed so that one actuator faces the control; the system only chooses which actuator to use and how long to push |
 
 ## FR-10 Safety gate
 
-Before any movement, check that no person or pet is near the path, that the risk class allows a press, and that the control's position is reliable. If any check fails, cancel and tell the resident why. Heaters and power strips are never pressed.
+Before any movement, check that no person or pet is near the robot's route or the path of the hand, that the risk class allows a press, and that the control's position is reliable. If any check fails, cancel and tell the resident why. Heaters and power strips are never pressed.
 
 | How | Value |
 |---|---|
-| People and pets | Camera model watches the work area of the arm or the actuators, before and during movement |
+| People and pets | Camera model watches the robot's route and the work area of the arm or the actuators, before and during movement |
 | Motion | The arm stays inside its work area at low speed; the linear actuators have a short stroke and a limited force |
 | Emergency stop | Button in the app or a key; turns off the motors of the arm or the actuators at once. The power adapter can also be switched off by hand |
 
 ## FR-11 Physical execution and result check
 
-The arm or the actuator presses through the Manipulator Adapter and state verification runs again. If the intent is still not met, retry a limited number of times with the safety gate before each try, then cancel and tell the resident.
+The arm or the actuator presses through the Manipulator Adapter and state verification runs again. If the check reports a failure, retry a limited number of times with the safety gate before each try, then cancel and tell the resident. An unsure result is handled as in FR-08 and never leads to another press.
 
 | How | Value |
 |---|---|
@@ -144,7 +147,7 @@ The arm or the actuator presses through the Manipulator Adapter and state verifi
 
 ## FR-12 Learning and log
 
-After each run, update how often the used channel worked and how fast it was, weighting recent results more. A mapping loses confidence when a later check disagrees, gains it when one agrees, and becomes `Stale` if confidence gets too low or the resident rejects the result. Every run, including a cancelled one, writes a log entry: trigger, intent, confidence, channel, result of each stage, main and second checks, and the reason for any cancellation. The resident can read the intent, channel and reason of any automatic action in plain language.
+After each run, update how often the used channel worked and how fast it was, weighting recent results more. A mapping loses confidence when a later check disagrees, gains it when one agrees, and becomes `Stale` if confidence gets too low or the resident rejects the result. After a successful press, the spot where the robot stood is saved as the control's press spot. Every run, including a cancelled one, writes a log entry: trigger, intent, confidence, channel, result of each stage, main and second checks, and the reason for any cancellation. The resident can read the intent, channel and reason of any automatic action in plain language.
 
 | How | Value |
 |---|---|

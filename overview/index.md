@@ -43,7 +43,7 @@ Seven stages in three phases. Every stage defines what goes in, what comes out, 
 | Setup | S3 Routine | A confirmed link becomes a routine, created from repeated habits or built by hand. The resident is told and can keep, change or remove it |
 | Runtime | S4 Trigger and intent | A sensor, a time or a routine starts a run. A cloud VLM works out the intent and the target device |
 | Runtime | S5 Wireless control | The system ranks the device's wireless channels by learned score, sends the command through the best one, and checks whether the device changed |
-| Runtime | S6 Physical fallback | If every wireless channel fails or none exists, CV finds the control, the system plans the press (a path for the arm, or the choice of actuator), the Safety Guard checks for people and obstacles, and the hand presses |
+| Runtime | S6 Physical fallback | If every wireless channel fails or none exists, the robot goes to the control's press spot, CV finds the control, the system plans the press (a path for the arm, or the choice of actuator), the Safety Guard checks for people and obstacles, and the hand presses |
 | Learning | S7 Learn | Every run, even a cancelled one, updates channel scores, link confidence and routine usefulness |
 
 ## Autonomy by risk
