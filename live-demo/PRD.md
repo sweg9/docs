@@ -37,7 +37,7 @@ Priority is M (must), S (should) or C (could).
 | LD-07 | Let the resident build a routine by hand from a verified control | M | S3 | FR-04 | Scenario 1 |
 | LD-08 | Let the resident set how independently a routine acts: do it and tell, ask first, or only suggest | M | S3 | FR-04, FR-06 | Scenario test |
 | LD-09 | Let the presenter start sensor, time and routine triggers by hand | M | S4 | FR-05 | Event injection test |
-| LD-10 | Ask first or only suggest according to the risk and confidence of the device | M | S4 | FR-06 | Low, medium and high-risk cases |
+| LD-10 | Ask first or only suggest according to the risk and confidence of the device | M | S4 | FR-06 | Low and high-risk cases |
 | LD-11 | Offer mapping first when a target has no verified mapping | M | S5 | FR-07 | Unmapped device test |
 | LD-12 | Show channel order and the result of each channel | M | S5 | FR-07 | Wireless failure test |
 | LD-13 | Show `success`, `failure` or `unsure`, with main and second checks, and show an unsure result to the resident | M | S5, S6 | FR-08 | Response injection test |
@@ -81,9 +81,8 @@ The proposal gives starting values, not success targets, so the demo reports wha
 | Source of values | Every value on screen comes from a server response. The front end does not create or change results |
 | Fake responses | For development only, always marked on screen when on, and never measured |
 | Routines | The system adds a routine without approval and shows it at once, and the resident can also add one by hand (FR-04) |
-| Low-risk devices (lights, fans) | Act and tell at high confidence, ask first at medium, otherwise only suggest (FR-06) |
-| Medium-risk devices (TV, air purifier) | Always ask first, if confidence is not too low (FR-06) |
-| High-risk devices (heaters, power strips) | Only suggest, with no action button. The arm never presses them (FR-06, FR-10) |
+| Low-risk devices (lights, fans, TV, air purifier) | Act and tell at high confidence, ask first at medium, otherwise only suggest (FR-06) |
+| High-risk devices (heaters, electric blankets, microwaves, power strips that feed them) | A warning when the routine is registered and a notification on every run. Turning off follows the low-risk rules; turning on always asks first, and nothing runs without an answer (FR-06, FR-10) |
 | Log | Each run also records the executor (real arm, simulator or script) and the prompt and model versions |
 
 ## 7. Risks
@@ -93,7 +92,7 @@ The proposal gives starting values, not success targets, so the demo reports wha
 | The real arm is not ready | Use the Unity simulator or a simple script through the settings file, and show which one is in use |
 | The VLM misreads or is slow | Show a waiting state. On `unsure` or a timeout, ask or only suggest |
 | Privacy of video in a home | Keep people and personal items out of recordings and logs |
-| Safety of the arm | Keep the emergency stop on every screen, and show no press action for high-risk devices |
+| Safety of the arm | Keep the emergency stop on every screen, and for high-risk devices show a press action only when the risk policy allows it (FR-06) |
 | One stage fails during the demo | Show the failure per stage, allow a retry, and keep a recorded backup |
 
 ## 8. Open items

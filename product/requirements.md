@@ -87,9 +87,8 @@ Accept sensor, time and routine events as triggers and attach the situation: tim
 
 | Risk | Devices | Policy |
 |---|---|---|
-| Low | Lights, fans | High confidence: act and tell. Medium: ask first. Low: only suggest |
-| Medium | TV, air purifier | Always ask first, if confidence is not too low |
-| High | Heaters, power strips | Only suggest; never act alone; the arm never presses |
+| Low | Lights, fans, TV, air purifier | High confidence: act and tell. Medium: ask first. Low: only suggest |
+| High | Heaters, electric blankets, microwaves, and the power strips that feed them | A warning when the routine is registered and a notification on every run. Turning off follows the low-risk rules; turning on always asks first and does nothing without an answer. The hand presses them only when this policy allows it |
 
 Thresholds start at 0.8 (high) and 0.5 (low). The risk sorting lives in a settings file.
 
@@ -126,7 +125,7 @@ The robot first moves to the control's saved press spot, where the control is vi
 
 ## FR-10 Safety gate
 
-Before any movement, check that no person or pet is near the robot's route or the path of the hand, that the risk class allows a press, and that the control's position is reliable. If any check fails, cancel and tell the resident why. Heaters and power strips are never pressed.
+Before any movement, check that no person or pet is near the robot's route or the path of the hand, that the risk class allows a press, and that the control's position is reliable. If any check fails, cancel and tell the resident why. High-risk devices (heaters, electric blankets, microwaves and the power strips that feed them) are pressed only when the risk policy of FR-06 allows it.
 
 | How | Value |
 |---|---|

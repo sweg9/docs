@@ -214,7 +214,7 @@ components:
         name: { type: string }
         type: { type: string }
         room: { type: string }
-        risk: { type: string, enum: [low, medium, high] }
+        risk: { type: string, enum: [low, high] }
         channels: { type: array, items: { type: string, enum: [IR, WIFI, BT, ARM] } }
     Independence:
       type: string

@@ -52,9 +52,10 @@ What the system does depends on the risk of the device and on its confidence.
 
 | Risk | Examples | High confidence | Medium | Low |
 |---|---|---|---|---|
-| Low | Lights, fans | Act, then tell the resident | Ask first | Only suggest |
-| Medium | TV, air purifier | Ask first | Ask first | Only suggest |
-| High | Heaters, power strips | Only suggest; never pressed | Only suggest | Only suggest |
+| Low | Lights, fans, TV, air purifier | Act, then tell the resident | Ask first | Only suggest |
+| High | Heaters, electric blankets, microwaves, power strips that feed them | Off: act, then tell. On: ask first | Ask first | Only suggest |
+
+High-risk devices also show a warning when a routine with them is registered, and every run sends a notification. Turning one on always asks first and does nothing without an answer.
 
 The starting thresholds are 0.8 (high) and 0.5 (low). If the resident keeps rejecting a routine, its independence goes down one step.
 

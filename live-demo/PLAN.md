@@ -51,7 +51,7 @@ USB camera and microphone ──> edge hub ──> backend-server ──> live-d
 | 2 | Wireless works | S4, S5, S7 | FR-05 to FR-08, FR-12 | The device changes, the main check confirms it, and the log explains the run |
 | 3 | Wireless fails and the arm presses | S4 to S7 | FR-07 to FR-12 | The next channels are tried, the arm presses after the safety gate, and the state check confirms it |
 | 4 | A person is near the arm | S6, S7 | FR-10, FR-12 | The press is cancelled, the resident is told why, and the run is logged |
-| 5 | A high-risk device | S4, S7 | FR-06, FR-12 | The system only suggests and the arm never moves |
+| 5 | A high-risk device | S4, S7 | FR-06, FR-12 | Turning it on asks the resident first and does nothing without an answer; turning it off follows the low-risk rules |
 
 A habit needs at least 3 days to be noticed (FR-04), so scenario 1 builds the routine by hand in the app. Running scenario 3 right after scenario 1 on the same control is the full end-to-end demo.
 
