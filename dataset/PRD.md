@@ -29,7 +29,7 @@ Priority is M (must), S (should) or C (could).
 | DS-01 | Each member collects about 50 photos, for about 200 to 300 in total | M | FR-01 | Count |
 | DS-02 | Photos show appliances and light switches, not whole homes, and vary in angle, lighting and device state | M | FR-01, FR-08 | Count per condition |
 | DS-03 | Each record holds shooting conditions in `capture` | M | FR-01 | Schema check |
-| DS-04 | Each control, including light switches and controls on appliances, has `bbox` and `kind`, for all five kinds | M | FR-01 | Schema check |
+| DS-04 | Each control has `bbox` and `kind`, for all three kinds (wall switch, toggle, power strip) | M | FR-01 | Schema check |
 | DS-05 | Look-alikes such as thermostats and outlets are labeled with `decoy` | S | FR-01 | Count |
 | DS-06 | Each control has `context` and `role` where they are known | M | FR-02 | Schema check |
 | DS-07 | On and off photos of the same device, angle and light can be paired, and the pair is recorded in `evidence` | M | FR-02, FR-08 | Count pairs |

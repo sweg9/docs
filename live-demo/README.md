@@ -1,6 +1,6 @@
 # live-demo documents
 
-Planning documents for the front end used with the real camera and arm. The implementation is in the [live-demo](https://github.com/sweg9/live-demo) repo.
+Planning documents for the front end used with the real camera and actuators. The implementation is in the [live-demo](https://github.com/sweg9/live-demo) repo.
 
 | Document | Content |
 |---|---|

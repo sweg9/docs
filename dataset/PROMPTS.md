@@ -9,10 +9,8 @@ Grounding DINO or OWL-ViT drafts the boxes from text queries, without retraining
 | Kind | Query |
 |---|---|
 | `switch` | "wall switch" |
-| `push_button` | "push button" |
 | `toggle` | "toggle switch" |
-| `knob` | "dial", "knob" |
-| `remote` | "remote control" |
+| `power_strip` | "power strip" |
 
 ## 2. Drafting rules
 

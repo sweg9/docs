@@ -158,7 +158,7 @@ paths:
     post:
       tags: [Safety]
       summary: Emergency stop
-      description: Turns off the motors of the arm or the actuators at once and cancels the current run.
+      description: Turns off the motors of the actuators at once and cancels the current run.
       x-requirements: [FR-10]
       responses:
         '200':
@@ -183,7 +183,7 @@ components:
   schemas:
     ControlKind:
       type: string
-      enum: [switch, push_button, toggle, knob, remote]
+      enum: [switch, toggle, power_strip]
     Control:
       type: object
       required: [control_id, kind, state, position]

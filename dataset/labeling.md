@@ -2,7 +2,7 @@
 
 The switch-panel dataset trains the detector (FR-01) and has to let a model answer three questions from an image: **where** the control is, **how** to operate it, and **what** it turns on. One JSON record per image holds a list of controls.
 
-Photos show real switches, buttons and dials in different places, from different angles and in different light. A tool (Grounding DINO or OWL-ViT) drafts the boxes first, and we correct them by hand. Photos are taken in sessions, and every session gives 20% of its photos to the evaluation set.
+Photos show real wall switches, toggles and power strips in different places, from different angles and in different light. A tool (Grounding DINO or OWL-ViT) drafts the boxes first, and we correct them by hand. Photos are taken in sessions, and every session gives 20% of its photos to the evaluation set.
 
 ::: tip Rules
 - Write `null` for anything you do not know. Never guess a value.
@@ -95,11 +95,11 @@ Photos show real switches, buttons and dials in different places, from different
 
 | Field | Meaning |
 |---|---|
-| `kind` | The five detector classes: `switch`, `push_button`, `toggle`, `knob`, `remote` |
+| `kind` | The three detector classes: `switch` (wall switch), `toggle`, `power_strip`. Labels made before the proposal of November 2026 use the earlier five kinds (`switch`, `push_button`, `toggle`, `knob`, `remote`) and label power strip switches as `switch`; the team migrates them later. |
 | `press_action` | How the hand operates it: `press`, `flip`, `turn`. Press depth is set per kind |
 | `press_point` | The point to press, as ratios 0 to 1 of the image |
-| `press_side` | `upper` or `lower` for a rocker, `cw` or `ccw` for a dial |
-| `reachable` | Whether the hand can reach it (an arm in reach, or an actuator mounted in front of it) |
+| `press_side` | `upper` or `lower` for a rocker |
+| `reachable` | Whether an actuator on the cart can be placed in front of it and reach it |
 | `state` | `on`, `off`, `unknown` |
 
 ### What it controls

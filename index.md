@@ -22,7 +22,7 @@ hero:
 features:
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>'
     title: Overview
-    details: Client needs, the two hand options (arm or linear actuators), the seven stages from recognition to learning, and autonomy by risk.
+    details: Client needs, the robot (linear actuators on a cart in the prototype), the seven stages from recognition to learning, and autonomy by risk.
     link: /overview/
     linkText: Start here
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/></svg>'

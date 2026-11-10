@@ -13,4 +13,4 @@ Several platforms and research systems cover part of the problem. None of them c
 | Open-vocabulary detection | OWL-ViT, Grounding DINO find objects from a text query | Locate objects only; do not say what a control operates |
 | Closed-loop embodied agents | SayCan, Inner Monologue, VLM success detection | Check a robot's own tasks, not a mixed set of household devices and channels |
 
-Platforms reach many devices but treat a sent command as done. Pushers and robots can press things but do not know which control needs which method. Our system is the layer that connects these pieces and works with different robot arms.
+Platforms reach many devices but treat a sent command as done. Pushers and robots can press things but do not know which control needs which method. Our system is the layer that connects these pieces and works with different robots.

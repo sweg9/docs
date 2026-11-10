@@ -1,6 +1,6 @@
 # Requirements
 
-What the system must do, and how each requirement is built. The resident gives feedback on routines and has the final say. A physical hand presses controls when needed: option A is the SO-101 arm, option B is two linear actuators. The cloud VLM works out the intent. The smart-home hub sends IR, Wi-Fi and Bluetooth commands.
+What the system must do, and how each requirement is built. The resident gives feedback on routines and has the final say. The robot moves to a control and presses it when needed; in the prototype it is linear actuators on a cart. The cloud VLM works out the intent. The smart-home hub sends IR, Wi-Fi and Bluetooth commands.
 
 All numbers are **starting values** to be tuned after the first measurements. Keep them in settings files, not in code.
 
@@ -16,7 +16,7 @@ All numbers are **starting values** to be tuned after the first measurements. Ke
 | FR-06 | Autonomy by risk | Runtime | Jemin An |
 | FR-07 | Channel selection and wireless command | S5 | Jemin An |
 | FR-08 | State verification | S5, S6 | Geonhak Lee |
-| FR-09 | Arm motion planning | S6 | Geonhak Lee |
+| FR-09 | Robot motion planning | S6 | Geonhak Lee |
 | FR-10 | Safety gate | S6 | Jemin An |
 | FR-11 | Physical execution and result check | S6 | Jemin An |
 | FR-12 | Learning and log | S7 | Jiwon Han (log), Jemin An and Jiwon Han (learning) |
@@ -25,16 +25,15 @@ All numbers are **starting values** to be tuned after the first measurements. Ke
 
 ## FR-01 Control recognition
 
-From the robot's camera feed, find switches, push buttons, toggles, knobs and remotes and decide the type of each one. Save a record per control with the type, the visible state, the possible actions, its position and a picture fingerprint (embedding), so the same control is recognized later and no duplicate is created. A control that cannot be told clearly is skipped until a clearer frame is available.
+From the robot's camera feed, find wall switches, toggles and power strips and decide the type of each one. Save a record per control with the type, the visible state, the possible actions, its position and a picture fingerprint (embedding), so the same control is recognized later and no duplicate is created. A control that cannot be told clearly is skipped until a clearer frame is available.
 
 | How | Value |
 |---|---|
-| Detector | Small YOLO model fine-tuned on our photos, five classes: switch, push button, toggle, knob, remote |
+| Detector | Small YOLO model fine-tuned on our photos, three classes: wall switch, toggle, power strip |
 | Frame rate | Every fifth frame |
 | Type and state | Each crop goes to the VLM, which returns type, state (on or off) and whether the picture is clear enough |
 | Duplicate check | Fingerprint compared with saved ones; very similar means the same control |
-| Sound | If a microphone is present, a sound model notes clicks when a control is used |
-| Training photos | Real switches, buttons and dials in different places, angles and light. A tool drafts boxes, people correct them |
+| Training photos | Real wall switches, toggles and power strips in different places, angles and light. A tool drafts boxes, people correct them |
 | Sessions | A session is one visit to one place at one time of day, with its own light and angles |
 | Split | 80% of the photos revise the prompts and labels; 20% are kept for evaluation only and never used for revision |
 | Evaluation set | Every session gives 20% of its own photos, so the evaluation set has the same mix of places and light as all the data. Photos taken within a few seconds of each other go to the same side |
@@ -42,17 +41,17 @@ From the robot's camera feed, find switches, push buttons, toggles, knobs and re
 
 ## FR-02 Device mapping
 
-Suggest which device each control operates, by **watching** (the resident uses a control and a nearby device changes, seen or heard) or by **testing** (the robot presses the control and the system compares the device before and after, by camera and by sound). Each candidate starts as `Pending` with a confidence value. It becomes `Verified` only when the change is clear and the VLM agrees. The resident can reject a mapping at any time (`Rejected`). If a control looks different or has moved, its mapping becomes `Stale` and is verified again before use.
+Suggest which device each control operates, by **watching** (the resident uses a control and a nearby device visibly changes: a switch is flipped and a fan starts to turn) or by **testing** (the robot presses the control and the system compares the device before and after by camera). Each candidate starts as `Pending` with a confidence value. It becomes `Verified` only when the change is clear and the VLM agrees. The resident can reject a mapping at any time (`Rejected`). If a control looks different or has moved, its mapping becomes `Stale` and is verified again before use.
 
 | How | Value |
 |---|---|
-| Watch window | About 3 s of pictures and sound after the resident uses a control |
+| Watch window | About 3 s of camera pictures of nearby devices after the resident uses a control |
 | Ranking hints | Same room, short distance in the picture, VLM thinks the change fits the device |
 | Saved spot | When a mapping becomes `Verified`, the spot from which the robot saw the change is saved with it |
 
 ## FR-03 Control-method registration
 
-For each device, register the methods that might work: IR, Wi-Fi, Bluetooth, or a press by the arm. Send a test command by each wireless method and keep it only if state verification confirms the change. A device with no working wireless method is saved as an arm target.
+For each device, register the methods that might work: IR, Wi-Fi, Bluetooth, or a physical press by the actuator. Send a test command by each wireless method and keep it only if state verification confirms the change. A device with no working wireless method is saved as an actuator target.
 
 | How | Value |
 |---|---|
@@ -94,7 +93,7 @@ Thresholds start at 0.8 (high) and 0.5 (low). The risk sorting lives in a settin
 
 ## FR-07 Channel selection and wireless command
 
-The Control Orchestrator looks up the target in the Mapping Registry. Without a verified mapping the system does not act, unless the resident agrees to map the device first. It ranks the wireless channels, preferring ones that often worked and are fast, sends through the best one, and tries the next if verification fails. The arm is used only when the device has no wireless channel or every channel failed.
+The Control Orchestrator looks up the target in the Mapping Registry. Without a verified mapping the system does not act, unless the resident agrees to map the device first. It ranks the wireless channels, preferring ones that often worked and are fast, sends through the best one, and tries the next if verification fails. The physical press is used only when the device has no wireless channel or every channel failed.
 
 | How | Value |
 |---|---|
@@ -102,7 +101,7 @@ The Control Orchestrator looks up the target in the Mapping Registry. Without a 
 
 ## FR-08 State verification
 
-After each command, check whether the device really changed. The **main check** looks at the device itself (a lit lamp, a spinning fan, a lit display): unless the device is already in view, the robot goes to the spot saved with the mapping. **Second checks** look at the surroundings (the room getting brighter) and, with a microphone, at sound (a fan hum, a click). The main check decides; second checks decide only when it is unsure. Disagreements are logged. The result is `success`, `failure` or `unsure`. Failure moves on to the next channel or, when no wireless channel is left, to the arm. An unsure result is checked once more after a short wait, without operating the device again. If it is still unsure, the run stops, and the resident gets a picture of the device and chooses whether to try again or leave it as it is.
+After each command, check whether the device really changed. The **main check** looks at the device itself (a lit lamp, a spinning fan, a lit display): unless the device is already in view, the robot goes to the spot saved with the mapping. The **second check** looks at the surroundings (the room getting brighter). The main check decides; the second check decides only when it is unsure. Disagreements are logged. The result is `success`, `failure` or `unsure`. Failure moves on to the next channel or, when no wireless channel is left, to the actuator. An unsure result is checked once more after a short wait, without operating the device again. If it is still unsure, the run stops, and the resident gets a picture of the device and chooses whether to try again or leave it as it is.
 
 | How | Value |
 |---|---|
@@ -110,39 +109,37 @@ After each command, check whether the device really changed. The **main check** 
 | Wait for effect | Up to 3 s |
 | Second look after unsure | About 3 s more, without operating the device |
 
-## FR-09 Arm motion planning
+## FR-09 Robot motion planning
 
-The robot first moves to the control's saved press spot, where the control is visible and within reach of the hand. Find the control again in the current image, starting from its saved position and fingerprint, and turn it into something the hand can act on. If it cannot be found or its position is not reliable enough, cancel and tell the resident. With the arm, a motion planner receives the control, its position and the expected effect, and returns a path and a way to press. With linear actuators, there is no path to plan.
+The robot first moves to the control's saved press spot, where the control is visible and within reach of an actuator. Find the control again in the current image, starting from its saved position and fingerprint, and turn it into something the actuator can act on. If it cannot be found or its position is not reliable enough, cancel and tell the resident. Otherwise the planner receives the control, its position and the expected effect, and returns which actuator to use and how long to push. Linear actuators have no joints, so there is no path to plan. The planner is a simple script, used through the RAL so that a VLA model or a different robot can replace it later.
 
 | How | Value |
 |---|---|
-| Getting there | In the prototype, the hand is on a wheeled cart that stands in for a mobile base, and a team member pushes it to the spot |
+| Getting there | In the prototype, the actuators are on a wheeled cart that stands in for a mobile base, and a team member pushes it to the spot |
 | Re-finding | Fingerprint similarity at least 0.7 near the saved place, otherwise cancel |
-| Option A, panel coordinates | Four ArUco markers at the panel corners; homography from image point to panel point, then the arm's kinematics give joint angles |
-| Option A, press depth | Set per kind of control |
-| Option A, planner | Simple script by default; a VLA model can replace it |
-| Option B, actuator choice | The cart is placed so that one actuator faces the control; the system only chooses which actuator to use and how long to push |
+| Press depth | Set per kind of control |
+| Planner | A simple script; a VLA model can replace it later |
+| Actuator choice | The cart is placed so that one actuator faces the control; the system only chooses which actuator to use and how long to push. No path to plan |
 
 ## FR-10 Safety gate
 
-Before any movement, check that no person or pet is near the robot's route or the path of the hand, that the risk class allows a press, and that the control's position is reliable. If any check fails, cancel and tell the resident why. High-risk devices (heaters, electric blankets, microwaves and the power strips that feed them) are pressed only when the risk policy of FR-06 allows it.
+Before any movement, check that no person or pet is near the robot's route or the actuators' work area, that the risk class allows a press, and that the control's position is reliable. If any check fails, cancel and tell the resident why. High-risk devices (heaters, electric blankets, microwaves and the power strips that feed them) are pressed only when the risk policy of FR-06 allows it.
 
 | How | Value |
 |---|---|
-| People and pets | Camera model watches the robot's route and the work area of the arm or the actuators, before and during movement |
-| Motion | The arm stays inside its work area at low speed; the linear actuators have a short stroke and a limited force |
-| Emergency stop | Button in the app or a key; turns off the motors of the arm or the actuators at once. The power adapter can also be switched off by hand |
+| People and pets | Camera model watches the robot's route and the work area of the actuators, before and during movement |
+| Motion | The linear actuators have a short stroke and a limited force |
+| Emergency stop | Button in the app or a key; turns off the motors of the robot at once. The power adapter can also be switched off by hand |
 
 ## FR-11 Physical execution and result check
 
-The arm or the actuator presses through the Manipulator Adapter and state verification runs again. If the check reports a failure, retry a limited number of times with the safety gate before each try, then cancel and tell the resident. An unsure result is handled as in FR-08 and never leads to another press.
+The actuator presses through the Manipulator Adapter and state verification runs again. If the check reports a failure, retry a limited number of times with the safety gate before each try, then cancel and tell the resident. An unsure result is handled as in FR-08 and never leads to another press.
 
 | How | Value |
 |---|---|
-| Option A motion | Move above the control, press, hold briefly, release, move back |
-| Option B motion | Push out, hold briefly, pull back |
-| Executor | SO-101 arm, linear actuators, Unity simulator or a simple script, chosen in a settings file |
-| Tries | At most 2 |
+| Motion | The actuator facing the control pushes out, holds briefly and pulls back |
+| Executor | Linear actuators, Unity simulator (rough demo and tests) or a simple script, chosen in a settings file |
+| Tries | At most 2, made only after a failed check; an unsure result never leads to another press |
 
 ## FR-12 Learning and log
 

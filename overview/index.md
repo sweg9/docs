@@ -1,12 +1,12 @@
 # Introduction
 
-We build a system that lets a proactive smart-home agent operate controls that are not on the network: wall switches, push buttons, toggles, knobs and remotes. A camera finds the controls, the system works out which device each one operates, and routines can then use them. Wireless control (IR, Wi-Fi, Bluetooth) comes first. When a camera check shows that a wireless command failed, and a safety check has passed, a physical actuator (a small robot arm or a linear actuator) presses the control.
+We build a system that lets a proactive smart-home agent operate controls that are not on the network: wall switches, toggles and power strips. A camera finds the controls, the system works out which device each one operates, and routines can then use them. Wireless control (IR, Wi-Fi, Bluetooth) comes first. When a camera check shows that a wireless command failed, and a safety check has passed, a robot presses the control. In the prototype the robot is linear actuators on a cart.
 
 ## Motivation
 
-Smart-home routines work only if every control the resident cares about is on the network and registered. Many are not, and in rented homes the wiring often cannot be changed. Low-cost robot arms and cameras, together with vision-language models (VLMs) and VLA research such as RT-2 and OpenVLA, now make it realistic for a machine to find a control, understand it and press it.
+Smart-home routines work only if every control the resident cares about is on the network and registered. Many are not, and in rented homes the wiring often cannot be changed. Low-cost robot arms, linear actuators and cameras, together with vision-language models (VLMs) and VLA research such as RT-2 and OpenVLA, now make it realistic for a machine to find a control, understand it and press it.
 
-A robot arm alone does not know which control to press, how to press it, or whether the press worked. A system that only sends commands repeats the weakness of today's routines: a command that is sent is assumed to have worked. So the system has to recognize controls, choose how each one is best operated, and check the result.
+A robot that presses controls reaches only a limited area, and by itself it does not know which control to press, how to press it, or whether the press worked. A system that only sends commands repeats the weakness of today's routines: a command that is sent is assumed to have worked. So the system has to recognize controls, choose how each one is best operated, and check the result.
 
 ## Client needs
 
@@ -18,19 +18,26 @@ The client is the resident of a home with both connected devices and unconnected
 | N2 | Needs little manual setup |
 | N3 | Checks that an action worked and recovers when it did not |
 | N4 | Stays safe, private and under the resident's control |
-| N5 | Works with a simple robot arm now and with other robots later |
+| N5 | Works with simple linear actuators now and with other robots later |
 | N6 | Acts before being asked and improves with use |
 
-## The hand
+## The robot
 
-The physical press is done by a simple "hand" next to a switch panel, with a camera that sees both the panel and the hand. The hand receives a target and an action, such as press or flip, and does nothing more. It sits behind a Robot Abstraction Layer (RAL), so either option, the Unity simulator or a simple script can be swapped in. For the prototype we choose one of two options:
+We assume a general-purpose home robot, with a camera head, arms and a mobile base (wheels, tracks or legs), that can move to a control, see both the control and its own hand, and press it. The robot receives a target position and an action, such as press or flip, and does nothing more. It sits behind a Robot Abstraction Layer (RAL), so a different robot, the Unity simulator or a simple script can be swapped in.
 
-| Option | Hand | How it presses | Cost |
-|---|---|---|---|
-| A | SO-101 robot arm (LeRobot) | Moves to the control, found through ArUco markers and inverse kinematics, then presses | About 150,000 KRW |
-| B | Two linear actuators and a driver board | Each actuator is fixed in front of one control and pushes a rod straight out and back. No path to plan | About 70,000 KRW |
+In the prototype, linear actuators that push straight stand in for such a robot. They are carried on a wheeled cart that a team member pushes to each spot, and the cart is placed so that one actuator faces the control. Linear actuators have no joints, so there is no path to plan: the system only chooses which actuator to use and how long to push.
 
-One arm reaches a limited area, so we start with one hand per switch panel and treat a mobile robot as a later extension. Finding the control, deciding how to operate it and checking the result are the work of the system, not of the hand.
+| Part | Purpose | Cost (KRW) |
+|---|---|---|
+| Linear actuator (12 V, 100 mm) | Physical press (S6) | 37,000 |
+| BTS7960 motor driver module | Drives the actuator in either direction | 5,300 |
+| Arduino Nano (USB-C) | Controller board, takes push and release commands from the Python hub over USB | 3,490 |
+| 12 V 2 A power adapter and DC jack | Powers the actuator | 16,210 |
+| Jumper wires (40 pin) | Wiring | 1,500 |
+| USB webcam (C270) | Camera feed | 23,040 |
+| Shipping | For the parts above | 8,700 |
+
+Prices are those in the shopping cart before purchase (November 2026). Finding the control, deciding how to operate it and checking the result are the work of the system, not of the robot.
 
 ## The process
 
@@ -38,12 +45,12 @@ Seven stages in three phases. Every stage defines what goes in, what comes out, 
 
 | Phase | Stage | What happens |
 |---|---|---|
-| Setup | S1 Recognize | A detector finds switches, push buttons, toggles, knobs and remotes. A VLM reads the type and state. Each control is saved with a picture fingerprint (embedding), and a microphone, if present, hears clicks |
+| Setup | S1 Recognize | A detector that works from text descriptions finds wall switches, toggles and power strips. A VLM reads the type and state, and depth data, if the camera provides it, helps place each control. Each control is saved with a picture fingerprint (embedding) |
 | Setup | S2 Map | The system links each control to a device, by watching the resident use it or by pressing it and comparing before and after. A link is confirmed only when the change is clear and the VLM agrees |
 | Setup | S3 Routine | A confirmed link becomes a routine, created from repeated habits or built by hand. The resident is told and can keep, change or remove it |
 | Runtime | S4 Trigger and intent | A sensor, a time or a routine starts a run. A cloud VLM works out the intent and the target device |
 | Runtime | S5 Wireless control | The system ranks the device's wireless channels by learned score, sends the command through the best one, and checks whether the device changed |
-| Runtime | S6 Physical fallback | If every wireless channel fails or none exists, the robot goes to the control's press spot, CV finds the control, the system plans the press (a path for the arm, or the choice of actuator), the Safety Guard checks for people and obstacles, and the hand presses |
+| Runtime | S6 Physical fallback | If every wireless channel fails or none exists, the robot goes to the control's press spot, CV finds the control, the planner chooses which actuator to use and how long to push, the Safety Guard checks for people and obstacles, and the actuator presses |
 | Learning | S7 Learn | Every run, even a cancelled one, updates channel scores, link confidence and routine usefulness |
 
 ## Autonomy by risk

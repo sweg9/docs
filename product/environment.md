@@ -4,10 +4,10 @@
 
 | Item | Choice | Notes |
 |---|---|---|
-| Operating systems | Windows, macOS | The team uses both. Code stays cross-platform; camera, microphone and arm drivers are tested on both. Speed reference: Windows 11 laptop, 16 GB RAM |
-| Main language | Python 3.11 | Edge hub, AI parts and backend. PyTorch, OpenCV, Ultralytics YOLO and LeRobot are Python libraries |
+| Operating systems | Windows, macOS | The team uses both. Code stays cross-platform; the hardware drivers (camera and actuator controller) are tested on both. Speed reference: Windows 11 laptop, 16 GB RAM |
+| Main language | Python 3.11 | Edge hub, AI parts and backend. PyTorch, OpenCV and Ultralytics YOLO are Python libraries |
 | Web app | TypeScript 5, React 18 | Runs in any browser; the resident installs nothing |
-| Simulator | Unity 6 LTS (C#) | Auxiliary only: switch panel and arm simulator for the rough demo and for tests without the real arm. Connects to the Python hub over a WebSocket |
+| Simulator | Unity 6 LTS (C#) | Auxiliary only: switch panel and robot simulator for the rough demo and for tests when the real robot is not available. Connects to the Python hub over a WebSocket |
 | Cloud | AWS EC2 | One small EC2 machine for the backend; a GPU machine rented only to tune the detector |
 | Tools | VS Code, GitHub, Overleaf, Claude Opus 5.5 | Claude Opus 5.5, an AI model from Anthropic, helps draft and review code and documents. Members decide and test everything, and Claude is not part of the product. The code is in public repositories, and the photo dataset and the trained detector are in a private repository |
 
@@ -21,33 +21,31 @@ We reuse existing software and build only the parts that connect it.
 | Grounding DINO, OWL-ViT | Open-vocabulary detection to draft labels and find controls before training |
 | Cloud VLM (API) | Reads type and state, infers intent, answers yes-or-no checks. Not trained by us; chosen after testing |
 | DINOv2 | Image encoder; its embedding is the control's fingerprint |
-| YAMNet | Audio event classifier for clicks and fan hum |
-| OpenCV | Capture, ArUco markers, homography from image to panel |
-| LeRobot, SO-101 (option A) | Arm control and inverse kinematics for the motion script |
-| Linear actuators and a driver board (option B) | Two actuators, mounted side by side on the cart so that one of them faces the control, driven by a small controller board that takes `push` and `release` from the Python hub over USB. No joints, so nothing to plan: the system chooses the actuator and how long to push |
+| OpenCV | Camera capture and image handling, such as cropping a control and comparing two pictures |
+| Linear actuators and a driver board | 12 V, 100 mm actuators mounted side by side on the cart, placed so that one of them faces the control. A BTS7960 motor driver module powers an actuator in either direction (out or back), and an Arduino Nano takes `push` and `release` from the Python hub over USB and tells the driver what to do. A 12 V, 2 A adapter supplies the power. No joints, so nothing to plan: the system chooses the actuator and how long to push |
 | VLA models (RT-2, OpenVLA, π0) | Candidates to replace the motion script later |
 | FastAPI, SQLite | Backend framework and database for the registry, routines and log in the prototype |
 | React | Web app UI |
 
 ## Versions
 
-Python 3.11, PyTorch 2, Ultralytics YOLO, OpenCV 4, LeRobot, FastAPI, Node.js 20, TypeScript 5, React 18 and Unity 6 LTS, pinned in each repository.
+Python 3.11, PyTorch 2, Ultralytics YOLO, OpenCV 4, FastAPI, Node.js 20, TypeScript 5, React 18 and Unity 6 LTS, pinned in each repository.
 
 Fine-tuning runs on a rented cloud GPU. The small detector is expected to run on a laptop CPU because the scene is mostly still; this will be measured.
 
-## Prototype cost (KRW, estimates)
+## Prototype cost (KRW)
 
 | Item | Purpose | Cost |
 |---|---|---|
 | Laptops (4 members, 2,000,000 each) | Development and tests | 8,000,000 |
-| Option A: SO-101 robot arm kit | Physical press (S6) | 150,000 |
-| Option B: two linear actuators and a driver board | Physical press (S6) | 70,000 |
-| Wheeled cart | Carries the hand, as a stand-in for the mobile base | 30,000 |
-| USB camera with microphone | Video and sound | 30,000 |
-| Wi-Fi plug, IR blaster | Wireless channels | 40,000 |
-| Cloud use | AWS (EC2), VLM API calls, GPU time | 100,000 |
+| Linear actuator (12 V, 100 mm) | Physical press (S6) | 37,000 |
+| BTS7960 motor driver module | Drives the actuator | 5,300 |
+| Arduino Nano (USB-C) | Controller board, takes commands over USB | 3,490 |
+| 12 V 2 A power adapter and DC jack | Powers the actuator | 16,210 |
+| Jumper wires (40 pin) | Wiring | 1,500 |
+| USB webcam (C270) | Camera feed | 23,040 |
+| Shipping | For the parts above | 8,700 |
 | Software | VS Code, GitHub, Overleaf, Unity (free plans) | 0 |
-| **Total with option A** | | **about 8,350,000** |
-| **Total with option B** | | **about 8,270,000** |
+| **Total** | | **8,095,240** |
 
-Each of the four members counts one laptop of 2,000,000 KRW. We choose one of the two actuator options, so each total counts only one of them. The SO-101 price follows its listed base kit, about 100 USD at about 1,400 KRW per dollar. The linear actuator price is our own estimate.
+Each of the four members counts one laptop of 2,000,000 KRW. The software tools are free or open source. The prices of the actuator, the controller parts and the webcam are those in our shopping cart before purchase (November 2026), and the shipping cost of that order is included.

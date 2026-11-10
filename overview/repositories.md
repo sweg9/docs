@@ -5,7 +5,7 @@ The project is split into seven repos in the [sweg9](https://github.com/sweg9) o
 | Repo | Role |
 |---|---|
 | [dataset](https://github.com/sweg9/dataset) | Photos of switch panels and their labels for the detector: collection, drafting boxes, correction |
-| [ai-engine](https://github.com/sweg9/ai-engine) | Recognition and checking: YOLO detector, VLM calls, fingerprints (DINOv2), sound events (YAMNet), state check, motion planner |
+| [ai-engine](https://github.com/sweg9/ai-engine) | Recognition and checking: YOLO detector, VLM calls, fingerprints (DINOv2), state check, motion planner |
 | [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend: Mapping Registry, routines, log, Control Orchestrator, channel adapters, safety gate, learning |
 | [sim-demo](https://github.com/sweg9/sim-demo) | Unity simulator, an auxiliary tool for the rough demo and for tests without the real hardware |
 | [live-demo](https://github.com/sweg9/live-demo) | Front end used with the real camera and hand |

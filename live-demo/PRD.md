@@ -4,8 +4,8 @@
 
 | Item | Content |
 |---|---|
-| Product | A front end that runs and shows the process with the real camera and arm |
-| Problem | The simulator cannot show how the system behaves with real video, devices and an arm |
+| Product | A front end that runs and shows the process with the real camera and actuators |
+| Problem | The simulator cannot show how the system behaves with real video, devices and actuators |
 | Solution | Connect to `backend-server` and show results, reasons and failure behavior in one place |
 | Reference | The [proposal](/papers/proposal). This document adds only the screen requirements (LD), each linked to [FR-01 to FR-12](/product/requirements) |
 | Stack | TypeScript 5 and React 18, in a browser. See [Development environment](/product/environment) |
@@ -19,7 +19,7 @@
 | S3 | Routines | Backend | The added routine, with keep, change and remove |
 | S4 | Trigger and intent | Backend, cloud VLM | Trigger, intent, target device, confidence |
 | S5 | Wireless control | Backend, edge hub | Channel order, result per channel, main and second checks |
-| S6 | Arm press | Edge hub, arm | Safety gate result, press, tries, reason for a cancellation |
+| S6 | Actuator press | Edge hub, actuators | Safety gate result, press, tries, reason for a cancellation |
 | S7 | Learning and log | Backend | Channel scores, mapping confidence, plain-language explanation |
 
 ## 3. Functional requirements
@@ -43,7 +43,7 @@ Priority is M (must), S (should) or C (could).
 | LD-13 | Show `success`, `failure` or `unsure`, with main and second checks, and show an unsure result to the resident | M | S5, S6 | FR-08 | Response injection test |
 | LD-14 | Show the safety gate result and the reason for a cancellation | M | S6 | FR-09, FR-10 | Scenario 4 |
 | LD-15 | Keep an emergency stop button on every screen | M | All | FR-10 | Stop test |
-| LD-16 | Show the arm's tries and result | S | S6 | FR-11 | Scenario 3 |
+| LD-16 | Show the actuator's tries and result | S | S6 | FR-11 | Scenario 3 |
 | LD-17 | Show channel scores and mapping confidence before and after a run | S | S7 | FR-12 | Consecutive runs |
 | LD-18 | Show every run, including cancelled ones, in plain language, and export the log to a file | M | All | FR-12 | End-to-end run |
 | LD-19 | Keep proactive features off until the resident turns them on, and allow pausing them at any time | M | All | Proposal, Section I.C | Pause test |
@@ -55,7 +55,7 @@ Priority is M (must), S (should) or C (could).
 | Item | Rule | How to check |
 |---|---|---|
 | Privacy | Video stays on the edge hub, and only crops and short notes go to the cloud. The front end calls only `backend-server` | Inspect browser and server request records |
-| Emergency stop | The button sends the stop at once, which turns off the arm's motors (FR-10) | Stop test |
+| Emergency stop | The button sends the stop at once, which turns off the actuators' motors (FR-10) | Stop test |
 | Explanations | What the screen shows matches the log | Compare screen and log |
 | Live updates | New controls, routines and run progress appear without a reload | Scenario 1 and 3 |
 
@@ -70,8 +70,8 @@ The proposal gives starting values, not success targets, so the demo reports wha
 | Registration time | FR-03 | Compare with registering the same device by hand |
 | Run result per stage | FR-12 | Log of repeated runs. A failed run counts against the first stage that failed |
 | Time from trigger to checked result | FR-05, FR-07, FR-08 | Log |
-| Share of runs that reach the arm, and why | FR-07 | Log. Failures created on purpose are counted separately |
-| Arm press result | FR-11 | Repeat scenario 3 |
+| Share of runs that reach the actuator, and why | FR-07 | Log. Failures created on purpose are counted separately |
+| Actuator press result | FR-11 | Repeat scenario 3 |
 | Routine feedback | FR-04 | Share of routines kept, changed or removed |
 
 ## 6. Behavior rules
@@ -83,20 +83,20 @@ The proposal gives starting values, not success targets, so the demo reports wha
 | Routines | The system adds a routine without approval and shows it at once, and the resident can also add one by hand (FR-04) |
 | Low-risk devices (lights, fans, TV, air purifier) | Act and tell at high confidence, ask first at medium, otherwise only suggest (FR-06) |
 | High-risk devices (heaters, electric blankets, microwaves, power strips that feed them) | A warning when the routine is registered and a notification on every run. Turning off follows the low-risk rules; turning on always asks first, and nothing runs without an answer (FR-06, FR-10) |
-| Log | Each run also records the executor (real arm, simulator or script) and the prompt and model versions |
+| Log | Each run also records the executor (real actuators, simulator or script) and the prompt and model versions |
 
 ## 7. Risks
 
 | Risk | Response |
 |---|---|
-| The real arm is not ready | Use the Unity simulator or a simple script through the settings file, and show which one is in use |
+| The real actuators are not ready | Use the Unity simulator or a simple script through the settings file, and show which one is in use |
 | The VLM misreads or is slow | Show a waiting state. On `unsure` or a timeout, ask or only suggest |
 | Privacy of video in a home | Keep people and personal items out of recordings and logs |
-| Safety of the arm | Keep the emergency stop on every screen, and for high-risk devices show a press action only when the risk policy allows it (FR-06) |
+| Safety of the actuators | Keep the emergency stop on every screen, and for high-risk devices show a press action only when the risk policy allows it (FR-06) |
 | One stage fails during the demo | Show the failure per stage, allow a retry, and keep a recorded backup |
 
 ## 8. Open items
 
-- The final demo devices are not fixed.- The hand is not decided: option A is the SO-101 arm, and option B is two linear actuators. Only one is used.
+- The final demo devices are not fixed.
 - The relation between `live-demo` and the resident's web app is not settled. The [repository page](/overview/repositories) lists them together, and these documents treat them as the same front end.
 - The number of repeated runs per scenario is decided once the hardware is ready.

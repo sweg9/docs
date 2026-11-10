@@ -30,7 +30,7 @@ The motion planner (FR-09) is a script or a VLA model, not a prompt.
 
 ```text
 Role: read one control in a crop from a camera next to a switch panel.
-Types: switch, push_button, toggle, knob, remote
+Types: switch, toggle, power_strip
 Rules:
 - Answer only from what is visible.
 - If the crop is blurry, cut off or hidden, set clear to false.

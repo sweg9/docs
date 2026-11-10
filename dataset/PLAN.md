@@ -33,7 +33,7 @@ Each member takes about 50 photos of appliances and light switches. Whole homes 
 
 | Condition | Values |
 |---|---|
-| Subject | Appliances and light switches, covering the five control kinds: switch, push button, toggle, knob, remote |
+| Subject | Appliances and light switches, covering the three control kinds: wall switch, toggle, power strip |
 | Angle | Top, bottom, left, right |
 | Light | Lighting on, lighting off |
 | Device state | On, off |
@@ -52,14 +52,14 @@ One set of photos serves several stages. Nothing is collected separately.
 | Role prediction test | S2 | FR-02 | The image and `context` as input, and `role` as the answer. `evidence` is never input |
 | P-S5 check | S5, S6 | FR-08 | `after_image` crops, with `change` as the answer |
 
-Arm planning (FR-09) and physical execution (FR-11) are measured in [real runs](/live-demo/PRD). Intent cases for P-S4 are not included for now. Events are assumed to come from sensors and the hub.
+Robot motion planning (FR-09) and physical execution (FR-11) are measured in [real runs](/live-demo/PRD). Intent cases for P-S4 are not included for now. Events are assumed to come from sensors and the hub.
 
 ## 7. Scope
 
 | Included | Excluded |
 |---|---|
 | About 200 to 300 photos and labels from the 4 members | Public data and simulator images |
-| All five control kinds, with a box on each control, including light switches and controls on appliances | Boxes around a whole appliance. Appliances are recorded by name only |
+| All three control kinds (wall switch, toggle, power strip), with a box on each control | Boxes around a whole appliance. Appliances are recorded by name only |
 | Drafted boxes corrected by hand, cross-checks, personal information checks | Large-scale collection |
 | Fixing the test photos and version management | Automated measurement (`harness`) |
 
