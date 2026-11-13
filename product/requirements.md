@@ -152,10 +152,10 @@ The actuator presses through the Manipulator Adapter and state verification runs
 
 ## FR-12 Learning and log
 
-After each run, update how often the used channel worked and how fast it was, weighting recent results more. A mapping loses confidence when a later check disagrees, gains it when one agrees, and becomes `Stale` if confidence gets too low or the resident rejects the result. After a successful press, the spot where the robot stood is saved as the control's press spot. Every run, including a cancelled one, writes a log entry: trigger, intent, confidence, channel, result of each stage, main and second checks, and the reason for any cancellation. The resident can read the intent, channel and reason of any automatic action in plain language.
+After each run, update how often the used channel worked and how fast it was, weighting recent results more. A mapping loses confidence when a later check after a press disagrees, gains it when one agrees, and becomes `Stale` if confidence gets too low or the resident rejects the result. After a successful press, the spot where the robot stood is saved as the control's press spot. Every run, including a cancelled one, writes a log entry: trigger, intent, confidence, channel, result of each stage and whether the result came from the platform or the camera, main and second checks, and the reason for any cancellation. The resident can read the intent, channel and reason of any automatic action in plain language.
 
 | How | Value |
 |---|---|
 | Channel score | Running average; the newest result counts 30% |
-| Link confidence | +0.05 when a later check agrees, down when it disagrees; `Stale` below 0.2 |
+| Link confidence | +0.05 when a later check after a press agrees, down when it disagrees; `Stale` below 0.2 |
 | Explanations | Fixed sentence templates, for example "I switched on the fan at 21:05 by IR because of your evening routine. Checked: it worked." |
