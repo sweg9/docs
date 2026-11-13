@@ -2,7 +2,7 @@
 
 ## 1. One-line definition
 
-A front end that shows the whole process running on real hardware: a camera finds the controls, the system works out which device each one operates, routines run through wireless channels first, and a physical hand presses the control when a camera check shows that wireless failed.
+A front end that shows the whole process running on real hardware: a camera finds the controls, the system works out which device each one operates, routines run through wireless channels first, and a physical hand presses the control when wireless fails (an error from the platform or, for IR, no change on camera), and the camera checks every press.
 
 ## 2. Background and problem
 
@@ -48,7 +48,7 @@ USB webcam ────────────────> edge hub ──> ba
 | No. | Situation | Stages | Requirements | Success criterion |
 |---|---|---|---|---|
 | 1 | A new control becomes part of a routine | S1 to S3 | FR-01 to FR-04 | The control is found, its mapping becomes `Verified`, and a routine is added and shown to the resident |
-| 2 | Wireless works | S4, S5, S7 | FR-05 to FR-08, FR-12 | The device changes, the main check confirms it, and the log explains the run |
+| 2 | Wireless works | S4, S5, S7 | FR-05 to FR-08, FR-12 | The device changes, the platform reports the new state (for IR, the main check confirms it), and the log explains the run |
 | 3 | Wireless fails and the actuator presses | S4 to S7 | FR-07 to FR-12 | The next channels are tried, the actuator presses after the safety gate, and the state check confirms it |
 | 4 | A person is near the actuators | S6, S7 | FR-10, FR-12 | The press is cancelled, the resident is told why, and the run is logged |
 | 5 | A high-risk device | S4, S7 | FR-06, FR-12 | Turning it on asks the resident first and does nothing without an answer; turning it off follows the low-risk rules |

@@ -1,6 +1,6 @@
 # Introduction
 
-We build a system that lets a proactive smart-home agent operate controls that are not on the network: wall switches, toggles and power strips. A camera finds the controls, the system works out which device each one operates, and routines can then use them. Wireless control (IR, Wi-Fi, Bluetooth) comes first. When a camera check shows that a wireless command failed, and a safety check has passed, a robot presses the control. In the prototype the robot is linear actuators on a cart.
+We build a system that lets a proactive smart-home agent operate controls that are not on the network: wall switches, toggles and power strips. A camera finds the controls, the system works out which device each one operates, and routines can then use them. Wireless control (IR, Wi-Fi, Bluetooth) comes first. When a wireless command fails (the platform reports an error or, for IR, which gives no response, a camera check shows no change) and a safety check has passed, a robot presses the control and the camera checks the result. In the prototype the robot is linear actuators on a cart.
 
 ## Motivation
 
@@ -49,8 +49,8 @@ Seven stages in three phases. Every stage defines what goes in, what comes out, 
 | Setup | S2 Map | The system links each control to a device, by watching the resident use it or by pressing it and comparing before and after. A link is confirmed only when the change is clear and the VLM agrees |
 | Setup | S3 Routine | A confirmed link becomes a routine, created from repeated habits or built by hand. The resident is told and can keep, change or remove it |
 | Runtime | S4 Trigger and intent | A sensor, a time or a routine starts a run. A cloud VLM works out the intent and the target device |
-| Runtime | S5 Wireless control | The system ranks the device's wireless channels by learned score, sends the command through the best one, and checks whether the device changed |
-| Runtime | S6 Physical fallback | If every wireless channel fails or none exists, the robot goes to the control's press spot, CV finds the control, the planner chooses which actuator to use and how long to push, the Safety Guard checks for people and obstacles, and the actuator presses |
+| Runtime | S5 Wireless control | The system ranks the device's wireless channels by learned score, sends the command through the best one, and checks whether the device changed: from the state the platform reports, or by camera for IR |
+| Runtime | S6 Physical fallback | If every wireless channel fails or none exists, the robot goes to the control's press spot, CV finds the control, the planner chooses which actuator to use and how long to push, the Safety Guard checks for people and obstacles, the actuator presses, and the camera checks the result |
 | Learning | S7 Learn | Every run, even a cancelled one, updates channel scores, link confidence and routine usefulness |
 
 ## Autonomy by risk

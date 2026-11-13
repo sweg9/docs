@@ -23,7 +23,7 @@ Only small crops of controls and short notes go to the cloud.
 | Routine Engine | Creates routines from habits, handles feedback, starts runs | 4, 5 |
 | Autonomy policy | Decides act, ask or suggest from risk and confidence | 6 |
 | Control Orchestrator | Looks up the mapping, ranks channels, sends commands, falls back to the physical press | 7 |
-| State Verifier | Main check on the device, second check on its surroundings (the room getting brighter) | 8 |
+| State Verifier | Decides each command's result: the state the platform reports for a device that reports one; for IR and every physical press, a camera check (main check on the device, second check on its surroundings, such as the room getting brighter) | 8 |
 | Motion planner | Picks the actuator that faces the control and how long to push; no path to plan. A simple script now, swappable for a VLA model later | 9 |
 | Safety Guard | Checks people, pets, risk class and position before any movement; emergency stop | 10 |
 | Manipulator Adapter | Executes the press through the RAL with an actuator | 11 |

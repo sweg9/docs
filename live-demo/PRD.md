@@ -18,7 +18,7 @@
 | S2 | Map | Edge hub, cloud VLM, backend | Candidate devices, confidence, status (`Pending`, `Verified`, `Rejected`, `Stale`) |
 | S3 | Routines | Backend | The added routine, with keep, change and remove |
 | S4 | Trigger and intent | Backend, cloud VLM | Trigger, intent, target device, confidence |
-| S5 | Wireless control | Backend, edge hub | Channel order, result per channel, main and second checks |
+| S5 | Wireless control | Backend, edge hub | Channel order, result per channel (reported state, or main and second checks for IR) |
 | S6 | Actuator press | Edge hub, actuators | Safety gate result, press, tries, reason for a cancellation |
 | S7 | Learning and log | Backend | Channel scores, mapping confidence, plain-language explanation |
 

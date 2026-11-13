@@ -1,6 +1,6 @@
 # Related work
 
-Several platforms and research systems cover part of the problem. None of them combines recognition of unconnected controls, device mapping, verified wireless control, a safety-gated physical fallback and learning.
+Several platforms and research systems cover part of the problem. None of them combines recognition of unconnected controls, device mapping, wireless control that is checked where the platform gives no confirmation, a safety-gated physical fallback and learning.
 
 | System | What it offers | What it leaves open |
 |---|---|---|
@@ -13,4 +13,4 @@ Several platforms and research systems cover part of the problem. None of them c
 | Open-vocabulary detection | OWL-ViT, Grounding DINO find objects from a text query | Locate objects only; do not say what a control operates |
 | Closed-loop embodied agents | SayCan, Inner Monologue, VLM success detection | Check a robot's own tasks, not a mixed set of household devices and channels |
 
-Platforms reach many devices but treat a sent command as done. Pushers and robots can press things but do not know which control needs which method. Our system is the layer that connects these pieces and works with different robots.
+Platforms reach many devices and report the state of connected ones, but an IR command or a press on a legacy control comes back with no confirmation. Pushers and robots can press things but do not know which control needs which method. Our system is the layer that connects these pieces and works with different robots.

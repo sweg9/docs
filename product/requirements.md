@@ -51,7 +51,7 @@ Suggest which device each control operates, by **watching** (the resident uses a
 
 ## FR-03 Control-method registration
 
-For each device, register the methods that might work: IR, Wi-Fi, Bluetooth, or a physical press by the actuator. Send a test command by each wireless method and keep it only if state verification confirms the change. A device with no working wireless method is saved as an actuator target.
+For each device, register the methods that might work: IR, Wi-Fi, Bluetooth, or a physical press by the actuator. Send a test command by each wireless method and keep it only if the change is confirmed as in FR-08: by the state the platform reports, or by a camera check for IR. A device with no working wireless method is saved as an actuator target.
 
 | How | Value |
 |---|---|
@@ -93,7 +93,7 @@ Thresholds start at 0.8 (high) and 0.5 (low). The risk sorting lives in a settin
 
 ## FR-07 Channel selection and wireless command
 
-The Control Orchestrator looks up the target in the Mapping Registry. Without a verified mapping the system does not act, unless the resident agrees to map the device first. It ranks the wireless channels, preferring ones that often worked and are fast, sends through the best one, and tries the next if verification fails. The physical press is used only when the device has no wireless channel or every channel failed.
+The Control Orchestrator looks up the target in the Mapping Registry. Without a verified mapping the system does not act, unless the resident agrees to map the device first. It ranks the wireless channels, preferring ones that often worked and are fast, sends through the best one, and tries the next if the result is a failure (FR-08). The physical press is used only when the device has no wireless channel or every channel failed.
 
 | How | Value |
 |---|---|
@@ -101,10 +101,19 @@ The Control Orchestrator looks up the target in the Mapping Registry. Without a 
 
 ## FR-08 State verification
 
-After each command, check whether the device really changed. The **main check** looks at the device itself (a lit lamp, a spinning fan, a lit display): unless the device is already in view, the robot goes to the spot saved with the mapping. The **second check** looks at the surroundings (the room getting brighter). The main check decides; the second check decides only when it is unsure. Disagreements are logged. The result is `success`, `failure` or `unsure`. Failure moves on to the next channel or, when no wireless channel is left, to the actuator. An unsure result is checked once more after a short wait, without operating the device again. If it is still unsure, the run stops, and the resident gets a picture of the device and chooses whether to try again or leave it as it is.
+After each command, decide whether the device really changed. How depends on the channel:
+
+| Channel | How the result is decided |
+|---|---|
+| Wireless, the device reports its state (ThinQ, Matter, Wi-Fi, Bluetooth) | The state and errors the platform reports. No camera check. An error or no report within the channel's time limit is a failure |
+| Wireless, no response (IR) | Camera check. The robot goes to the spot saved with the mapping, unless the device is already in view |
+| Physical press | Camera check, always. The robot is already at the control |
+
+A camera check has two parts. The **main check** looks at the device itself (a lit lamp, a spinning fan, a lit display). The **second check** looks at the surroundings (the room getting brighter). The main check decides; the second check decides only when it is unsure. Disagreements are logged. The result is `success`, `failure` or `unsure`. Failure moves on to the next channel or, when no wireless channel is left, to the actuator. An unsure result is checked once more after a short wait, without operating the device again. If it is still unsure, the run stops, and the resident gets a picture of the device and chooses whether to try again or leave it as it is.
 
 | How | Value |
 |---|---|
+| Reported state | Read from the platform after the command, within the channel's time limit (FR-07) |
 | Main check | VLM answers a yes-or-no question on the device crop ("is the lamp on?"), plus a before and after comparison |
 | Wait for effect | Up to 3 s |
 | Second look after unsure | About 3 s more, without operating the device |
