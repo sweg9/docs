@@ -11,7 +11,7 @@
 | Web app (React, TypeScript) | The resident's screens: mappings, routine feedback, log, notifications, emergency stop |
 | Robot or simulator | In the prototype, 12 V linear actuators on a wheeled cart that a team member pushes to each spot. An Arduino Nano takes push and release commands from the hub over USB and drives a BTS7960 motor driver; a 12 V 2 A adapter powers them. Or the Unity simulator or a simple script. All behind the RAL, so a general-purpose home robot can replace them later |
 
-Only small crops of controls and short notes go to the cloud.
+Only small crops of controls and short notes go to the cloud. Both the edge hub and the backend run from the `backend-server` repository, in its `hub` and `cloud` modes; the hub keeps a WebSocket open to the backend. See [Stack](./stack) for the libraries and messages.
 
 ## Main parts
 

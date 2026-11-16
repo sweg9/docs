@@ -17,7 +17,7 @@ See [contributing.md](contributing.md) for how to add pages, PDFs and API specs.
 
 | Folder | Content |
 |---|---|
-| [overview/](overview/) | Introduction, architecture, related work, team, repositories |
+| [overview/](overview/) | Introduction, architecture, stack, related work, team, repositories |
 | [product/](product/) | Requirements 1 to 12, development environment, prompts, simulator |
 | [dataset/](dataset/) | Labeling spec for the switch-panel dataset |
 | [api/](api/) | API conventions and the draft backend spec (`public/api/`) |
@@ -31,7 +31,7 @@ Standards and skills are not stored here. The wiki copies them from [harness](ht
 |---|---|
 | [dataset](https://github.com/sweg9/dataset) | Photos of switch panels and their labels for the detector |
 | [ai-engine](https://github.com/sweg9/ai-engine) | Detector, VLM calls, fingerprints, state check, motion planner |
-| [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend: Mapping Registry, routines, log, orchestrator, channel adapters, safety gate, learning |
+| [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend in two run modes: `cloud` (EC2) for the registry, routines, log, VLM calls and learning; `hub` (the laptop at home) for the orchestrator, channel adapters, safety gate and the hand |
 | [sim-demo](https://github.com/sweg9/sim-demo) | Unity simulator, an auxiliary tool for the rough demo and tests without the real hardware |
 | [live-demo](https://github.com/sweg9/live-demo) | Front end used with the real camera and hand |
 | [docs](https://github.com/sweg9/docs) | This wiki |
