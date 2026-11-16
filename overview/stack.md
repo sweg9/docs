@@ -111,7 +111,7 @@ The exact payloads go into the backend API spec when `backend-server` builds the
 
 | Question | Why it matters |
 |---|---|
-| Which Wi-Fi plug and IR blaster to buy | Decides the adapter libraries |
+| Which Wi-Fi plug and IR blaster to support | Decides the adapter libraries. The demo device has no wireless channel (see the [live-demo plan](/live-demo/PLAN)), so none is bought for the demo, and the adapters are tested with stubs |
 | Control kinds in `data-model.md`: five names or the three kinds of the new proposal | Decides the database schema and the API enums |
 | Backups: `data-model.md` says S3, the team does not use S3 | Decides how the SQLite file is backed up, for example EC2 snapshots |
 | Which cloud VLM | Decides the `VLMClient` adapter and its cost |
