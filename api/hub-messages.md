@@ -101,7 +101,7 @@ Watching for flips continues after `scan.done` for `watch_s` seconds.
 
 ### `mapping.candidate` (hub to cloud)
 
-The hub saw a found control change state, and within the watch window (about 3 s, FR-02) a region outside the control changed too, such as a lamp lighting up. The hub sends the control and the before and after crops of that region. The cloud asks the VLM whether the change fits a device, matches it to a `Device`, and creates a `Pending` mapping. The mapping becomes `Verified` only when the change is clear and the VLM agrees.
+The hub saw a found control change state, and within the watch window (about 3 s, FR-02) a region outside the control changed too, such as a lamp lighting up. The hub sends the control and the before and after crops of that region. It does not know which device changed; the cloud works that out (see [Which device changed](#which-device-changed)) and creates a `Pending` mapping. The mapping becomes `Verified` only when the change is clear and the VLM agrees.
 
 | Field | Type | Rule |
 |---|---|---|
@@ -114,12 +114,24 @@ The hub saw a found control change state, and within the watch window (about 3 s
 | `after` | crop | The same region at the end of the watch window |
 | `change_score` | number | How much the region changed, 0 to 1 (OpenCV frame difference) |
 | `spot_id` | string | Saved with the mapping when it becomes `Verified` (FR-02) |
+| `room` | string | The room of `spot_id`, from the hub settings |
 
 ```json
-{"scan_id":"sc-0003","local_id":"c1","method":"watch","control_state":{"before":"off","after":"on"},"device_box":[0.70,0.10,0.88,0.45],"before":{"crop_id":"cr-h-0130","jpeg_b64":"…","w":200,"h":256},"after":{"crop_id":"cr-h-0131","jpeg_b64":"…","w":200,"h":256},"change_score":0.64,"spot_id":"living_wall_1"}
+{"scan_id":"sc-0003","local_id":"c1","method":"watch","control_state":{"before":"off","after":"on"},"device_box":[0.70,0.10,0.88,0.45],"before":{"crop_id":"cr-h-0130","jpeg_b64":"…","w":200,"h":256},"after":{"crop_id":"cr-h-0131","jpeg_b64":"…","w":200,"h":256},"change_score":0.64,"spot_id":"living_wall_1","room":"living_room"}
 ```
 
 The cloud stores `device_box` with the mapping and sends it back in `run.start`, so the hub knows where to look when it checks the device later.
+
+### Which device changed
+
+The resident does not register devices by hand (proposal, section I-B, second problem). The cloud finds or creates the `Device` from the candidate:
+
+1. It asks the VLM what changed, with the before and after crops. The answer is a device type from a fixed list in the settings file, such as `lamp` or `fan`, or `unknown`.
+2. It ranks the saved devices with the hints of FR-02: same `room`, same type, and a `device_box` that overlaps the new one at the same `spot_id`. If one fits, the mapping points to it.
+3. If none fits, it creates a `Device`: `name` and `type` from the VLM answer, `room` from the candidate, `risk` from the risk sorting in the settings file (FR-06), `channels` empty until FR-03 registers them.
+4. A type that is not in the risk sorting, or `unknown`, gets `risk: high`, the safe side, until the resident sets it.
+
+The mapping card in the app shows the device it points to. The resident can rename the device, change its room or risk, or reject the mapping. A changed risk takes effect from the next run.
 
 ## Runtime: S4 to S7
 
@@ -236,6 +248,5 @@ The cloud marks the hub offline after 3 missed heartbeats and does not send `run
 
 | Question | Why it matters |
 |---|---|
-| How a `Device` is registered before S2 | `mapping.candidate` gives a changed region, not a device. The cloud can match it by VLM and room, or the resident can name it in the app |
 | Whether the hub should ask the VLM directly | Saves the round trip of `check.ask`, but puts an API key on the laptop |
 | Crop size | 256 px is a guess; it depends on what the VLM needs to read a state |

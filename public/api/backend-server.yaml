@@ -10,6 +10,8 @@ servers:
 tags:
   - name: Controls
     description: Controls found by recognition (FR-01).
+  - name: Devices
+    description: Devices the cloud found or created during mapping. The resident can correct them (FR-02, FR-06).
   - name: Mappings
     description: Which control operates which device (FR-02).
   - name: Routines
@@ -30,6 +32,44 @@ paths:
           content:
             application/json:
               schema: { type: array, items: { $ref: '#/components/schemas/Control' } }
+  /devices:
+    get:
+      tags: [Devices]
+      summary: List devices
+      x-requirements: [FR-02]
+      responses:
+        '200':
+          description: Devices
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Device' } }
+  /devices/{device_id}:
+    patch:
+      tags: [Devices]
+      summary: Correct a device
+      description: The resident renames a device or changes its room or risk. A changed risk takes effect from the next run.
+      x-requirements: [FR-02, FR-06]
+      parameters:
+        - name: device_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeviceUpdate' }
+      responses:
+        '200':
+          description: Updated device
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Device' }
+        '404':
+          description: Unknown device
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
   /mappings:
     get:
       tags: [Mappings]
@@ -216,6 +256,12 @@ components:
         room: { type: string }
         risk: { type: string, enum: [low, high] }
         channels: { type: array, items: { type: string, enum: [IR, WIFI, BT, ARM] } }
+    DeviceUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        room: { type: string }
+        risk: { type: string, enum: [low, high] }
     Independence:
       type: string
       enum: [act_and_tell, ask_first, suggest_only]
