@@ -33,7 +33,7 @@ Standards and skills are not stored here. The wiki copies them from [harness](ht
 | [ai-engine](https://github.com/sweg9/ai-engine) | Detector, VLM calls, fingerprints, state check, motion planner |
 | [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend in two run modes: `cloud` (EC2) for the registry, routines, log, VLM calls and learning; `hub` (the laptop at home) for the orchestrator, channel adapters, safety gate and the hand |
 | [sim-demo](https://github.com/sweg9/sim-demo) | Unity simulator, an auxiliary tool for the rough demo and tests without the real hardware |
-| [live-demo](https://github.com/sweg9/live-demo) | Front end used with the real camera and hand |
+| [live-demo](https://github.com/sweg9/live-demo) | The one front end: the resident's web app and the presenter's demo screens |
 | [docs](https://github.com/sweg9/docs) | This wiki |
 | [harness](https://github.com/sweg9/harness) | Standards, shared skills, CI/CD, and the test and evaluation harness |
 

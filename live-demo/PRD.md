@@ -8,6 +8,7 @@
 | Problem | The simulator cannot show how the system behaves with real video, devices and actuators |
 | Solution | Connect to `backend-server` and show results, reasons and failure behavior in one place |
 | Reference | The [proposal](/papers/proposal). This document adds only the screen requirements (LD), each linked to [FR-01 to FR-12](/product/requirements) |
+| Scope | One front end for both the resident (mappings, routines, log, notifications, emergency stop) and the presenter (camera view, stage progress, trigger controls). The resident's web app in the proposal is this front end |
 | Stack | TypeScript 5 and React 18, in a browser. See [Development environment](/product/environment) |
 
 ## 2. Screens per stage
@@ -98,5 +99,4 @@ The proposal gives starting values, not success targets, so the demo reports wha
 ## 8. Open items
 
 - The final demo devices are not fixed.
-- The relation between `live-demo` and the resident's web app is not settled. The [repository page](/overview/repositories) lists them together, and these documents treat them as the same front end.
 - The number of repeated runs per scenario is decided once the hardware is ready.
