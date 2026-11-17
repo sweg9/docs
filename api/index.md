@@ -15,6 +15,7 @@ Two contracts are not HTTP and have their own pages: the [hub messages](./hub-me
 - **One file per service** at `public/api/<service>.yaml`. The owning repo is the source; copy its spec here when it changes.
 - **Names follow the proposal.** Records and states come from [Architecture](/overview/architecture): mapping status `Pending`, `Verified`, `Rejected`, `Stale`; channels `IR`, `WIFI`, `BT`, `ARM`; control kinds `switch`, `toggle`, `power_strip`.
 - **Trace requirements.** Each operation lists the requirements it serves in `x-requirements`, for example `[FR-02]`, using the numbers in [Requirements](/product/requirements).
+- **Sign-in.** Every operation needs the session cookie unless it says `security: []`; without it the answer is `401` (see [Sign-in](/overview/stack#sign-in)).
 - **Errors** use one shape: `{"code": "...", "message": "...", "reason": "..."}` with a human-readable `reason`.
 - **Times** are UTC ISO 8601. **Confidence** is a number from 0 to 1.
 - **Live updates** (a new control, a new routine, the progress of a run) are pushed to the app over a WebSocket.

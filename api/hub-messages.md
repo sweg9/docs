@@ -4,7 +4,7 @@
 A first proposal for the messages between the hub and the cloud. `backend-server` owns the contract and changes this page as it builds both modes. Numbers are starting values and belong in settings files.
 :::
 
-The hub opens one WebSocket to the cloud and keeps it open (see [Stack](/overview/stack#two-run-modes-of-one-backend)). This page lists every message on that connection, with its payload. Names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
+The hub opens one WebSocket to the cloud and keeps it open (see [Stack](/overview/stack#two-run-modes-of-one-backend)). The hub signs in with `HUB_TOKEN` when it connects (see [Sign-in](/overview/stack#sign-in)). This page lists every message on that connection, with its payload. Names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
 
 ## Envelope
 

@@ -50,6 +50,7 @@ Priority is M (must), S (should) or C (could).
 | LD-19 | Keep proactive features off until the resident turns them on, and allow pausing them at any time | M | All | Proposal, Section I.C | Pause test |
 | LD-20 | Show a setup guide | S | Setup | Proposal, Roles | Walkthrough |
 | LD-21 | Show the cause when the server, cloud or camera connection drops, without freezing the screen | M | All | FR-05 | Connection cut test |
+| LD-22 | Ask for the password before any other screen, and let the resident sign out (see [Sign-in](/overview/stack#sign-in)) | M | All | C-10 | Sign-in test |
 
 ## 4. Quality checks
 

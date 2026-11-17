@@ -16,7 +16,7 @@ backend-server/
 │   ├── cloud.yaml          thresholds, weights, habit rule, backup, time zone
 │   └── risk.yaml           risk sorting of device types (FR-06)
 ├── src/backend/
-│   ├── cli.py              `backend hub`, `backend cloud`, `backend export-runs`, `backend seed-demo`
+│   ├── cli.py              `backend hub`, `backend cloud`, `backend export-runs`, `backend seed-demo`, `backend hash-password`
 │   ├── common/             used by both modes
 │   ├── hub/                runs on the laptop
 │   └── cloud/              runs on EC2
@@ -81,6 +81,7 @@ One FastAPI process with **one worker**: SQLite, the APScheduler jobs and the hu
 | `main.py` | FastAPI app, the scheduler, the database | |
 | `db/` | SQLAlchemy models of the [database](./database), sessions | FR-12 |
 | `api/` | One router per tag of the [API](/api/backend-server): `controls`, `devices`, `mappings`, `routines`, `runs`, `safety` | |
+| `auth.py` | Password check, sessions, the `401` for every route but `POST /login`, the login limit, the hub token check | Sign-in |
 | `live.py` | WebSocket to the app: pushes new controls, mappings, routines, run progress | |
 | `hub_gateway.py` | WebSocket for the hub: checks the hub token, skips message `id`s already handled, sends each message to the module below | Hub messages |
 | `registry.py` | Same control or new one, finds or creates the device, creates and updates mappings | FR-01, FR-02 |
@@ -110,5 +111,4 @@ Every test names its requirement with `@pytest.mark.fr("FR-07")` (C-01). The `ch
 
 | Question | Why it matters |
 |---|---|
-| How the app signs in | The cloud API is on the internet. A shared password at Caddy is the smallest step; the hub already uses a token from an environment variable (C-10) |
 | Whether the outbox needs acknowledgements | A message written into the socket just before it drops can be lost. For now, a run without `run.result` ends as `cancelled` on the cloud after its time limit |

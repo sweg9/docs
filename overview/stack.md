@@ -85,6 +85,21 @@ The Unity simulator is a WebSocket client of the hub and uses the same messages 
 
 JSON objects over the hub's WebSocket: a scan (`scan.start`, `control.found`, `scan.done`), a mapping candidate (`mapping.candidate`), a run (`run.start`, `run.progress`, `run.result`), the emergency `stop`, and the `hub.status` heartbeat. The payloads are in [Hub messages](/api/hub-messages).
 
+## Sign-in
+
+The cloud is on the internet, so nothing on it answers without a sign-in. The app and the hub sign in differently.
+
+| Who | How | Secret |
+|---|---|---|
+| Web app | One resident account with a password. `POST /login` checks it and sets a session cookie: `HttpOnly`, `Secure`, `SameSite=Strict`. Every API call and the app's WebSocket must carry it, or get `401` | `APP_PASSWORD_HASH` (argon2) in the cloud's environment |
+| Hub | `Authorization: Bearer <token>` when it opens its WebSocket. A wrong token closes the connection | `HUB_TOKEN` in the environment of both the cloud and the hub |
+
+- **Sessions** are rows in the database (see [Database](./database#sessions)), so `POST /logout` ends one for good. A session lasts 30 days and is renewed while the app is used, so the emergency stop in the app is not lost to an expired sign-in in the middle of a demo.
+- **The stop needs no app.** The key on the hub and the switch on the power adapter work without signing in (FR-10).
+- **Same origin.** Caddy serves the app and the API from one host, so the browser sends the cookie on its own and `SameSite=Strict` blocks requests from other sites. In development, Vite proxies the API to the local backend for the same reason.
+- **Guessing.** After 5 wrong passwords within a minute, `POST /login` answers `429` for a minute.
+- **No secrets in a repo** (C-10). The password hash and the token are set on EC2 and on the laptop, never committed. `backend hash-password` prints the hash for a new password.
+
 ## Deployment
 
 | Place | How |

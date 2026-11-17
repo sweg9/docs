@@ -1,13 +1,17 @@
 openapi: 3.1.0
 info:
   title: backend-server
-  version: 0.2.0
+  version: 0.3.0
   x-status: draft
   description: API between the resident's web app and the backend (FastAPI). Draft derived from the proposal, section IV-A. Live updates are pushed over a WebSocket.
 servers:
   - url: http://localhost:8000
     description: local
+security:
+  - session: []
 tags:
+  - name: Session
+    description: Sign-in of the resident's app. Every other operation needs the session cookie.
   - name: Controls
     description: Controls found by recognition (FR-01).
   - name: Devices
@@ -21,6 +25,58 @@ tags:
   - name: Safety
     description: Emergency stop and pausing proactive features (FR-10).
 paths:
+  /login:
+    post:
+      tags: [Session]
+      summary: Sign in
+      description: Checks the resident's password and sets the session cookie (HttpOnly, Secure, SameSite=Strict, 30 days, renewed while used).
+      x-requirements: [C-10]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Login' }
+      responses:
+        '204':
+          description: Signed in
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+              description: The session cookie
+        '401':
+          description: Wrong password
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429':
+          description: Too many wrong passwords; try again in a minute
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /logout:
+    post:
+      tags: [Session]
+      summary: Sign out
+      description: Ends the session for good and clears the cookie.
+      x-requirements: [C-10]
+      responses:
+        '204':
+          description: Signed out
+  /me:
+    get:
+      tags: [Session]
+      summary: Check the session
+      description: The app calls this on start. 401 means it shows the sign-in screen.
+      x-requirements: [C-10]
+      responses:
+        '200':
+          description: Signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '401':
+          $ref: '#/components/responses/SignedOut'
   /controls:
     get:
       tags: [Controls]
@@ -220,7 +276,29 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ProactiveSetting' }
 components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: session
+      description: Set by POST /login. Also required by the app's WebSocket.
+  responses:
+    SignedOut:
+      description: No valid session cookie
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
   schemas:
+    Login:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string, format: password }
+    Me:
+      type: object
+      required: [expires_at]
+      properties:
+        expires_at: { type: string, format: date-time }
     ControlKind:
       type: string
       enum: [switch, toggle, power_strip]

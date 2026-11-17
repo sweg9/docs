@@ -32,6 +32,7 @@ The cloud keeps everything the system remembers (see [What the system remembers]
 | `runs` | Ended run, the log | `run.result` | FR-12 |
 | `hub_messages` | Message `id` already handled | Every hub message | Hub messages |
 | `app_state` | Setting the resident can change | The app | FR-06 |
+| `sessions` | Signed-in app | `POST /login` | Sign-in |
 
 ## Setup: S1 and S2
 
@@ -224,6 +225,18 @@ The `id` of every hub message already handled, so a message resent after a recon
 ### `app_state`
 
 Key and JSON value, for the few settings the resident changes in the app. In the prototype, one key: `proactive_paused` (`PUT /proactive`).
+
+### `sessions`
+
+One row per signed-in app (see [Sign-in](./stack#sign-in)).
+
+| Column | Type | Rule |
+|---|---|---|
+| `token_hash` | text, key | SHA-256 of the cookie's random value. The value itself is never stored |
+| `created_at` | time | |
+| `expires_at` | time | 30 days after the last use; moved forward at most once an hour |
+
+`POST /logout` deletes the row. Expired rows are deleted once a day.
 
 ## What is not stored
 
