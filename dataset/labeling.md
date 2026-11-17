@@ -76,7 +76,7 @@ Photos show real wall switches, toggles and power strips in different places, fr
 | `room_id` | One specific room in one home, for example `house03_living` |
 | `room_type` | The kind of room, for example `living_room`. A hint for the model |
 | `session` | One visit to one place at one time of day. Every session gives 20% of its photos to the evaluation set |
-| `split` | `revise` (80%: revising prompts and labels) or `eval` (20%: measuring only) |
+| `split` | `revise` (80%: training, tuning and revising labels) or `eval` (20%: measuring only) |
 | `burst` | Photos taken within a few seconds of each other share a burst id and always share a split |
 | `capture.distance_m`, `view_angle_deg`, `lighting` | Shooting conditions, to see where recognition works and where it fails |
 | `status` | `draft`, `reviewed` or `frozen` |
@@ -117,7 +117,26 @@ Photos show real wall switches, toggles and power strips in different places, fr
 `evidence` reveals the answer. Use it only to check labels, never as an input when training. Model inputs are the image and `context`.
 :::
 
+### Devices in view
+
+A separate list at the image level, for the device detector (M-S2) and the result check (M-S5). See [Models](/product/models).
+
+```json
+"devices": [
+  { "type": "light", "bbox": [0.70, 0.10, 0.18, 0.35], "state": "on" }
+]
+```
+
+| Field | Meaning |
+|---|---|
+| `type` | Device type from the data model: `light` `fan` `tv` `air_purifier` `heater` `electric_blanket` `microwave` `other` |
+| `bbox` | Box of the device, ratios from 0 to 1, like `controls[].bbox` |
+| `state` | `on` `off` `unknown`, as it looks in this photo |
+
+Devices are not labeled yet. Start with the demo devices, a lamp and a fan, from videos in which they are switched on and off.
+
 ## Open items
 
 - The harness standard (`per-repo.md`) summarizes this record. Change both together.
+- No photo has `controls[].state` yet. The state classifier (M-S1b) needs it; frames from a video of the demo switch are the quickest start.
 - Without a depth camera, `height_m` is measured by hand or left `null`.

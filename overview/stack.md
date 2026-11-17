@@ -13,14 +13,14 @@ The devices that the system operates can only be reached from inside the home. T
 | Mode | Runs on | Parts | Requirements |
 |---|---|---|---|
 | `hub` | The laptop at home | Camera capture, `ai-engine` (imported as a package), Control Orchestrator, channel adapters, Safety Guard, Robot Abstraction Layer, State Verifier | FR-01, FR-03, FR-07 to FR-11 |
-| `cloud` | AWS EC2 | Mapping Registry, Routine Engine, trigger scheduler, autonomy policy, log, VLM calls, the API for the web app | FR-02, FR-04 to FR-06, FR-12 |
+| `cloud` | AWS EC2 | Mapping Registry, Routine Engine, trigger scheduler, autonomy policy, log, the API for the web app | FR-02, FR-04 to FR-06, FR-12 |
 
 The hub opens a WebSocket **out** to the cloud when it starts and keeps it open. The cloud sends commands down this connection, and the hub sends progress and results back up. The home router needs no port forwarding.
 
 Frames never leave the hub. Only crops of controls and short notes go up, as the [introduction](./#privacy) says.
 
 ```text
-web app ──REST/WS──> cloud (EC2) ──VLM API──> cloud VLM
+web app ──REST/WS──> cloud (EC2)
                         ▲
                         │ WebSocket opened by the hub
                         ▼
@@ -51,8 +51,7 @@ If the connection drops, the hub finishes or cancels the run it holds and keeps 
 | Web framework | FastAPI | Cloud API and the WebSocket endpoints |
 | Database | SQLite in WAL mode, SQLAlchemy 2, Alembic | Cloud only. Alembic records every schema change |
 | Time triggers | APScheduler | In process, no separate queue |
-| Recognition | Ultralytics YOLO11 (CPU), DINOv2 small, OpenCV 4 | In `ai-engine`, imported by the hub. No separate service |
-| Cloud VLM | One `VLMClient` interface, one adapter per provider | The provider is chosen after testing. Called from the cloud |
+| Recognition | Ultralytics YOLO11 (CPU): control detector, control state classifier, device detector. DINOv2 small, OpenCV 4 | In `ai-engine`, imported by the hub. All local, no model API (see [Models](/product/models)) |
 | Serial | `pyserial` | Hub to Arduino |
 | Wi-Fi plug | `python-kasa` (TP-Link Tapo or Kasa) or `tinytuya` (Tuya) | *Proposed*, depends on the plug we buy |
 | IR | `python-broadlink` (Broadlink RM4 mini) | *Proposed*, depends on the blaster we buy |
@@ -84,7 +83,7 @@ The Unity simulator is a WebSocket client of the hub and uses the same messages 
 
 ## Hub to cloud messages
 
-JSON objects over the hub's WebSocket: a scan (`scan.start`, `control.found`, `scan.done`), a mapping candidate (`mapping.candidate`), a run (`run.start`, `run.progress`, `check.ask`, `check.answer`, `run.result`), the emergency `stop`, and the `hub.status` heartbeat. The payloads are in [Hub messages](/api/hub-messages).
+JSON objects over the hub's WebSocket: a scan (`scan.start`, `control.found`, `scan.done`), a mapping candidate (`mapping.candidate`), a run (`run.start`, `run.progress`, `run.result`), the emergency `stop`, and the `hub.status` heartbeat. The payloads are in [Hub messages](/api/hub-messages).
 
 ## Deployment
 
@@ -100,4 +99,3 @@ JSON objects over the hub's WebSocket: a scan (`scan.start`, `control.found`, `s
 |---|---|
 | Which Wi-Fi plug and IR blaster to support | Decides the adapter libraries. The demo device has no wireless channel (see the [live-demo plan](/live-demo/PLAN)), so none is bought for the demo, and the adapters are tested with stubs |
 | Backups: `data-model.md` says S3, the team does not use S3 | Decides how the SQLite file is backed up, for example EC2 snapshots |
-| Which cloud VLM | Decides the `VLMClient` adapter and its cost |

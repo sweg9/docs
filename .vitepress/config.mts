@@ -56,7 +56,7 @@ export default defineConfig({
           { text: 'Documents', link: '/product/' },
           { text: 'Requirements', link: '/product/requirements' },
           { text: 'Development environment', link: '/product/environment' },
-          { text: 'Prompts', link: '/product/prompts' },
+          { text: 'Models', link: '/product/models' },
           { text: 'Simulator', link: '/product/simulator' },
         ],
       },

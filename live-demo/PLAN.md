@@ -71,7 +71,7 @@ The team member who pushes the cart steps out of the actuators' work area before
 
 | Included | Excluded |
 |---|---|
-| Screens that show results and reasons for S1 to S7 | Models and prompts (`ai-engine`) |
+| Screens that show results and reasons for S1 to S7 | Models (`ai-engine`) |
 | Mapping confirmation, routine feedback, notifications, setup guide | API, registry, routines and safety gate logic (`backend-server`) |
 | Plain-language log, pause switches, emergency stop button | Training and evaluation data (`dataset`) |
 | Trigger controls for the presenter, recorded backup of the demo | A mobile robot, several robots, several homes |

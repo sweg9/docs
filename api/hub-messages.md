@@ -43,13 +43,11 @@ The hub never sends a whole frame. Before it sends a crop it runs the person det
 | hub to cloud | `mapping.candidate` | A control changed and a device changed with it | S2 |
 | cloud to hub | `run.start` | A run is decided as `act` | S4 |
 | hub to cloud | `run.progress` | Each step of the run | S5, S6 |
-| hub to cloud | `check.ask` | The hub needs the VLM for a camera check | S5, S6 |
-| cloud to hub | `check.answer` | The VLM answered | S5, S6 |
 | hub to cloud | `run.result` | The run ends, in any way | S7 |
 | cloud to hub | `stop` | Emergency stop | Any |
 | hub to cloud | `hub.status` | Every 5 s | Any |
 
-`scan.done`, `check.ask` and `check.answer` are new compared with the first list in [Stack](/overview/stack). The camera check (FR-08) needs a VLM answer in the middle of a run, the VLM is called from the cloud, and the hub has to know the answer before it decides whether to press again. The app needs `scan.done` to know when a scan is over.
+`scan.done` is new compared with the first list in [Stack](/overview/stack): the app needs it to know when a scan is over. All recognition and every camera check run on the hub (see [Models](/product/models)), so no message asks the cloud to look at a picture.
 
 ## Setup: S1 and S2
 
@@ -68,7 +66,7 @@ The hub never sends a whole frame. Before it sends a crop it runs the person det
 
 ### `control.found` (hub to cloud)
 
-One message per control. The hub sends what the detector sees; the cloud does the rest. It asks the VLM for the kind, the state and whether the crop is clear (FR-01), compares the fingerprint with the saved controls, and either creates a `Control` or updates the one it matches. The hub keeps no registry.
+One message per control. The hub has already found the control (M-S1a) and read its state (M-S1b), and sends only controls whose crop is clear (FR-01). The cloud compares the fingerprint with the saved controls and either creates a `Control` or updates the one it matches. The hub keeps no registry.
 
 | Field | Type | Rule |
 |---|---|---|
@@ -76,6 +74,8 @@ One message per control. The hub sends what the detector sees; the cloud does th
 | `local_id` | string | The hub's name for this control during the scan, used again in `mapping.candidate` |
 | `kind` | `switch` `toggle` `power_strip` | The detector's class |
 | `score` | number | The detector's confidence |
+| `state` | `on` `off` `unknown` | From the state classifier; `unknown` below its threshold |
+| `state_confidence` | number | |
 | `box` | box | In the frame |
 | `panel_point` | `[x, y]` or `null` | From the ArUco homography; `null` when no marker is in view |
 | `fingerprint` | array of 384 numbers | DINOv2 small embedding of the crop |
@@ -83,7 +83,7 @@ One message per control. The hub sends what the detector sees; the cloud does th
 | `spot_id` | string | |
 
 ```json
-{"scan_id":"sc-0003","local_id":"c1","kind":"switch","score":0.91,"box":[0.42,0.31,0.51,0.44],"panel_point":[0.12,0.40],"fingerprint":[0.013,-0.207,"…"],"crop":{"crop_id":"cr-h-0121","jpeg_b64":"/9j/4AAQ…","w":180,"h":256},"spot_id":"living_wall_1"}
+{"scan_id":"sc-0003","local_id":"c1","kind":"switch","score":0.91,"state":"off","state_confidence":0.93,"box":[0.42,0.31,0.51,0.44],"panel_point":[0.12,0.40],"fingerprint":[0.013,-0.207,"…"],"crop":{"crop_id":"cr-h-0121","jpeg_b64":"/9j/4AAQ…","w":180,"h":256},"spot_id":"living_wall_1"}
 ```
 
 The cloud pushes the new or updated control to the app and sends nothing back to the hub. A control the detector cannot tell clearly is not sent (FR-01).
@@ -101,7 +101,7 @@ Watching for flips continues after `scan.done` for `watch_s` seconds.
 
 ### `mapping.candidate` (hub to cloud)
 
-The hub saw a found control change state, and within the watch window (about 3 s, FR-02) a region outside the control changed too, such as a lamp lighting up. The hub sends the control and the before and after crops of that region. It does not know which device changed; the cloud works that out (see [Which device changed](#which-device-changed)) and creates a `Pending` mapping. The mapping becomes `Verified` only when the change is clear and the VLM agrees.
+The hub saw a found control change state, and within the watch window (about 3 s, FR-02) a region outside the control changed too, such as a lamp lighting up. The hub sends the control and the before and after crops of that region. It also runs the device detector (M-S2) on that region. The cloud finds or creates the device (see [Which device changed](#which-device-changed)) and creates a `Pending` mapping. The mapping becomes `Verified` only when the change is clear (`change_score` above its threshold) and the device detector found a device in the region (C-08).
 
 | Field | Type | Rule |
 |---|---|---|
@@ -113,11 +113,13 @@ The hub saw a found control change state, and within the watch window (about 3 s
 | `before` | crop | The region just before the flip |
 | `after` | crop | The same region at the end of the watch window |
 | `change_score` | number | How much the region changed, 0 to 1 (OpenCV frame difference) |
+| `device_type` | device type or `null` | From the device detector; `null` when it found no device in the region |
+| `device_score` | number or `null` | The device detector's confidence |
 | `spot_id` | string | Saved with the mapping when it becomes `Verified` (FR-02) |
 | `room` | string | The room of `spot_id`, from the hub settings |
 
 ```json
-{"scan_id":"sc-0003","local_id":"c1","method":"watch","control_state":{"before":"off","after":"on"},"device_box":[0.70,0.10,0.88,0.45],"before":{"crop_id":"cr-h-0130","jpeg_b64":"…","w":200,"h":256},"after":{"crop_id":"cr-h-0131","jpeg_b64":"…","w":200,"h":256},"change_score":0.64,"spot_id":"living_wall_1","room":"living_room"}
+{"scan_id":"sc-0003","local_id":"c1","method":"watch","control_state":{"before":"off","after":"on"},"device_box":[0.70,0.10,0.88,0.45],"before":{"crop_id":"cr-h-0130","jpeg_b64":"…","w":200,"h":256},"after":{"crop_id":"cr-h-0131","jpeg_b64":"…","w":200,"h":256},"change_score":0.64,"device_type":"light","device_score":0.88,"spot_id":"living_wall_1","room":"living_room"}
 ```
 
 The cloud stores `device_box` with the mapping and sends it back in `run.start`, so the hub knows where to look when it checks the device later.
@@ -126,10 +128,10 @@ The cloud stores `device_box` with the mapping and sends it back in `run.start`,
 
 The resident does not register devices by hand (proposal, section I-B, second problem). The cloud finds or creates the `Device` from the candidate:
 
-1. It asks the VLM what changed, with the before and after crops. The answer is a device type from a fixed list in the settings file, such as `lamp` or `fan`, or `unknown`.
+1. It takes the device type from `device_type`. When it is `null`, the mapping stays `Pending` and the app asks the resident which device it is.
 2. It ranks the saved devices with the hints of FR-02: same `room`, same type, and a `device_box` that overlaps the new one at the same `spot_id`. If one fits, the mapping points to it.
-3. If none fits, it creates a `Device`: `name` and `type` from the VLM answer, `room` from the candidate, `risk` from the risk sorting in the settings file (FR-06), `channels` empty until FR-03 registers them.
-4. A type that is not in the risk sorting, or `unknown`, gets `risk: high`, the safe side, until the resident sets it.
+3. If none fits, it creates a `Device`: `name` and `type` from `device_type`, `room` from the candidate, `risk` from the risk sorting in the settings file (FR-06), `channels` empty until FR-03 registers them.
+4. A type that is not in the risk sorting, or `other`, gets `risk: high`, the safe side, until the resident sets it.
 
 The mapping card in the app shows the device it points to. The resident can rename the device, change its room or risk, or reject the mapping. A changed risk takes effect from the next run.
 
@@ -146,11 +148,11 @@ The cloud resolves the intent (FR-05) and applies the autonomy policy (FR-06) be
 | `action` | `on` `off` | |
 | `decision` | `act` `ask` | `ask` means the resident already said yes |
 | `control` | object | `control_id`, `kind`, `fingerprint`, `panel_point`, `press_spot_id` |
-| `check` | object | `device_box`, `spot_id` (where the device is in view), `question` for the VLM, for example `"Is the lamp on?"` |
+| `check` | object | `device_box`, `spot_id` (where the device is in view), `device_type`, which picks the measure of M-S5 |
 | `channels` | array | One item per channel the device has: `channel`, `success_score`, `latency_ms`. Empty when the device has no wireless channel; `ARM` is never listed, it is always the last resort |
 
 ```json
-{"mapping_id":"mp-0002","device":{"device_id":"dev_lamp_01","name":"lamp","risk":"low"},"action":"on","decision":"act","control":{"control_id":"ctl-0005","kind":"switch","fingerprint":["…"],"panel_point":[0.12,0.40],"press_spot_id":"living_wall_1"},"check":{"device_box":[0.70,0.10,0.88,0.45],"spot_id":"living_wall_1","question":"Is the lamp on?"},"channels":[]}
+{"mapping_id":"mp-0002","device":{"device_id":"dev_lamp_01","name":"lamp","risk":"low"},"action":"on","decision":"act","control":{"control_id":"ctl-0005","kind":"switch","fingerprint":["…"],"panel_point":[0.12,0.40],"press_spot_id":"living_wall_1"},"check":{"device_box":[0.70,0.10,0.88,0.45],"spot_id":"living_wall_1","device_type":"light"},"channels":[]}
 ```
 
 The hub holds one run at a time. A `run.start` that arrives while another run is in progress is answered at once with `run.result`, `result: cancelled`, `reason: "another run is in progress"`.
@@ -174,28 +176,9 @@ One message per step, for the live screen. The log does not depend on these: `ru
 
 For the demo device, scenario 3 sends, in order: `S5 channel skipped "no wireless channel"`, `S6 move started` (the team member pushes the cart; the hub waits for the presenter to confirm in the app), `S6 gate ok`, `S6 press ok`, `S6 check started`, `S6 check ok`.
 
-### `check.ask` (hub to cloud)
+### Camera check on the hub
 
-The main check of FR-08 asks the VLM a yes-or-no question about the device. The hub makes the crops; the cloud calls the VLM.
-
-| Field | Type | Rule |
-|---|---|---|
-| `check_id` | string | Made by the hub |
-| `kind` | `main` `second` | `second` looks at the surroundings |
-| `question` | string | From `run.start` |
-| `before` | crop | The device before the command |
-| `after` | crop | The device after the wait for effect (up to 3 s) |
-| `local_diff` | number | The hub's own before and after comparison, 0 to 1 |
-
-### `check.answer` (cloud to hub)
-
-| Field | Type | Rule |
-|---|---|---|
-| `check_id` | string | |
-| `answer` | `yes` `no` `unsure` | |
-| `note` | string or `null` | The VLM's short reason |
-
-If no `check.answer` arrives within the VLM timeout (about 8 s, FR-05), the hub treats the answer as `unsure`. An unsure result gets one second look after about 3 s, without operating the device, and then the run stops (FR-08). It is never followed by another press (FR-11).
+The hub runs the check of FR-08 itself (M-S5): it compares the device crop before the command with the crop after the wait for effect (up to 3 s), with the measure for `check.device_type`. An `unsure` result gets one second look after about 3 s, without operating the device, and then the run stops (FR-08). It is never followed by another press (FR-11).
 
 ### `run.result` (hub to cloud)
 
@@ -241,12 +224,4 @@ The cloud marks the hub offline after 3 missed heartbeats and does not send `run
 |---|---|---|
 | During a scan | Ends the scan, queues its messages | Shows the scan as interrupted until `scan.done` arrives |
 | During a run, before a press | Cancels the run: `reason: "cloud not reached"` | Never counts the run as successful without `run.result` |
-| During a camera check | Treats the answer as `unsure`; the run stops without another press | |
 | After reconnect | Sends the queue in order | Ignores `id`s it has already handled |
-
-## Open questions
-
-| Question | Why it matters |
-|---|---|
-| Whether the hub should ask the VLM directly | Saves the round trip of `check.ask`, but puts an API key on the laptop |
-| Crop size | 256 px is a guess; it depends on what the VLM needs to read a state |

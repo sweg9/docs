@@ -45,10 +45,10 @@ Seven stages in three phases. Every stage defines what goes in, what comes out, 
 
 | Phase | Stage | What happens |
 |---|---|---|
-| Setup | S1 Recognize | A detector that works from text descriptions finds wall switches, toggles and power strips. A VLM reads the type and state, and depth data, if the camera provides it, helps place each control. Each control is saved with a picture fingerprint (embedding) |
-| Setup | S2 Map | The system links each control to a device, by watching the resident use it or by pressing it and comparing before and after. A link is confirmed only when the change is clear and the VLM agrees |
+| Setup | S1 Recognize | A detector that works from text descriptions finds wall switches, toggles and power strips. A small classifier reads the state, and depth data, if the camera provides it, helps place each control. Each control is saved with a picture fingerprint (embedding) |
+| Setup | S2 Map | The system links each control to a device, by watching the resident use it or by pressing it and comparing before and after. A link is confirmed only when the change is clear and a device detector finds the device that changed |
 | Setup | S3 Routine | A confirmed link becomes a routine, created from repeated habits or built by hand. The resident is told and can keep, change or remove it |
-| Runtime | S4 Trigger and intent | A sensor, a time or a routine starts a run. A cloud VLM works out the intent and the target device |
+| Runtime | S4 Trigger and intent | A sensor, a time or a routine starts a run. The routine names the intent and the target device |
 | Runtime | S5 Wireless control | The system ranks the device's wireless channels by learned score, sends the command through the best one, and checks whether the device changed: from the state the platform reports, or by camera for IR |
 | Runtime | S6 Physical fallback | If every wireless channel fails or none exists, the robot goes to the control's press spot, CV finds the control, the planner chooses which actuator to use and how long to push, the Safety Guard checks for people and obstacles, the actuator presses, and the camera checks the result |
 | Learning | S7 Learn | Every run, even a cancelled one, updates channel scores, link confidence and routine usefulness |

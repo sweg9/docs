@@ -18,7 +18,7 @@ See [contributing.md](contributing.md) for how to add pages, PDFs and API specs.
 | Folder | Content |
 |---|---|
 | [overview/](overview/) | Introduction, architecture, stack, related work, team, repositories |
-| [product/](product/) | Requirements 1 to 12, development environment, prompts, simulator |
+| [product/](product/) | Requirements 1 to 12, development environment, models, simulator |
 | [dataset/](dataset/) | Labeling spec for the switch-panel dataset |
 | [api/](api/) | API conventions and the draft backend spec (`public/api/`) |
 | [papers/](papers/) | The proposal (`public/papers/`) |
@@ -30,8 +30,8 @@ Standards and skills are not stored here. The wiki copies them from [harness](ht
 | Repo | Role |
 |---|---|
 | [dataset](https://github.com/sweg9/dataset) | Photos of switch panels and their labels for the detector |
-| [ai-engine](https://github.com/sweg9/ai-engine) | Detector, VLM calls, fingerprints, state check, motion planner |
-| [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend in two run modes: `cloud` (EC2) for the registry, routines, log, VLM calls and learning; `hub` (the laptop at home) for the orchestrator, channel adapters, safety gate and the hand |
+| [ai-engine](https://github.com/sweg9/ai-engine) | All recognition on the hub: detectors, state classifier, result check, fingerprints, motion planner |
+| [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend in two run modes: `cloud` (EC2) for the registry, routines, log and learning; `hub` (the laptop at home) for the orchestrator, channel adapters, safety gate and the hand |
 | [sim-demo](https://github.com/sweg9/sim-demo) | Unity simulator, an auxiliary tool for the rough demo and tests without the real hardware |
 | [live-demo](https://github.com/sweg9/live-demo) | The one front end: the resident's web app and the presenter's demo screens |
 | [docs](https://github.com/sweg9/docs) | This wiki |

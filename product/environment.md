@@ -19,7 +19,6 @@ We reuse existing software and build only the parts that connect it.
 |---|---|
 | YOLO (Ultralytics) | Fast detector, fine-tuned on our switch-panel photos |
 | Grounding DINO, OWL-ViT | Open-vocabulary detection to draft labels and find controls before training |
-| Cloud VLM (API) | Reads type and state, infers intent, answers yes-or-no checks. Not trained by us; chosen after testing |
 | DINOv2 | Image encoder; its embedding is the control's fingerprint |
 | OpenCV | Camera capture and image handling, such as cropping a control and comparing two pictures |
 | Linear actuators and a driver board | 12 V, 100 mm actuators mounted side by side on the cart, placed so that one of them faces the control. A BTS7960 motor driver module powers an actuator in either direction (out or back), and an Arduino Nano takes `push` and `release` from the Python hub over USB and tells the driver what to do. A 12 V, 2 A adapter supplies the power. No joints, so nothing to plan: the system chooses the actuator and how long to push |

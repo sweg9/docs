@@ -1,6 +1,6 @@
 # Requirements
 
-What the system must do, and how each requirement is built. The resident gives feedback on routines and has the final say. The robot moves to a control and presses it when needed; in the prototype it is linear actuators on a cart. The cloud VLM works out the intent. The smart-home hub sends IR, Wi-Fi and Bluetooth commands.
+What the system must do, and how each requirement is built. The resident gives feedback on routines and has the final say. The robot moves to a control and presses it when needed; in the prototype it is linear actuators on a cart. The smart-home hub sends IR, Wi-Fi and Bluetooth commands. All recognition runs on the hub with our own models (see [Models](./models)); the proposal's cloud VLM is not used.
 
 All numbers are **starting values** to be tuned after the first measurements. Keep them in settings files, not in code.
 
@@ -31,22 +31,22 @@ From the robot's camera feed, find wall switches, toggles and power strips and d
 |---|---|
 | Detector | Small YOLO model fine-tuned on our photos, three classes: wall switch, toggle, power strip |
 | Frame rate | Every fifth frame |
-| Type and state | Each crop goes to the VLM, which returns type, state (on or off) and whether the picture is clear enough |
+| Type and state | The detector gives the type. A small classifier reads the state of each crop (on, off, or unknown when unsure). A crop is clear enough when the detector's confidence and the crop's sharpness pass their thresholds |
 | Duplicate check | Fingerprint compared with saved ones; very similar means the same control |
 | Training photos | Real wall switches, toggles and power strips in different places, angles and light. A tool drafts boxes, people correct them |
 | Sessions | A session is one visit to one place at one time of day, with its own light and angles |
-| Split | 80% of the photos revise the prompts and labels; 20% are kept for evaluation only and never used for revision |
+| Split | 80% of the photos train and tune the models and revise the labels; 20% are kept for evaluation only and never used for training or revision |
 | Evaluation set | Every session gives 20% of its own photos, so the evaluation set has the same mix of places and light as all the data. Photos taken within a few seconds of each other go to the same side |
 | Measured on the 20% | For example, how many controls are found with the right type and state |
 
 ## FR-02 Device mapping
 
-Suggest which device each control operates, by **watching** (the resident uses a control and a nearby device visibly changes: a switch is flipped and a fan starts to turn) or by **testing** (the robot presses the control and the system compares the device before and after by camera). Each candidate starts as `Pending` with a confidence value. It becomes `Verified` only when the change is clear and the VLM agrees. The resident can reject a mapping at any time (`Rejected`). If a control looks different or has moved, its mapping becomes `Stale` and is verified again before use.
+Suggest which device each control operates, by **watching** (the resident uses a control and a nearby device visibly changes: a switch is flipped and a fan starts to turn) or by **testing** (the robot presses the control and the system compares the device before and after by camera). Each candidate starts as `Pending` with a confidence value. It becomes `Verified` only when the change is clear and the device detector finds a device in the changed region. The resident can reject a mapping at any time (`Rejected`). If a control looks different or has moved, its mapping becomes `Stale` and is verified again before use.
 
 | How | Value |
 |---|---|
 | Watch window | About 3 s of camera pictures of nearby devices after the resident uses a control |
-| Ranking hints | Same room, short distance in the picture, VLM thinks the change fits the device |
+| Ranking hints | Same room, short distance in the picture, the device detector finds a device of a known type where the change happened |
 | Saved spot | When a mapping becomes `Verified`, the spot from which the robot saw the change is saved with it |
 
 ## FR-03 Control-method registration
@@ -73,14 +73,12 @@ A verified mapping can become a routine without waiting for approval. When the s
 
 ## FR-05 Trigger and intent
 
-Accept sensor, time and routine events as triggers and attach the situation: time, room, state of nearby devices. Each trigger starts one run with its own ID. The Routine Engine sends the situation and crops of the relevant controls to the cloud VLM, which returns the intent, the target device and a confidence value. If the cloud cannot be reached, the system does not act and only suggests.
+Accept sensor, time and routine events as triggers and attach the situation: time, room, state of nearby devices. Each trigger starts one run with its own ID. The Routine Engine takes the intent and the target device from the routine that fired, and computes a confidence value. If the hub cannot reach the cloud, the system does not act and only suggests.
 
 | How | Value |
 |---|---|
 | Duplicate merge | Same event twice within 10 s counts once |
-| VLM input | Situation description and up to 3 crops |
-| VLM timeout | About 8 s |
-| Final confidence | Mix of VLM confidence, trigger reliability, and how often the resident accepted this routine |
+| Final confidence | Mix of trigger reliability and how often the resident accepted this routine |
 
 ## FR-06 Autonomy by risk
 
@@ -114,7 +112,7 @@ A camera check has two parts. The **main check** looks at the device itself (a l
 | How | Value |
 |---|---|
 | Reported state | Read from the platform after the command, within the channel's time limit (FR-07) |
-| Main check | VLM answers a yes-or-no question on the device crop ("is the lamp on?"), plus a before and after comparison |
+| Main check | A before and after comparison on the device crop, by device type: brightness for a light, motion for a fan (see [Models](./models#m-s5-in-more-detail)) |
 | Wait for effect | Up to 3 s |
 | Second look after unsure | About 3 s more, without operating the device |
 

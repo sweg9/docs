@@ -7,7 +7,7 @@ Create a small labeled set of photos, taken by the 4 team members, to fine-tune 
 ## 2. Background and problem
 
 - Controls come in many shapes, and fixed-category detectors do not cover them well, so the detector needs our own photos.
-- Without a fixed set of photos, there is no way to tell whether a new prompt version is better.
+- Without a fixed set of photos, there is no way to tell whether a new model version is better.
 - Photos can contain personal information, so they have to be checked before they are shared.
 
 ## 3. Goals
@@ -16,7 +16,7 @@ Create a small labeled set of photos, taken by the 4 team members, to fine-tune 
 |---|---|
 | What to make | About 200 to 300 labeled photos, with 20% of the photos from each session kept aside for testing |
 | What matters | A rough test to check direction. If the results are good, this scale carries through to the final presentation |
-| What not to do | Large-scale collection, strict statistical validation, model training or prompt writing (`ai-engine`) |
+| What not to do | Large-scale collection, strict statistical validation, model training (`ai-engine`) |
 
 ## 4. Users and stakeholders
 
@@ -24,7 +24,7 @@ Create a small labeled set of photos, taken by the 4 team members, to fine-tune 
 |---|---|
 | 4 team members | Each takes about 50 photos, corrects the drafted boxes, writes labels and checks another member's labels |
 | Anyone in a photo or whose space appears | Gives consent, recorded in `consent` |
-| `ai-engine` | Fine-tunes the detector and checks prompts with the data |
+| `ai-engine` | Trains the detectors and the state classifier with the data |
 | `harness` | Runs the tests and evaluation |
 
 ## 5. Collection method
@@ -47,12 +47,12 @@ One set of photos serves several stages. Nothing is collected separately.
 | Use | Stage | Requirement | How it is used |
 |---|---|---|---|
 | Detector | S1 | FR-01 | `bbox` and `kind` train and test the detector |
-| P-S1 check | S1 | FR-01 | Crops with `kind` and `state` as answers |
-| P-S2 check | S2 | FR-02 | `before_image` and `after_image` crops, with `changed_device` as the answer |
+| M-S1a and M-S1b check | S1 | FR-01 | Photos and crops with `kind` and `state` as answers |
+| M-S2 check | S2 | FR-02 | Photos with `devices[]` as the answer |
 | Role prediction test | S2 | FR-02 | The image and `context` as input, and `role` as the answer. `evidence` is never input |
-| P-S5 check | S5, S6 | FR-08 | `after_image` crops, with `change` as the answer |
+| M-S5 check | S5, S6 | FR-08 | `before_image` and `after_image` crops, with `change` as the answer |
 
-Robot motion planning (FR-09) and physical execution (FR-11) are measured in [real runs](/live-demo/PRD). Intent cases for P-S4 are not included for now. Events are assumed to come from sensors and the hub.
+Robot motion planning (FR-09) and physical execution (FR-11) are measured in [real runs](/live-demo/PRD). Events are assumed to come from sensors and the hub.
 
 ## 7. Scope
 

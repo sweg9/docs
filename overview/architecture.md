@@ -4,9 +4,8 @@
 
 | Place | What runs there |
 |---|---|
-| Edge hub (inside the home, Python) | Camera capture, control detection, channel adapters (IR, Wi-Fi, Bluetooth), control of the hand through the Robot Abstraction Layer, Safety Guard. Video never leaves the hub |
-| Backend (AWS EC2, FastAPI) | Mapping Registry, routines and the log (SQLite in the prototype), VLM calls |
-| Cloud VLM (API) | Reads the type and state of a control, infers intent, answers yes-or-no questions when a result is checked |
+| Edge hub (inside the home, Python) | Camera capture, all recognition (control detector, state classifier, device detector, result check), channel adapters (IR, Wi-Fi, Bluetooth), control of the hand through the Robot Abstraction Layer, Safety Guard. Video never leaves the hub |
+| Backend (AWS EC2, FastAPI) | Mapping Registry, routines and the log (SQLite in the prototype) |
 | Private GitHub repository | Photo dataset, trained detector |
 | Web app (React, TypeScript) | The resident's screens: mappings, routine feedback, log, notifications, emergency stop |
 | Robot or simulator | In the prototype, 12 V linear actuators on a wheeled cart that a team member pushes to each spot. An Arduino Nano takes push and release commands from the hub over USB and drives a BTS7960 motor driver; a 12 V 2 A adapter powers them. Or the Unity simulator or a simple script. All behind the RAL, so a general-purpose home robot can replace them later |
@@ -35,9 +34,9 @@ Only small crops of controls and short notes go to the cloud. Both the edge hub 
 camera ─────> recognition ──> Mapping Registry <──── learning
                                     │                    ▲
 trigger ──> Routine Engine ──> Control Orchestrator ─────┤
-               │                    │        │           │
-          cloud VLM           channel     Safety Guard   │
-          (intent)            adapters        │          │
+                                    │        │           │
+                              channel     Safety Guard   │
+                              adapters        │          │
                                   │      motion planner  │
                                   ▼           ▼          │
                                device <── robot (RAL) ───┤

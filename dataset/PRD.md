@@ -5,7 +5,7 @@
 | Item | Content |
 |---|---|
 | Product | About 200 to 300 photos taken by the team, with labels |
-| Problem | The detector needs our own photos, and without a fixed set, results and prompt versions cannot be compared |
+| Problem | The detector needs our own photos, and without a fixed set, results and model versions cannot be compared |
 | Solution | Fix a small dataset as a version and use it for fine-tuning and a rough test |
 | Reference | The [proposal](/papers/proposal). The format is in the [labeling spec](./labeling). This document adds only the data requirements (DS) |
 
@@ -36,8 +36,8 @@ Priority is M (must), S (should) or C (could).
 | DS-08 | `evidence` is never a model input when training or predicting a role | M | FR-02 | Input check |
 | DS-09 | Unknown values are `null`, never guessed | M | Labeling spec | Cross-check |
 | DS-10 | Every session gives 20% of its own photos to the test set, which is never used for revision. Photos taken within a few seconds of each other go to the same side | M | FR-01 | Split check |
-| DS-11 | Fixed records are not edited. A change makes a new version | M | Prompt rule 8 | Hash comparison |
-| DS-12 | Failure cases from tests and the demo can be added to the next version | C | Prompt rule 8 | Addition history |
+| DS-11 | Fixed records are not edited. A change makes a new version | M | Model rule 6 | Hash comparison |
+| DS-12 | Failure cases from tests and the demo can be added to the next version | C | Model rule 6 | Addition history |
 
 ## 4. Quality rules
 
@@ -45,14 +45,14 @@ Priority is M (must), S (should) or C (could).
 |---|---|
 | DS-N1 | Privacy: fill `consent` for every image. Before upload, mask anything that identifies a person, such as a face; a reflection or a body part that identifies no one may stay. Mask or remove documents, screens and addresses, and delete GPS metadata |
 | DS-N2 | Storage: photos go in the private dataset repository on GitHub, with their labels, manifests and code |
-| DS-N3 | Cloud: only crops of controls and devices that have been cleaned and checked are sent to the VLM |
+| DS-N3 | No photo of the dataset is sent to a model API; all models train and run on our own machines |
 | DS-N4 | Reproducibility: the same data can be retrieved by version and hash |
 
 ## 5. Sets and quantities
 
 | Set | Share | Quantity | Use |
 |---|---|---|---|
-| Development | About 80% | About 160 to 240 photos | Fine-tuning and prompt revision |
+| Development | About 80% | About 160 to 240 photos | Training and tuning |
 | Test | About 20% | About 40 to 60 photos | Version comparison and results |
 
 The test set is 20% of the photos of each session, or about 40 to 60 photos in total. That is about 10 photos per member, which cannot cover all 16 condition combinations, so the test photos are spread across the conditions.
@@ -77,7 +77,7 @@ Detection results are matched as the same `kind` with IoU of at least 0.5 (propo
 |---|---|---|
 | D1 | Too little data to trust the results | Treat results as a reference, and take more photos only for conditions that came out badly |
 | D2 | The 4 members photograph and label differently | Align after the first photos, and cross-check |
-| D3 | Test photos leak into prompt revision | Revise prompts with the development set only |
+| D3 | Test photos leak into training or tuning | Train and tune with the development set only |
 | D4 | Drafted boxes leave errors in the answers | People correct every box |
 | D5 | Close photos do not show much of the surroundings, so room clues in `context` are often `null` | Report results as results on these photos, and do not read them as performance in a whole home |
 | D6 | Personal information appears in photos | Follow DS-N1 to DS-N3, and check again before fixing the test set |
@@ -86,6 +86,5 @@ Detection results are matched as the same `kind` with IoU of at least 0.5 (propo
 
 - The team has decided to photograph appliances and light switches. The [labeling spec](./labeling) does not mention appliances yet.
 - The ratio of control kinds in the photos is not decided. A kind with few photos has a larger error.
-- Whether P-S4 needs its own intent cases is decided later.
 - The labeling tool is not decided.
 - The numbers above are starting values to be tuned after the rough test.

@@ -15,10 +15,10 @@
 
 | Stage | Name | Where it is processed | What the screen shows |
 |---|---|---|---|
-| S1 | Recognize | Edge hub, cloud VLM | Boxes, type, state and whether the picture is clear |
-| S2 | Map | Edge hub, cloud VLM, backend | Candidate devices, confidence, status (`Pending`, `Verified`, `Rejected`, `Stale`) |
+| S1 | Recognize | Edge hub | Boxes, type, state and whether the picture is clear |
+| S2 | Map | Edge hub, backend | Candidate devices, confidence, status (`Pending`, `Verified`, `Rejected`, `Stale`) |
 | S3 | Routines | Backend | The added routine, with keep, change and remove |
-| S4 | Trigger and intent | Backend, cloud VLM | Trigger, intent, target device, confidence |
+| S4 | Trigger and intent | Backend | Trigger, intent, target device, confidence |
 | S5 | Wireless control | Backend, edge hub | Channel order, result per channel (reported state, or main and second checks for IR) |
 | S6 | Actuator press | Edge hub, actuators | Safety gate result, press, tries, reason for a cancellation |
 | S7 | Learning and log | Backend | Channel scores, mapping confidence, plain-language explanation |
@@ -84,14 +84,14 @@ The proposal gives starting values, not success targets, so the demo reports wha
 | Routines | The system adds a routine without approval and shows it at once, and the resident can also add one by hand (FR-04) |
 | Low-risk devices (lights, fans, TV, air purifier) | Act and tell at high confidence, ask first at medium, otherwise only suggest (FR-06) |
 | High-risk devices (heaters, electric blankets, microwaves, power strips that feed them) | A warning when the routine is registered and a notification on every run. Turning off follows the low-risk rules; turning on always asks first, and nothing runs without an answer (FR-06, FR-10) |
-| Log | Each run also records the executor (real actuators, simulator or script) and the prompt and model versions |
+| Log | Each run also records the executor (real actuators, simulator or script) and the model versions |
 
 ## 7. Risks
 
 | Risk | Response |
 |---|---|
 | The real actuators are not ready | Use the Unity simulator or a simple script through the settings file, and show which one is in use |
-| The VLM misreads or is slow | Show a waiting state. On `unsure` or a timeout, ask or only suggest |
+| A model misreads (state `unknown`, check `unsure`) | Show why, and ask the resident as FR-08 says |
 | Privacy of video in a home | Keep people and personal items out of recordings and logs |
 | Safety of the actuators | Keep the emergency stop on every screen, and for high-risk devices show a press action only when the risk policy allows it (FR-06) |
 | One stage fails during the demo | Show the failure per stage, allow a retry, and keep a recorded backup |
