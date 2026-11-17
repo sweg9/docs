@@ -49,7 +49,7 @@ If the connection drops, the hub finishes or cancels the run it holds and keeps 
 | Language and tools | Python 3.11, `uv`, `ruff`, `pytest` | `ai-engine` already uses `uv` |
 | Models and settings | Pydantic v2, YAML settings files | Every number in settings, not in code |
 | Web framework | FastAPI | Cloud API and the WebSocket endpoints |
-| Database | SQLite in WAL mode, SQLAlchemy 2, Alembic | Cloud only. Alembic records every schema change |
+| Database | SQLite in WAL mode, SQLAlchemy 2, Alembic | Cloud only. Alembic records every schema change. Tables in [Database](./database) |
 | Time triggers | APScheduler | In process, no separate queue |
 | Recognition | Ultralytics YOLO11 (CPU): control detector, control state classifier, device detector. DINOv2 small, OpenCV 4 | In `ai-engine`, imported by the hub. All local, no model API (see [Models](/product/models)) |
 | Serial | `pyserial` | Hub to Arduino |

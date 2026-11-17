@@ -45,6 +45,7 @@ export default defineConfig({
           { text: 'Introduction', link: '/overview/' },
           { text: 'Architecture', link: '/overview/architecture' },
           { text: 'Stack', link: '/overview/stack' },
+          { text: 'Database', link: '/overview/database' },
           { text: 'Related work', link: '/overview/related-work' },
           { text: 'Team', link: '/overview/team' },
           { text: 'Repositories', link: '/overview/repositories' },
