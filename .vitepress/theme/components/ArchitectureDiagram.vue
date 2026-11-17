@@ -44,10 +44,10 @@
       <text class="sd-group-label" x="48" y="290">hub · on the laptop, outside k8s</text>
       <rect class="sd-zone" x="10" y="576" width="700" height="92" rx="10" />
       <text class="sd-zone-label" x="696" y="662" text-anchor="end">In the room</text>
-      <rect class="sd-box" x="30" y="80" width="200" height="56" rx="8" />
-      <use href="#ad-l-zap" class="sd-line-icon" x="42" y="97" width="22" height="22" />
-      <text class="sd-title" x="72" y="104">Trigger</text>
-      <text class="sd-sub" x="72" y="121">time · sensor · routine</text>
+      <rect class="sd-box" x="44" y="80" width="186" height="56" rx="8" />
+      <use href="#ad-l-zap" class="sd-line-icon" x="56" y="97" width="22" height="22" />
+      <text class="sd-title" x="86" y="104">Trigger</text>
+      <text class="sd-sub" x="86" y="121">time, sensor, routine</text>
       <rect class="sd-box" x="260" y="80" width="200" height="56" rx="8" />
       <use href="#ad-l-repeat" class="sd-line-icon" x="272" y="97" width="22" height="22" />
       <text class="sd-title" x="302" y="104">Routine Engine</text>
@@ -56,18 +56,18 @@
       <use href="#ad-l-scale" class="sd-line-icon" x="502" y="97" width="22" height="22" />
       <text class="sd-title" x="532" y="104">Autonomy policy</text>
       <text class="sd-sub" x="532" y="121">act/ask/suggest · FR-06</text>
-      <rect class="sd-box" x="30" y="160" width="200" height="56" rx="8" />
-      <use href="#ad-l-trending-up" class="sd-line-icon" x="42" y="177" width="22" height="22" />
-      <text class="sd-title" x="72" y="184">Learning and log</text>
-      <text class="sd-sub" x="72" y="201">scores, log · FR-12</text>
+      <rect class="sd-box" x="44" y="160" width="186" height="56" rx="8" />
+      <use href="#ad-l-trending-up" class="sd-line-icon" x="56" y="177" width="22" height="22" />
+      <text class="sd-title" x="86" y="184">Learning and log</text>
+      <text class="sd-sub" x="86" y="201">scores, log · FR-12</text>
       <rect class="sd-box" x="260" y="160" width="200" height="56" rx="8" />
       <use href="#ad-l-database" class="sd-line-icon" x="272" y="177" width="22" height="22" />
       <text class="sd-title" x="302" y="184">Mapping Registry</text>
       <text class="sd-sub" x="302" y="201">Verified links · FR-02</text>
-      <rect class="sd-box" x="30" y="310" width="200" height="56" rx="8" />
-      <use href="#ad-l-camera" class="sd-line-icon" x="42" y="327" width="22" height="22" />
-      <text class="sd-title" x="72" y="334">Camera</text>
-      <text class="sd-sub" x="72" y="351">frames stay here</text>
+      <rect class="sd-box" x="44" y="310" width="186" height="56" rx="8" />
+      <use href="#ad-l-camera" class="sd-line-icon" x="56" y="327" width="22" height="22" />
+      <text class="sd-title" x="86" y="334">Camera</text>
+      <text class="sd-sub" x="86" y="351">frames stay here</text>
       <rect class="sd-box" x="260" y="310" width="200" height="56" rx="8" />
       <use href="#ad-l-scan-search" class="sd-line-icon" x="272" y="327" width="22" height="22" />
       <text class="sd-title" x="302" y="334">Recognition</text>
@@ -76,10 +76,10 @@
       <use href="#ad-l-split" class="sd-line-icon" x="502" y="327" width="22" height="22" />
       <text class="sd-title" x="532" y="334">Orchestrator</text>
       <text class="sd-sub" x="532" y="351">channel order · FR-07</text>
-      <rect class="sd-box" x="30" y="400" width="200" height="56" rx="8" />
-      <use href="#ad-l-badge-check" class="sd-line-icon" x="42" y="417" width="22" height="22" />
-      <text class="sd-title" x="72" y="424">State Verifier</text>
-      <text class="sd-sub" x="72" y="441">result check · FR-08</text>
+      <rect class="sd-box" x="44" y="400" width="186" height="56" rx="8" />
+      <use href="#ad-l-badge-check" class="sd-line-icon" x="56" y="417" width="22" height="22" />
+      <text class="sd-title" x="86" y="424">State Verifier</text>
+      <text class="sd-sub" x="86" y="441">result check · FR-08</text>
       <rect class="sd-box" x="260" y="400" width="200" height="56" rx="8" />
       <use href="#ad-l-radio" class="sd-line-icon" x="272" y="417" width="22" height="22" />
       <text class="sd-title" x="302" y="424">Channel adapters</text>
@@ -96,10 +96,10 @@
       <use href="#ad-l-crosshair" class="sd-line-icon" x="502" y="507" width="22" height="22" />
       <text class="sd-title" x="532" y="514">Motion planner</text>
       <text class="sd-sub" x="532" y="531">actuator, push · FR-09</text>
-      <rect class="sd-box" x="30" y="600" width="200" height="56" rx="8" />
-      <use href="#ad-l-lightbulb" class="sd-line-icon" x="42" y="617" width="22" height="22" />
-      <text class="sd-title" x="72" y="624">Lamp, fan</text>
-      <text class="sd-sub" x="72" y="641">the device</text>
+      <rect class="sd-box" x="44" y="600" width="186" height="56" rx="8" />
+      <use href="#ad-l-lightbulb" class="sd-line-icon" x="56" y="617" width="22" height="22" />
+      <text class="sd-title" x="86" y="624">Lamp, fan</text>
+      <text class="sd-sub" x="86" y="641">the device</text>
       <rect class="sd-box" x="260" y="600" width="200" height="56" rx="8" />
       <use href="#ad-l-toggle-right" class="sd-line-icon" x="272" y="617" width="22" height="22" />
       <text class="sd-title" x="302" y="624">Wall switch</text>
@@ -107,7 +107,7 @@
       <path class="sd-edge" d="M230 108 H260" marker-end="url(#ad-arrow)" />
       <path class="sd-edge" d="M460 108 H490" marker-end="url(#ad-arrow)" />
       <path class="sd-edge" d="M460 188 H560 V136" marker-end="url(#ad-arrow)" />
-      <text class="sd-edge-label" x="510" y="180" text-anchor="middle">Verified mapping</text>
+      <text class="sd-edge-label" x="514" y="206" text-anchor="middle">Verified mapping</text>
       <path class="sd-edge" d="M230 188 H260" marker-end="url(#ad-arrow)" />
       <path class="sd-edge sd-accent" d="M640 136 V310" marker-end="url(#ad-arrow-accent)" />
       <text class="sd-edge-label sd-accent-text" x="648" y="232">run.start</text>
@@ -122,7 +122,7 @@
       <path class="sd-edge" d="M490 518 H460" marker-end="url(#ad-arrow)" />
       <path class="sd-edge" d="M130 366 V400" marker-end="url(#ad-arrow)" />
       <text class="sd-edge-label" x="138" y="388">crops</text>
-      <path class="sd-edge sd-accent" d="M30 428 H20 V188 H30" marker-end="url(#ad-arrow-accent)" />
+      <path class="sd-edge sd-accent" d="M44 428 H20 V188 H44" marker-end="url(#ad-arrow-accent)" />
       <text class="sd-edge-label sd-accent-text" x="24" y="236">result</text>
       <path class="sd-edge" d="M360 546 V600" marker-end="url(#ad-arrow)" />
       <path class="sd-edge" d="M260 628 H230" marker-end="url(#ad-arrow)" />
