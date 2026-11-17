@@ -149,12 +149,11 @@ The server's SQLite file holds every mapping, routine and run, so it is backed u
 2. The backups are in `~/sweg9-data/backups/`, outside the cluster, so they survive a deleted cluster.
 3. To restore, scale `server` to 0, put the backup file in place of `app.db`, and scale it back to 1; the init container runs `alembic upgrade head` in case the backup has an older schema.
 
-Every copy is on the same laptop. A lost or broken laptop loses them all; see the open questions.
+**Known limit.** Every copy is on the same laptop, so a lost or broken laptop loses them all. The team accepts this: the database holds demo data that a new scan recreates, and the code, wiki and dataset are on GitHub. A real home would copy the backups to an external drive now and then, which still keeps the data at home.
 
 ## Open questions
 
 | Question | Why it matters |
 |---|---|
 | Which Wi-Fi plug and IR blaster to support | Decides the adapter libraries. The demo device has no wireless channel (see the [live-demo plan](/live-demo/PLAN)), so none is bought for the demo, and the adapters are tested with stubs |
-| A copy of the backups off the laptop | All backups are on the one laptop. An external drive copied by hand once a week is the simplest step that keeps data at home |
 | Opening the app from a phone on the home Wi-Fi | The certificate from `mkcert` names `sweg9.localhost`, which a phone cannot resolve. The demo uses the laptop's browser |
