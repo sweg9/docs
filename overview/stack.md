@@ -19,23 +19,7 @@ The hub stays outside Kubernetes because Docker on macOS cannot pass a USB webca
 
 Frames never leave the hub process. Only crops of controls and short notes go to the server, as the [introduction](./#privacy) says, and the server keeps them on the same laptop.
 
-```text
-┌──────────────────────────── laptop at home ────────────────────────────┐
-│                                                                        │
-│  browser ──https──> ingress (Traefik) ──> web (nginx, app build)       │
-│                         │                                              │
-│                         ├──> server (FastAPI, SQLite) ── data volume   │
-│                         │        ▲                                     │
-│                         │        │ WebSocket /ws/hub                   │
-│                         │        │                                     │
-│                         └──> Grafana ──> Loki <── Alloy (logs)         │
-│              k3d cluster ────────┼──────────────────────▲──────────────│
-│                                  │                      │ log files    │
-│                        hub (uv run) ──USB──> Arduino ──> actuators     │
-│                          ├──USB──> webcam                              │
-│                          └──LAN──> Wi-Fi plug, IR blaster ──> lamp, fan│
-└────────────────────────────────────────────────────────────────────────┘
-```
+<StackDiagram />
 
 ### One run, end to end
 
