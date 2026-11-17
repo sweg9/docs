@@ -59,6 +59,7 @@ One Python process with `asyncio`. Camera capture runs in its own thread, and mo
 | `link.py` | WebSocket client to the cloud: connect, reconnect, `hub.status` every 5 s, the outbox file, and `ack`s for the cloud's messages ([Delivery](/api/hub-messages#delivery)) | Hub messages |
 | `camera.py` | Reads the webcam, keeps the newest frame and a short history for before and after crops | FR-01, FR-08 |
 | `scan.py` | Runs a scan: detect every fifth frame, read state, fingerprint, drop crops with a person in them, send `control.found`; then watch for flips and send `mapping.candidate` | FR-01, FR-02 |
+| `watch.py` | Watches the controls of `watch.set` at the current spot between scans and runs and sends `control.used` | FR-04 |
 | `orchestrator.py` | Runs one run from `run.start`: tries the wireless channels in the order given, then the press; sends `run.progress` and `run.result` | FR-07, FR-11 |
 | `verifier.py` | Decides each command's result: the platform's report or the camera check, with the second look after `unsure` | FR-08 |
 | `safety.py` | The gate before every movement: person or pet in the work area, risk, position reliable | FR-10 |
@@ -85,7 +86,7 @@ One FastAPI process with **one worker**: SQLite, the APScheduler jobs and the hu
 | `live.py` | WebSocket to the app: pushes new controls, mappings, routines, run progress | |
 | `hub_gateway.py` | WebSocket for the hub: checks the hub token, skips message `id`s already handled, sends each message to the module below, and sends `ack` after the commit | Hub messages |
 | `registry.py` | Same control or new one, finds or creates the device, creates and updates mappings | FR-01, FR-02 |
-| `routines.py` | Finds habits in `uses`, handles feedback and demotion | FR-04 |
+| `routines.py` | Writes `uses` from `control.used`, finds habits once a day, handles feedback and demotion, sends `watch.set` when the list changes | FR-04 |
 | `triggers.py` | Time triggers from APScheduler, sensor and routine triggers, merges duplicates within 10 s, opens a run | FR-05 |
 | `policy.py` | Act, ask or suggest from risk and confidence | FR-06, C-03 |
 | `runs.py` | Sends `run.start`, writes the run entry when `run.result` arrives, ends runs that never got one | FR-12, L-01 |

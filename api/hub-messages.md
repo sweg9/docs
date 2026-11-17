@@ -41,6 +41,8 @@ The hub never sends a whole frame. Before it sends a crop it runs the person det
 | hub to cloud | `control.found` | The detector finds a control | S1 |
 | hub to cloud | `scan.done` | The scan ends | S1 |
 | hub to cloud | `mapping.candidate` | A control changed and a device changed with it | S2 |
+| cloud to hub | `watch.set` | Which controls to watch for uses, or stop watching | S3 |
+| hub to cloud | `control.used` | The resident flipped a watched control | S3 |
 | cloud to hub | `run.start` | A run is decided as `act` | S4 |
 | hub to cloud | `run.progress` | Each step of the run | S5, S6 |
 | hub to cloud | `run.result` | The run ends, in any way | S7 |
@@ -136,6 +138,48 @@ The resident does not register devices by hand (proposal, section I-B, second pr
 
 The mapping card in the app shows the device it points to. The resident can rename the device, change its room or risk, or reject the mapping. A changed risk takes effect from the next run.
 
+## Uses for habits: S3
+
+A habit (FR-04) is the same device and action at about the same time on several days, so the cloud needs to know each time the resident uses a device by hand. While proactive features are on, the hub keeps watching the controls in view at the spot where the cart stands, between scans and runs. Frames stay on the hub; only the control and its new state go up (C-05).
+
+### `watch.set` (cloud to hub)
+
+The current list, sent whenever it changes: when the hub connects, when the resident turns proactive features on or off, when a mapping becomes `Verified`, `Stale` or `Rejected`, and when a run or a scan ends (the cart may stand somewhere else). Each `watch.set` replaces the last one.
+
+| Field | Type | Rule |
+|---|---|---|
+| `enabled` | boolean | `false` while proactive features are off or paused (C-05, C-06). Off until the resident turns them on |
+| `controls` | array | Controls with a `Verified` mapping: `control_id`, `kind`, `fingerprint`, `seen_spot_id`, `box` (last box at that spot) |
+
+```json
+{"enabled":true,"controls":[{"control_id":"ctl-0005","kind":"switch","fingerprint":["…"],"seen_spot_id":"living_wall_1","box":[0.42,0.31,0.51,0.44]}]}
+```
+
+The hub watches only the controls whose `seen_spot_id` is the spot where the cart stands now: the spot of the last scan, or the press spot of the last run.
+
+### Watching on the hub
+
+Every `watch.interval_s` (2 s) the hub takes a frame, re-finds each watched control near its box (the same check as before a press, FR-09), and reads its state (M-S1b). A flip counts when the new state is read the same way twice in a row, neither read is `unknown`, and it differs from the last state. The hub does not watch:
+
+- during a scan, which has its own watching for `mapping.candidate`;
+- during a run, and for `watch.quiet_s` (10 s) after it ends, so that the system's own presses are not counted as the resident's;
+- while `enabled` is `false`.
+
+### `control.used` (hub to cloud)
+
+| Field | Type | Rule |
+|---|---|---|
+| `control_id` | string | |
+| `before`, `after` | `on` `off` | The states read before and after the flip |
+| `at` | UTC ISO 8601 | The time of the first read of the new state |
+| `confidence` | number | The lower state confidence of the two reads |
+
+```json
+{"control_id":"ctl-0005","before":"off","after":"on","at":"2026-11-17T12:04:58.000Z","confidence":0.91}
+```
+
+The cloud writes one row in `uses` for each `Verified` mapping of the control, with `action` equal to `after`: a switch that is on means its device has power. No crop is sent.
+
 ## Runtime: S4 to S7
 
 ### `run.start` (cloud to hub)
@@ -216,6 +260,7 @@ The hub sends `STOP` to the RAL before it does anything else, then ends the curr
 | `ral` | object | `impl` (`linear_actuators` `unity_sim` `script`), `state` (`idle` `busy` `stopped` `error`) |
 | `run_id` | string or `null` | The run the hub holds |
 | `queued` | integer | Messages waiting to be sent after a reconnect |
+| `watching` | integer | Number of controls watched now; `0` when watching is off or no watched control is at this spot |
 
 The cloud marks the hub offline after 3 missed heartbeats and does not send `run.start` until it is back.
 
@@ -235,9 +280,10 @@ A WebSocket can drop a message that was written just before the connection broke
 
 | Message | Confirmed when | If no `ack` comes |
 |---|---|---|
-| `control.found`, `scan.done`, `mapping.candidate`, `run.result` (hub to cloud) | The cloud has committed the message and its `id` to the database in one transaction | The hub sends it again after the next reconnect |
+| `control.found`, `scan.done`, `mapping.candidate`, `control.used`, `run.result` (hub to cloud) | The cloud has committed the message and its `id` to the database in one transaction | The hub sends it again after the next reconnect |
 | `scan.start` (cloud to hub) | The hub has started the scan, or answered with `scan.done` and a `reason` | After 5 s the app shows that the scan did not start. Not sent again |
 | `run.start` (cloud to hub) | The hub holds the run, or has already answered it with `run.result` `cancelled` | The run stays open and the cloud waits for the hub's own word (see below). Not sent again |
+| `watch.set` (cloud to hub) | The hub has applied the list | Sent again when the hub reconnects, like every `watch.set`. It holds a state, not a command, so a late one does no harm |
 | `stop` (cloud to hub) | The hub's `ral.stop()` has returned | After 2 s the app says the stop was not confirmed and tells the resident to use the key on the hub or the power switch. Sent again at once if the hub reconnects, because a stop is always safe |
 | `run.progress`, `hub.status` | Never | Lost. Progress is only for the screen, and the next status replaces the last one |
 

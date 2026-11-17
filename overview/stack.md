@@ -83,7 +83,7 @@ The Unity simulator is a WebSocket client of the hub and uses the same messages 
 
 ## Hub to cloud messages
 
-JSON objects over the hub's WebSocket: a scan (`scan.start`, `control.found`, `scan.done`), a mapping candidate (`mapping.candidate`), a run (`run.start`, `run.progress`, `run.result`), the emergency `stop`, and the `hub.status` heartbeat. The payloads are in [Hub messages](/api/hub-messages).
+JSON objects over the hub's WebSocket: a scan (`scan.start`, `control.found`, `scan.done`), a mapping candidate (`mapping.candidate`), watching for uses (`watch.set`, `control.used`), a run (`run.start`, `run.progress`, `run.result`), the emergency `stop`, the `hub.status` heartbeat, and `ack`. The payloads are in [Hub messages](/api/hub-messages).
 
 ## Sign-in
 

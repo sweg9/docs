@@ -135,17 +135,20 @@ The Channel record of the data model. One row per device and channel that FR-03 
 
 ### `uses`
 
-Each time the resident is seen using a device by hand: a flip seen while watching, with a `Verified` mapping for that control. The habit finder of FR-04 reads this table.
+Each time the resident is seen using a device by hand, from `control.used` (see [Uses for habits](/api/hub-messages#uses-for-habits-s3)). The habit finder of FR-04 reads this table.
 
 | Column | Type | Rule |
 |---|---|---|
 | `use_id` | text, key | |
 | `device_id` | text → `devices` | |
-| `action` | `on` `off` | |
+| `control_id` | text → `controls` or null | Null for `seed` rows |
+| `action` | `on` `off` | The control's state after the flip |
 | `at` | time | |
 | `source` | `watch` `seed` | `seed` for rows the demo script adds |
 
-Runs started by the system are not uses; they are in `runs`.
+Runs started by the system are not uses; they are in `runs`. Rows older than 60 days are deleted.
+
+**Habit finder.** Once a day, at 04:00 local time, `routines.py` looks at the last 14 days of `uses` for each device and action. If uses fall within one 30-minute window of the day on at least 3 different days (FR-04), it creates a routine with `source: habit`, `time` set to the middle of the window, and the starting `independence` from the settings (`ask_first`), and tells the resident. It creates none if a routine for the same mapping and action already starts within that window, or if the resident removed one there in the last 30 days.
 
 ### `routines`
 
@@ -243,9 +246,3 @@ One row per signed-in app (see [Sign-in](./stack#sign-in)).
 - **Frames and video.** They never leave the hub.
 - **Spots and rooms.** `spot_id` and room names come from the hub settings file; the database keeps them as text.
 - **Hub status.** `hub.status` is kept in memory; after a cloud restart the hub counts as offline until its next heartbeat.
-
-## Open questions
-
-| Question | Why it matters |
-|---|---|
-| When the hub watches for uses outside a scan | `uses` only fills while the hub watches, and today it watches only after a scan (`watch_s`). Habits (FR-04) need watching through the day. Not needed for the demo, which builds its routine by hand |
