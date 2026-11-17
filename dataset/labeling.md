@@ -95,7 +95,7 @@ Photos show real wall switches, toggles and power strips in different places, fr
 
 | Field | Meaning |
 |---|---|
-| `kind` | The three detector classes: `switch` (wall switch), `toggle`, `power_strip`. Labels made before the proposal of November 2026 use the earlier five kinds (`switch`, `push_button`, `toggle`, `knob`, `remote`) and label power strip switches as `switch`; the team migrates them later. |
+| `kind` | The three detector classes: `switch` (wall switch), `toggle`, `power_strip`. A round push button or a touch point that switches a light is a `switch`. Dials and remotes get no box. Labels made before 2026-11-17 used five kinds and were moved: `push_button` became `switch`, `knob` and `remote` boxes were removed, power strip switches became `power_strip`. |
 | `press_action` | How the hand operates it: `press`, `flip`, `turn`. Press depth is set per kind |
 | `press_point` | The point to press, as ratios 0 to 1 of the image |
 | `press_side` | `upper` or `lower` for a rocker |

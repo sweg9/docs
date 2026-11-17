@@ -54,7 +54,7 @@ Runs the control detector on one frame. The hub decides which frames to pass (ev
 | `confidence` | number | The detector's score |
 | `reason` | string | `"switch found with score 0.91"` |
 
-Detections below `predict.conf` are dropped. The detector's classes become kinds through `kind_map` in the settings, and a class with no entry is dropped. detector-v1 still has five classes, so for now: `switch` → `switch`, `toggle` → `toggle`; `push_button`, `knob` and `remote` are dropped until the team decides (see [Open questions](#open-questions)).
+Detections below `predict.conf` are dropped. The detector's classes become kinds through `kind_map` in the settings, and a class with no entry is dropped. A model trained on the three kinds needs no map. detector-v1 was trained on five earlier classes, so while it is in use: `switch` and `push_button` → `switch`, `toggle` → `toggle`; `knob` and `remote` are dropped. It has no `power_strip` class and finds power strip switches as `switch`, as its training labels did.
 
 ### `read_state(crop, kind)` (FR-01)
 
@@ -159,7 +159,7 @@ New sections in `ai-engine`'s `settings.yaml`, next to the existing `detector` a
 
 | Key | Start | Used by |
 |---|---|---|
-| `detector.kind_map` | `{switch: switch, toggle: toggle}` | `detect_controls` |
+| `detector.kind_map` | For detector-v1: `{switch: switch, push_button: switch, toggle: toggle}` | `detect_controls` |
 | `detector.weights` | `models/detector-v1.pt` | `detect_controls` |
 | `state.weights`, `state.threshold` | none, 0.7 | `read_state` |
 | `clear.min_score`, `clear.min_sharpness` | 0.5, 80 | `is_clear` |
@@ -181,5 +181,4 @@ Model files used by the hub go in `models/` with a model card each (A-05); `runs
 
 | Question | Why it matters |
 |---|---|
-| What `push_button`, `knob` and `remote` from detector-v1 become | Until decided they are dropped. Power strips are labeled `switch` today and so are found as `switch` until the labels move to `power_strip` |
 | How fast the calls are on the hub's CPU | The detector on every fifth frame, fingerprints for each control and the check all share one CPU. To be measured on the demo laptop |
