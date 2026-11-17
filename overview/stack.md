@@ -93,9 +93,18 @@ JSON objects over the hub's WebSocket: a scan (`scan.start`, `control.found`, `s
 | Hub | `uv run` on the laptop, with the settings file that picks the RAL implementation |
 | Web app | Static build served by the cloud's Caddy |
 
+### Backups
+
+The cloud's SQLite file holds every mapping, routine and run, so it is backed up once a day at no cost.
+
+1. A cron job on EC2 runs `sqlite3 app.db ".backup backups/app-<date>.db"` at 18:00 UTC (03:00 KST). `.backup` gives a consistent copy while the API keeps writing in WAL mode. The job keeps the last 7 files and deletes older ones. The crops the cloud keeps are copied in the same job.
+2. Once a day, and each time the hub starts, the hub laptop copies the newest backup over `scp` into a local folder and keeps the last 7. A copy then exists even if the EC2 instance is lost.
+3. To restore, stop the cloud API, put the backup file in place of `app.db`, run `alembic upgrade head` in case the backup has an older schema, and start the API.
+
+No S3 bucket and no EBS snapshots, so backups cost nothing. Paths, times and the number of files kept are in the cloud settings file.
+
 ## Open questions
 
 | Question | Why it matters |
 |---|---|
 | Which Wi-Fi plug and IR blaster to support | Decides the adapter libraries. The demo device has no wireless channel (see the [live-demo plan](/live-demo/PLAN)), so none is bought for the demo, and the adapters are tested with stubs |
-| Backups: `data-model.md` says S3, the team does not use S3 | Decides how the SQLite file is backed up, for example EC2 snapshots |
