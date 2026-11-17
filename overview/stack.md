@@ -4,7 +4,7 @@
 A first proposal for the detailed stack. Library choices marked *proposed* are open until the demo devices are bought and the first measurements are in.
 :::
 
-The [architecture](./architecture) says what the parts are. This page says which machine runs each part, how the machines talk, and which libraries they use.
+The [architecture](./architecture) says what the parts are. This page says which machine runs each part, how the machines talk, and which libraries they use. The tables are in [Database](./database), and the code layout in [Modules](./modules).
 
 ## Two run modes of one backend
 
