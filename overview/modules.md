@@ -62,7 +62,7 @@ One Python process with `asyncio`. Camera capture runs in its own thread, and mo
 | `orchestrator.py` | Runs one run from `run.start`: tries the wireless channels in the order given, then the press; sends `run.progress` and `run.result` | FR-07, FR-11 |
 | `verifier.py` | Decides each command's result: the platform's report or the camera check, with the second look after `unsure` | FR-08 |
 | `safety.py` | The gate before every movement: person or pet in the work area, risk, position reliable | FR-10 |
-| `planner.py` | Re-finds the control at the press spot and picks the actuator and the push time. A simple script | FR-09 |
+| `press.py` | At the press spot: re-finds the control and gets a press plan from `ai-engine` (the motion planner lives there), runs the gate, presses through the RAL | FR-09, FR-11 |
 | `channels/` | `base.py` (`reachable`, `send`), `wifi.py`, `ir.py`, `bt.py`, `stub.py` | FR-03, FR-07 |
 | `ral/` | `base.py` (`go_to_spot`, `press`, `release`, `stop`), `linear_actuators.py` (serial), `unity_sim.py` (WebSocket), `script.py` | FR-11, C-13 |
 
@@ -93,26 +93,14 @@ One FastAPI process with **one worker**: SQLite, the APScheduler jobs and the hu
 
 ## What the hub needs from `ai-engine`
 
-The hub imports `ai_engine` as a package. Today `ai-engine` has only training code, so these functions are the interface it has to add. Each answer carries `confidence` and `reason` (A-02).
-
-| Function | Returns | Model |
-|---|---|---|
-| `detect_controls(frame)` | Boxes with kind and score | M-S1a |
-| `read_state(crop)` | `on`, `off` or `unknown` with confidence | M-S1b |
-| `is_clear(crop, score)` | Whether the crop is clear enough | Sharpness and score thresholds |
-| `fingerprint(crop)` | 384 numbers | DINOv2 small |
-| `detect_devices(region)` | Device type, box and score, or nothing | M-S2 |
-| `check_effect(before, after, device_type, action)` | `yes`, `no` or `unsure` | M-S5 |
-| `find_people(image)` | Boxes of people and pets | Pretrained YOLO, classes `person`, `cat`, `dog` |
-
-The model files and thresholds come from `ai-engine`'s own settings. The hub passes images and gets answers; it never loads a model itself.
+The hub imports `ai_engine` and calls one `Engine` object for every model step: detecting controls and devices, reading state, fingerprints, the change and effect checks, finding people, re-finding a control and planning a press (FR-09). The calls and their results are in [ai-engine interface](/api/ai-engine). The hub passes images and gets answers; it never loads a model itself.
 
 ## Tests
 
 | Folder | What | How |
 |---|---|---|
 | `tests/common` | Message and run entry models | Examples from the wiki pages must parse |
-| `tests/hub` | Orchestrator, verifier, safety, planner | Fake camera with recorded frames, `stub` channels, `script` RAL. No hardware |
+| `tests/hub` | Orchestrator, verifier, safety, press | Fake camera with recorded frames, `stub` channels, `script` RAL. No hardware |
 | `tests/cloud` | API, registry, policy, learning | SQLite in memory, a fake hub on the WebSocket |
 | `tests/contract` | Both modes against each other | A real hub and cloud in one test, with fakes for the camera and the RAL |
 
