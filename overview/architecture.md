@@ -31,19 +31,9 @@ Only small crops of controls and short notes go to the server. Both the edge hub
 
 ## Main flow
 
-```text
-camera ─────> recognition ──> Mapping Registry <──── learning
-                                    │                    ▲
-trigger ──> Routine Engine ──> Control Orchestrator ─────┤
-                                    │        │           │
-                              channel     Safety Guard   │
-                              adapters        │          │
-                                  │      motion planner  │
-                                  ▼           ▼          │
-                               device <── robot (RAL) ───┤
-                                  │                      │
-                                  └──> State Verifier ───┘
-```
+A trigger becomes a run on the server; the hub carries it out and checks it; the result goes back to learning. Wireless channels come first (1), the press only after them (2), and every press passes the Safety Guard. The numbers are the requirements.
+
+<ArchitectureDiagram />
 
 ## What the system remembers
 
