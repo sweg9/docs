@@ -84,6 +84,7 @@ export default defineConfig({
         items: [
           { text: 'Conventions', link: '/api/' },
           { text: 'backend-server', link: '/api/backend-server' },
+          { text: 'Hub messages', link: '/api/hub-messages' },
         ],
       },
       {

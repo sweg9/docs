@@ -12,8 +12,8 @@ The devices that the system operates can only be reached from inside the home. T
 
 | Mode | Runs on | Parts | Requirements |
 |---|---|---|---|
-| `hub` | The laptop at home | Camera capture, `ai-engine` (imported as a package), Control Orchestrator, channel adapters, Safety Guard, Robot Abstraction Layer, State Verifier | FR-01, FR-03, FR-06 to FR-11 |
-| `cloud` | AWS EC2 | Mapping Registry, Routine Engine, trigger scheduler, log, VLM calls, the API for the web app | FR-02, FR-04, FR-05, FR-12 |
+| `hub` | The laptop at home | Camera capture, `ai-engine` (imported as a package), Control Orchestrator, channel adapters, Safety Guard, Robot Abstraction Layer, State Verifier | FR-01, FR-03, FR-07 to FR-11 |
+| `cloud` | AWS EC2 | Mapping Registry, Routine Engine, trigger scheduler, autonomy policy, log, VLM calls, the API for the web app | FR-02, FR-04 to FR-06, FR-12 |
 
 The hub opens a WebSocket **out** to the cloud when it starts and keeps it open. The cloud sends commands down this connection, and the hub sends progress and results back up. The home router needs no port forwarding.
 
@@ -32,8 +32,8 @@ web app ──REST/WS──> cloud (EC2) ──VLM API──> cloud VLM
 
 ### One run, end to end
 
-1. The resident starts a routine in the web app, or the scheduler fires it. The cloud resolves the intent and the target device (FR-05).
-2. The cloud looks up the `Verified` mapping and sends `run.start` to the hub.
+1. The resident starts a routine in the web app, or the scheduler fires it. The cloud resolves the intent and the target device (FR-05) and decides act, ask or suggest (FR-06).
+2. If the decision is act, or the resident said yes, the cloud looks up the `Verified` mapping and sends `run.start` to the hub.
 3. The hub ranks the channels, sends the command, and checks the result (FR-07, FR-08). If wireless fails, it runs the Safety Guard and presses (FR-10, FR-11).
 4. The hub streams `run.progress` events and a final `run.result` to the cloud.
 5. The cloud writes the run to the log, updates scores and confidence (FR-12), and pushes the result to the web app.
@@ -84,20 +84,7 @@ The Unity simulator is a WebSocket client of the hub and uses the same messages 
 
 ## Hub to cloud messages
 
-JSON objects with `type`, `id`, `run_id` (when there is one), `sent_at` (UTC, ISO 8601) and `payload`.
-
-| Direction | `type` | Meaning |
-|---|---|---|
-| cloud to hub | `run.start` | Operate a device: mapping, action, device risk, channel scores |
-| cloud to hub | `stop` | Emergency stop. The hub sends `STOP` to the RAL at once |
-| cloud to hub | `scan.start` | Start S1 on the current camera view |
-| hub to cloud | `control.found` | A new control: kind, state, position, fingerprint, crop |
-| hub to cloud | `mapping.candidate` | A before-and-after result for S2 |
-| hub to cloud | `run.progress` | A step of a run: channel tried, safety check, press |
-| hub to cloud | `run.result` | The final result and the reason |
-| hub to cloud | `hub.status` | Heartbeat, camera and RAL health |
-
-The exact payloads go into the backend API spec when `backend-server` builds them.
+JSON objects over the hub's WebSocket: a scan (`scan.start`, `control.found`, `scan.done`), a mapping candidate (`mapping.candidate`), a run (`run.start`, `run.progress`, `check.ask`, `check.answer`, `run.result`), the emergency `stop`, and the `hub.status` heartbeat. The payloads are in [Hub messages](/api/hub-messages).
 
 ## Deployment
 
