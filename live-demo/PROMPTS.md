@@ -29,7 +29,7 @@ Intent (S4) comes from the routine, not a model. The motion planner (FR-09) is a
 | `unsure` from M-S5 | Check once more without operating the device. If it is still unsure, stop and let the resident choose | Follows FR-08 |
 | State `unknown` or not clear from M-S1b | Show the control as not clear yet | Skipped until a clearer frame is available |
 | No device found by M-S2 | Show the change without a device | The mapping stays `Pending` |
-| Hub cannot reach the cloud | Show the cause | The system only suggests |
+| Hub cannot reach the server | Show the cause | The system only suggests |
 
 ## 4. Evaluation
 

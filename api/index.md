@@ -8,7 +8,7 @@ Each service keeps its API as an OpenAPI 3.1 file. This wiki renders the file as
 |---|---|---|
 | backend-server | [Reference](./backend-server) · [`backend-server.yaml`](/api/backend-server.yaml){target="_blank"} | <Badge type="warning" text="draft" /> |
 
-Two contracts are not HTTP and have their own pages: the [hub messages](./hub-messages) between the hub and the cloud, and the [ai-engine interface](./ai-engine), the Python calls the hub makes.
+Two contracts are not HTTP and have their own pages: the [hub messages](./hub-messages) between the hub and the server, and the [ai-engine interface](./ai-engine), the Python calls the hub makes.
 
 ## Rules
 

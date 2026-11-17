@@ -73,7 +73,7 @@ A verified mapping can become a routine without waiting for approval. When the s
 
 ## FR-05 Trigger and intent
 
-Accept sensor, time and routine events as triggers and attach the situation: time, room, state of nearby devices. Each trigger starts one run with its own ID. The Routine Engine takes the intent and the target device from the routine that fired, and computes a confidence value. If the hub cannot reach the cloud, the system does not act and only suggests.
+Accept sensor, time and routine events as triggers and attach the situation: time, room, state of nearby devices. Each trigger starts one run with its own ID. The Routine Engine takes the intent and the target device from the routine that fired, and computes a confidence value. If the hub cannot reach the server, the system does not act and only suggests.
 
 | How | Value |
 |---|---|

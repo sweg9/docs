@@ -1,17 +1,17 @@
 # Database
 
 ::: warning Draft
-A first proposal for the cloud's tables. `backend-server` owns the schema; Alembic migrations are the source, and this page follows them once they exist.
+A first proposal for the server's tables. `backend-server` owns the schema; Alembic migrations are the source, and this page follows them once they exist.
 :::
 
-The cloud keeps everything the system remembers (see [What the system remembers](./architecture#what-the-system-remembers)) in one SQLite file, `app.db`, in WAL mode. The hub keeps no database: it gets what a run needs in `run.start` (see [Hub messages](/api/hub-messages)). Field names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
+The server keeps everything the system remembers (see [What the system remembers](./architecture#what-the-system-remembers)) in one SQLite file, `app.db`, in WAL mode. The hub keeps no database: it gets what a run needs in `run.start` (see [Hub messages](/api/hub-messages)). Field names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
 
 ## Rules for every table
 
 - **Identifiers** are text: a prefix and a ULID, for example `ctl_01JD3Q…`. They sort by creation time and are never reused. Prefixes: `ctl` control, `dev` device, `mp` mapping, `rt` routine, `r` run, `sc` scan, `cr` crop, `use` use, `fb` feedback.
-- **Times** are text, UTC ISO 8601 with milliseconds. The one exception is a routine's time of day, which is local time (`"21:00"`); the time zone is in the cloud settings file (`Asia/Seoul`).
+- **Times** are text, UTC ISO 8601 with milliseconds. The one exception is a routine's time of day, which is local time (`"21:00"`); the time zone is in the server settings file (`Asia/Seoul`).
 - **Enumerations** are text with a `CHECK` constraint that lists the exact values of the data model.
-- **Lists and small objects** (a box, a point, a list of actions) are JSON text. Anything the cloud searches or joins on is a real column.
+- **Lists and small objects** (a box, a point, a list of actions) are JSON text. Anything the server searches or joins on is a real column.
 - **Foreign keys** are on (`PRAGMA foreign_keys = ON`). Nothing is deleted with `CASCADE`: records that a run refers to are kept, and a removed routine is only marked `removed_at`.
 - **Every number** that the code compares against (thresholds, weights, the number of days for a habit) is in the settings file, not in a table.
 
@@ -78,7 +78,7 @@ Crops are never shown in the log (L-07); a run names a crop only by `crop_id`. A
 | `seen_at` | time | |
 | `created_at` | time | |
 
-**Same control or new one.** On `control.found` the cloud compares the fingerprint with every saved control of the same `kind` (cosine similarity, in Python; a home has tens of controls, so no vector index is needed). Above the threshold in the settings file, it updates that row. Otherwise it inserts a new one. If the best match is close but its `panel_point` moved more than the set distance, the control's `Verified` mappings become `Stale` (FR-02).
+**Same control or new one.** On `control.found` the server compares the fingerprint with every saved control of the same `kind` (cosine similarity, in Python; a home has tens of controls, so no vector index is needed). Above the threshold in the settings file, it updates that row. Otherwise it inserts a new one. If the best match is close but its `panel_point` moved more than the set distance, the control's `Verified` mappings become `Stale` (FR-02).
 
 ### `devices`
 
@@ -129,7 +129,7 @@ The Channel record of the data model. One row per device and channel that FR-03 
 | `tries` | integer | |
 | `updated_at` | time | |
 
-`run.start` lists the device's wireless rows, best first; `ARM` is never listed (see [`run.start`](/api/hub-messages#run-start-cloud-to-hub)).
+`run.start` lists the device's wireless rows, best first; `ARM` is never listed (see [`run.start`](/api/hub-messages#run-start-server-to-hub)).
 
 ## Routines: S3 and S4
 
@@ -180,7 +180,7 @@ Every answer from the resident, kept as it was given. `confidence` in a run (FR-
 
 ## Runs: S4 to S7
 
-A run has two parts in the database. While it is going on, it is a row in `open_runs`. When `run.result` arrives (or the cloud cancels it), the cloud writes the full [run entry](/standards/execution-log) to `runs` and deletes the `open_runs` row in the same transaction.
+A run has two parts in the database. While it is going on, it is a row in `open_runs`. When `run.result` arrives (or the server cancels it), the server writes the full [run entry](/standards/execution-log) to `runs` and deletes the `open_runs` row in the same transaction.
 
 ### `open_runs`
 
@@ -197,7 +197,7 @@ A run has two parts in the database. While it is going on, it is a row in `open_
 | `started_at` | time | |
 | `dedup_key` | text | Trigger and routine; a second trigger with the same key within 10 s joins this run (FR-05) |
 
-When the cloud starts, it ends every row still in `waiting_answer` as `cancelled`, `reason: "cloud restarted"`: the resident's answer may come too late. Rows in `sent` or `running` wait for the hub, as [How the cloud ends a run](/api/hub-messages#how-the-cloud-ends-a-run) says.
+When the server starts, it ends every row still in `waiting_answer` as `cancelled`, `reason: "server restarted"`: the resident's answer may come too late. Rows in `sent` or `running` wait for the hub, as [How the server ends a run](/api/hub-messages#how-the-server-ends-a-run) says.
 
 ### `runs`
 
@@ -245,4 +245,4 @@ One row per signed-in app (see [Sign-in](./stack#sign-in)).
 
 - **Frames and video.** They never leave the hub.
 - **Spots and rooms.** `spot_id` and room names come from the hub settings file; the database keeps them as text.
-- **Hub status.** `hub.status` is kept in memory; after a cloud restart the hub counts as offline until its next heartbeat.
+- **Hub status.** `hub.status` is kept in memory; after a server restart the hub counts as offline until its next heartbeat.

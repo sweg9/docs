@@ -68,7 +68,7 @@ The starting thresholds are 0.8 (high) and 0.5 (low). If the resident keeps reje
 
 ## Privacy
 
-Frames are processed at the edge, inside the home. Only small crops of controls and short notes go to the cloud. Proactive features stay off until the resident turns them on.
+Frames are processed at the edge, inside the home. Only small crops of controls and short notes go to the server, which also runs on the laptop at home, so nothing leaves the home (decision of 2026-11-17; the proposal puts the server on AWS). Proactive features stay off until the resident turns them on.
 
 ## Where to go next
 

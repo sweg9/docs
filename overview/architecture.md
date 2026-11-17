@@ -5,12 +5,13 @@
 | Place | What runs there |
 |---|---|
 | Edge hub (inside the home, Python) | Camera capture, all recognition (control detector, state classifier, device detector, result check), channel adapters (IR, Wi-Fi, Bluetooth), control of the hand through the Robot Abstraction Layer, Safety Guard. Video never leaves the hub |
-| Backend (AWS EC2, FastAPI) | Mapping Registry, routines and the log (SQLite in the prototype) |
+| Server (the laptop at home, FastAPI on k8s) | Mapping Registry, routines and the log (SQLite in the prototype). The proposal puts it on AWS EC2; the team keeps it at home for privacy |
+| Logging (Loki and Grafana on k8s) | The operational logs of the hub and the server, for finding faults. The run log of FR-12 stays in the database |
 | Private GitHub repository | Photo dataset, trained detector |
 | Web app (React, TypeScript) | The resident's screens: mappings, routine feedback, log, notifications, emergency stop |
 | Robot or simulator | In the prototype, 12 V linear actuators on a wheeled cart that a team member pushes to each spot. An Arduino Nano takes push and release commands from the hub over USB and drives a BTS7960 motor driver; a 12 V 2 A adapter powers them. Or the Unity simulator or a simple script. All behind the RAL, so a general-purpose home robot can replace them later |
 
-Only small crops of controls and short notes go to the cloud. Both the edge hub and the backend run from the `backend-server` repository, in its `hub` and `cloud` modes; the hub keeps a WebSocket open to the backend. See [Stack](./stack) for the libraries and messages.
+Only small crops of controls and short notes go to the server. Both the edge hub and the backend run from the `backend-server` repository, in its `hub` and `server` modes, on the same laptop; the hub keeps a WebSocket open to the server. See [Stack](./stack) for the libraries and messages.
 
 ## Main parts
 

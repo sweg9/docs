@@ -64,7 +64,7 @@ The team member who pushes the cart steps out of the actuators' work area before
 
 | Failure | How to create it (proposed) |
 |---|---|
-| Cloud not reachable | Disconnect the network. The system only suggests (FR-05) |
+| Server not reachable | Stop the server's pod. The system only suggests (FR-05) |
 | Wrong mapping | Move a control or change how it looks. The mapping becomes `Stale` (FR-02) |
 
 ## 7. Scope

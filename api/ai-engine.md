@@ -79,7 +79,7 @@ Detections below `predict.conf` are dropped. The detector's classes become kinds
 | `vector` | 384 numbers | Normalized to length 1, so the cosine similarity is a dot product |
 | `model` | string | Model file, so fingerprints of different models are never compared |
 
-`Fingerprint.similarity(other)` returns the cosine similarity and raises `ValueError` if the models differ. The cloud compares stored fingerprints itself (see [Database](/overview/database#controls)) with the same formula and does not import `ai_engine`.
+`Fingerprint.similarity(other)` returns the cosine similarity and raises `ValueError` if the models differ. The server compares stored fingerprints itself (see [Database](/overview/database#controls)) with the same formula and does not import `ai_engine`.
 
 ### `measure_change(before, after)` (FR-02)
 

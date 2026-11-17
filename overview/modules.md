@@ -4,28 +4,31 @@
 A first proposal for the layout of the `backend-server` repository. The repository owns its layout and changes this page as it is built.
 :::
 
-[Stack](./stack) says that `backend-server` runs in two modes, `hub` and `cloud`. This page says how the code is split so that both modes live in one repository without getting in each other's way, and which module serves which requirement.
+[Stack](./stack) says that `backend-server` runs in two modes, `hub` and `server`. This page says how the code is split so that both modes live in one repository without getting in each other's way, and which module serves which requirement.
 
 ## Layout
 
 ```text
 backend-server/
 ├── pyproject.toml          uv project; the hub extra pulls in ai-engine
+├── Dockerfile              the server image (no YOLO, no PyTorch)
 ├── settings/
-│   ├── hub.yaml            spots, rooms, RAL choice, camera, time limits
-│   ├── cloud.yaml          thresholds, weights, habit rule, backup, time zone
+│   ├── hub.yaml            spots, rooms, RAL choice, camera, time limits, log file
+│   ├── server.yaml         thresholds, weights, habit rule, backup, time zone
 │   └── risk.yaml           risk sorting of device types (FR-06)
 ├── src/backend/
-│   ├── cli.py              `backend hub`, `backend cloud`, `backend export-runs`, `backend seed-demo`, `backend hash-password`
+│   ├── cli.py              `backend hub`, `backend server`, `backend backup`, `backend export-runs`,
+│   │                       `backend seed-demo`, `backend hash-password`
 │   ├── common/             used by both modes
-│   ├── hub/                runs on the laptop
-│   └── cloud/              runs on EC2
-├── migrations/             Alembic, cloud only
+│   ├── hub/                runs on the laptop itself
+│   └── server/             runs as a pod on k8s
+├── migrations/             Alembic, server only
+├── deploy/
+│   ├── k3d.yaml            the one-node cluster: port 443, the data folders
+│   └── k8s/                kustomization: namespaces, server, web, backup, ingress, logging
 ├── firmware/               Arduino sketch for the actuators
-├── scripts/                backup.sh (EC2 cron), pull_backup.sh (hub)
-├── deploy/                 Dockerfile, compose.yaml, Caddyfile
 └── tests/
-    ├── common/  hub/  cloud/
+    ├── common/  hub/  server/
     └── contract/           hub messages and the OpenAPI spec
 ```
 
@@ -33,11 +36,11 @@ backend-server/
 
 | Module | May import | Never imports |
 |---|---|---|
-| `common` | Pydantic, the standard library | `hub`, `cloud`, `ai_engine` |
-| `hub` | `common`, `ai_engine` | `cloud` |
-| `cloud` | `common` | `hub`, `ai_engine` |
+| `common` | Pydantic, the standard library | `hub`, `server`, `ai_engine` |
+| `hub` | `common`, `ai_engine` | `server` |
+| `server` | `common` | `hub`, `ai_engine` |
 
-The two modes talk only through the [hub messages](/api/hub-messages), whose models are in `common`. So the cloud image needs no YOLO and no PyTorch and stays small, and the hub can be tested without a database. A test in `tests/` checks the rules with `import-linter`.
+The two modes talk only through the [hub messages](/api/hub-messages), whose models are in `common`. So the server image needs no YOLO and no PyTorch and stays small, and the hub can be tested without a database. A test in `tests/` checks the rules with `import-linter`.
 
 ## `common`
 
@@ -56,7 +59,7 @@ One Python process with `asyncio`. Camera capture runs in its own thread, and mo
 | Module | Job | Requirement |
 |---|---|---|
 | `main.py` | Starts the parts below from `hub.yaml` | |
-| `link.py` | WebSocket client to the cloud: connect, reconnect, `hub.status` every 5 s, the outbox file, and `ack`s for the cloud's messages ([Delivery](/api/hub-messages#delivery)) | Hub messages |
+| `link.py` | WebSocket client to the server: connect, reconnect, `hub.status` every 5 s, the outbox file, and `ack`s for the server's messages ([Delivery](/api/hub-messages#delivery)) | Hub messages |
 | `camera.py` | Reads the webcam, keeps the newest frame and a short history for before and after crops | FR-01, FR-08 |
 | `scan.py` | Runs a scan: detect every fifth frame, read state, fingerprint, drop crops with a person in them, send `control.found`; then watch for flips and send `mapping.candidate` | FR-01, FR-02 |
 | `watch.py` | Watches the controls of `watch.set` at the current spot between scans and runs and sends `control.used` | FR-04 |
@@ -73,9 +76,9 @@ One Python process with `asyncio`. Camera capture runs in its own thread, and mo
 
 **`go_to_spot` in the prototype.** `linear_actuators.py` sends a `run.progress` with `step: move` and waits until the presenter confirms in the app that the cart is in place.
 
-## `cloud`
+## `server`
 
-One FastAPI process with **one worker**: SQLite, the APScheduler jobs and the hub's WebSocket all live in that process, and a second worker would run every scheduled trigger twice.
+One FastAPI process with **one worker**, in one pod: SQLite, the APScheduler jobs and the hub's WebSocket all live in that process, and a second worker or pod would run every scheduled trigger twice. It logs JSON lines to stdout (see [Logging](./stack#logging)) and answers `GET /healthz` for Kubernetes.
 
 | Module | Job | Requirement |
 |---|---|---|
@@ -103,7 +106,7 @@ The hub imports `ai_engine` and calls one `Engine` object for every model step: 
 |---|---|---|
 | `tests/common` | Message and run entry models | Examples from the wiki pages must parse |
 | `tests/hub` | Orchestrator, verifier, safety, press | Fake camera with recorded frames, `stub` channels, `script` RAL. No hardware |
-| `tests/cloud` | API, registry, policy, learning | SQLite in memory, a fake hub on the WebSocket |
-| `tests/contract` | Both modes against each other | A real hub and cloud in one test, with fakes for the camera and the RAL |
+| `tests/server` | API, registry, policy, learning | SQLite in memory, a fake hub on the WebSocket |
+| `tests/contract` | Both modes against each other | A real hub and server in one test, with fakes for the camera and the RAL |
 
 Every test names its requirement with `@pytest.mark.fr("FR-07")` (C-01). The `check-fr-coverage` skill reads these marks.

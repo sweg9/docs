@@ -49,14 +49,14 @@ Priority is M (must), S (should) or C (could).
 | LD-18 | Show every run, including cancelled ones, in plain language, and export the log to a file | M | All | FR-12 | End-to-end run |
 | LD-19 | Keep proactive features off until the resident turns them on, and allow pausing them at any time | M | All | Proposal, Section I.C | Pause test |
 | LD-20 | Show a setup guide | S | Setup | Proposal, Roles | Walkthrough |
-| LD-21 | Show the cause when the server, cloud or camera connection drops, without freezing the screen | M | All | FR-05 | Connection cut test |
+| LD-21 | Show the cause when the hub, server or camera connection drops, without freezing the screen | M | All | FR-05 | Connection cut test |
 | LD-22 | Ask for the password before any other screen, and let the resident sign out (see [Sign-in](/overview/stack#sign-in)) | M | All | C-10 | Sign-in test |
 
 ## 4. Quality checks
 
 | Item | Rule | How to check |
 |---|---|---|
-| Privacy | Video stays on the edge hub, and only crops and short notes go to the cloud. The front end calls only `backend-server` | Inspect browser and server request records |
+| Privacy | Video stays on the edge hub, only crops and short notes go to the server, and nothing leaves the home. The front end calls only `backend-server` | Inspect browser and server request records |
 | Emergency stop | The button sends the stop at once, which turns off the actuators' motors (FR-10) | Stop test |
 | Explanations | What the screen shows matches the log | Compare screen and log |
 | Live updates | New controls, routines and run progress appear without a reload | Scenario 1 and 3 |

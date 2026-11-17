@@ -3,10 +3,12 @@ info:
   title: backend-server
   version: 0.3.0
   x-status: draft
-  description: API between the resident's web app and the backend (FastAPI). Draft derived from the proposal, section IV-A. Live updates are pushed over a WebSocket.
+  description: API between the resident's web app and the backend server (FastAPI), both on the laptop at home. Draft derived from the proposal, section IV-A. Live updates are pushed over a WebSocket.
 servers:
+  - url: https://sweg9.localhost/api
+    description: The k3d cluster on the laptop at home, through the ingress
   - url: http://localhost:8000
-    description: local
+    description: The server run directly, for tests
 security:
   - session: []
 tags:
