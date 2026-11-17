@@ -38,7 +38,7 @@ web app ──REST/WS──> cloud (EC2)
 4. The hub streams `run.progress` events and a final `run.result` to the cloud.
 5. The cloud writes the run to the log, updates scores and confidence (FR-12), and pushes the result to the web app.
 
-If the connection drops, the hub finishes or cancels the run it holds and keeps its events in a local queue until it reconnects. The cloud never treats a run as successful without a `run.result`.
+If the connection drops, the hub finishes or cancels the run it holds and keeps its messages in an outbox file until the cloud confirms them with `ack`. The cloud never treats a run as successful without a `run.result`, and never sends a command twice (see [Delivery](/api/hub-messages#delivery)).
 
 ## Libraries
 

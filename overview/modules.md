@@ -56,7 +56,7 @@ One Python process with `asyncio`. Camera capture runs in its own thread, and mo
 | Module | Job | Requirement |
 |---|---|---|
 | `main.py` | Starts the parts below from `hub.yaml` | |
-| `link.py` | WebSocket client to the cloud: connect, reconnect, `hub.status` every 5 s, and an outbox file for messages while offline | Hub messages |
+| `link.py` | WebSocket client to the cloud: connect, reconnect, `hub.status` every 5 s, the outbox file, and `ack`s for the cloud's messages ([Delivery](/api/hub-messages#delivery)) | Hub messages |
 | `camera.py` | Reads the webcam, keeps the newest frame and a short history for before and after crops | FR-01, FR-08 |
 | `scan.py` | Runs a scan: detect every fifth frame, read state, fingerprint, drop crops with a person in them, send `control.found`; then watch for flips and send `mapping.candidate` | FR-01, FR-02 |
 | `orchestrator.py` | Runs one run from `run.start`: tries the wireless channels in the order given, then the press; sends `run.progress` and `run.result` | FR-07, FR-11 |
@@ -83,7 +83,7 @@ One FastAPI process with **one worker**: SQLite, the APScheduler jobs and the hu
 | `api/` | One router per tag of the [API](/api/backend-server): `controls`, `devices`, `mappings`, `routines`, `runs`, `safety` | |
 | `auth.py` | Password check, sessions, the `401` for every route but `POST /login`, the login limit, the hub token check | Sign-in |
 | `live.py` | WebSocket to the app: pushes new controls, mappings, routines, run progress | |
-| `hub_gateway.py` | WebSocket for the hub: checks the hub token, skips message `id`s already handled, sends each message to the module below | Hub messages |
+| `hub_gateway.py` | WebSocket for the hub: checks the hub token, skips message `id`s already handled, sends each message to the module below, and sends `ack` after the commit | Hub messages |
 | `registry.py` | Same control or new one, finds or creates the device, creates and updates mappings | FR-01, FR-02 |
 | `routines.py` | Finds habits in `uses`, handles feedback and demotion | FR-04 |
 | `triggers.py` | Time triggers from APScheduler, sensor and routine triggers, merges duplicates within 10 s, opens a run | FR-05 |
@@ -106,9 +106,3 @@ The hub imports `ai_engine` and calls one `Engine` object for every model step: 
 | `tests/contract` | Both modes against each other | A real hub and cloud in one test, with fakes for the camera and the RAL |
 
 Every test names its requirement with `@pytest.mark.fr("FR-07")` (C-01). The `check-fr-coverage` skill reads these marks.
-
-## Open questions
-
-| Question | Why it matters |
-|---|---|
-| Whether the outbox needs acknowledgements | A message written into the socket just before it drops can be lost. For now, a run without `run.result` ends as `cancelled` on the cloud after its time limit |

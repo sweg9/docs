@@ -190,11 +190,11 @@ A run has two parts in the database. While it is going on, it is a row in `open_
 | `action` | `on` `off` | |
 | `decision` | `act` `ask` `suggest` | |
 | `confidence`, `risk` | | As decided at the start |
-| `phase` | `waiting_answer` `sent` | `waiting_answer` while an `ask` waits for the resident; `sent` once `run.start` went to the hub |
+| `phase` | `waiting_answer` `sent` `running` | `waiting_answer` while an `ask` waits for the resident; `sent` once `run.start` went to the hub; `running` once the hub's `ack` for it came |
 | `started_at` | time | |
 | `dedup_key` | text | Trigger and routine; a second trigger with the same key within 10 s joins this run (FR-05) |
 
-When the cloud starts, it ends every `open_runs` row older than the run time limit in the settings as `cancelled`, `reason: "cloud restarted"`, unless the hub's `run.result` for it arrives first.
+When the cloud starts, it ends every row still in `waiting_answer` as `cancelled`, `reason: "cloud restarted"`: the resident's answer may come too late. Rows in `sent` or `running` wait for the hub, as [How the cloud ends a run](/api/hub-messages#how-the-cloud-ends-a-run) says.
 
 ### `runs`
 
@@ -220,7 +220,7 @@ Learning (FR-12) runs in the same transaction as the insert: it updates `channel
 
 ### `hub_messages`
 
-The `id` of every hub message already handled, so a message resent after a reconnect is handled once. Columns: `id` (key), `type`, `received_at`. Rows older than 1 day are deleted.
+The `id` of every hub message already handled, so a message resent after a reconnect is handled once. Columns: `id` (key), `type`, `received_at`. Rows older than 7 days are deleted; the hub drops outbox messages older than that (see [Delivery](/api/hub-messages#delivery)).
 
 ### `app_state`
 

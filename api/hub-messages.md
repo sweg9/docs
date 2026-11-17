@@ -46,6 +46,7 @@ The hub never sends a whole frame. Before it sends a crop it runs the person det
 | hub to cloud | `run.result` | The run ends, in any way | S7 |
 | cloud to hub | `stop` | Emergency stop | Any |
 | hub to cloud | `hub.status` | Every 5 s | Any |
+| both | `ack` | A message was handled (see [Delivery](#delivery)) | Any |
 
 `scan.done` is new compared with the first list in [Stack](/overview/stack): the app needs it to know when a scan is over. All recognition and every camera check run on the hub (see [Models](/product/models)), so no message asks the cloud to look at a picture.
 
@@ -218,10 +219,48 @@ The hub sends `STOP` to the RAL before it does anything else, then ends the curr
 
 The cloud marks the hub offline after 3 missed heartbeats and does not send `run.start` until it is back.
 
+## Delivery
+
+A WebSocket can drop a message that was written just before the connection broke, and either side can restart. So the messages that change a record are confirmed with `ack`, and only the hub ever sends a message again.
+
+### `ack` (both directions)
+
+| Field | Type | Rule |
+|---|---|---|
+| `ids` | array of strings | The `id`s of the messages handled since the last `ack`. A side may collect them for up to 200 ms and send one `ack` |
+
+`ack` itself is never confirmed.
+
+### Which messages are confirmed
+
+| Message | Confirmed when | If no `ack` comes |
+|---|---|---|
+| `control.found`, `scan.done`, `mapping.candidate`, `run.result` (hub to cloud) | The cloud has committed the message and its `id` to the database in one transaction | The hub sends it again after the next reconnect |
+| `scan.start` (cloud to hub) | The hub has started the scan, or answered with `scan.done` and a `reason` | After 5 s the app shows that the scan did not start. Not sent again |
+| `run.start` (cloud to hub) | The hub holds the run, or has already answered it with `run.result` `cancelled` | The run stays open and the cloud waits for the hub's own word (see below). Not sent again |
+| `stop` (cloud to hub) | The hub's `ral.stop()` has returned | After 2 s the app says the stop was not confirmed and tells the resident to use the key on the hub or the power switch. Sent again at once if the hub reconnects, because a stop is always safe |
+| `run.progress`, `hub.status` | Never | Lost. Progress is only for the screen, and the next status replaces the last one |
+
+**Why the cloud does not send `run.start` again.** A command that arrives late would switch a device at a moment the resident did not choose. The hub cancels a run it cannot report anyway (`reason: "cloud not reached"`), so a run is started by the cloud once or not at all.
+
+### The hub's outbox
+
+The hub appends every message that needs an `ack` to `outbox.jsonl` in its data folder before it sends it, and removes it when the `ack` arrives. After a reconnect, or after the hub restarts, it sends what is left in the original order. `hub.status.queued` is the number of messages in the file. Messages older than 7 days are dropped with a warning in the hub's own log, because the cloud forgets handled `id`s after 7 days.
+
+### How the cloud ends a run
+
+The cloud closes a run that went to the hub only from the hub's own word:
+
+1. `run.result` arrives: the run entry is written as usual.
+2. The hub reconnects, its outbox is empty (`queued: 0`), and its `run_id` is not this run: the hub never got `run.start`, or its result is lost with its outbox file. If the cloud had an `ack` for `run.start`, the run ends as `unsure`, `reason: "the hub's result was lost; check the device"`, and the resident chooses what to do (C-09). Otherwise it ends as `cancelled`, `reason: "the hub did not get the start"`.
+
+While the hub stays offline, the run stays open and the app shows the hub as offline. A run is never closed as `success` by the cloud alone.
+
 ## When the connection drops
 
 | Situation | Hub | Cloud |
 |---|---|---|
-| During a scan | Ends the scan, queues its messages | Shows the scan as interrupted until `scan.done` arrives |
-| During a run, before a press | Cancels the run: `reason: "cloud not reached"` | Never counts the run as successful without `run.result` |
-| After reconnect | Sends the queue in order | Ignores `id`s it has already handled |
+| During a scan | Ends the scan; its messages wait in the outbox | Shows the scan as interrupted until `scan.done` arrives |
+| During a run, before a press | Cancels the run: `reason: "cloud not reached"` | Keeps the run open (see [How the cloud ends a run](#how-the-cloud-ends-a-run)) |
+| During a run, after the press started | Finishes the press and the check; `run.result` waits in the outbox | Keeps the run open |
+| After reconnect | Sends the outbox in order, then `hub.status` | Handles each message once, by its `id`, and answers with `ack` |
