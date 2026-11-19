@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: sweg9 Docs
+  name: NOVA Docs
   text: Development wiki
   tagline: 'NOVA: Non-connected Object Vision and Actuation for Smart Home Routines. Requirements, architecture, API specs, standards and papers in one place.'
   image:
