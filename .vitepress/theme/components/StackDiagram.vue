@@ -2,7 +2,7 @@
      Icons: Simple Icons 13.21.0 (CC0; the logos stay their owners' trademarks) and Lucide 0.460.0 (ISC). -->
 <template>
   <figure class="stack-diagram">
-    <svg viewBox="0 0 720 764" role="img" aria-labelledby="sd-title sd-desc">
+    <svg viewBox="0 0 760 926" role="img" aria-labelledby="sd-title sd-desc">
       <title id="sd-title">Where each part runs</title>
       <desc id="sd-desc">
         One laptop at home runs a k3d cluster with the server, backup, ingress and logging, and the hub process
@@ -37,119 +37,123 @@
       </defs>
 
       <!-- laptop -->
-      <rect class="sd-zone" x="10" y="10" width="700" height="576" rx="14" />
-      <text class="sd-zone-label" x="26" y="34">Laptop at home · nothing leaves the home</text>
-      <rect class="sd-box" x="30" y="52" width="150" height="52" rx="8" />
-      <use href="#sd-l-globe" class="sd-line-icon" x="42" y="67" width="22" height="22" />
-      <text class="sd-title" x="72" y="74">Browser</text>
-      <text class="sd-sub" x="72" y="91">the resident</text>
-      <!-- k3d cluster -->
-      <rect class="sd-group" x="30" y="118" width="670" height="330" rx="10" />
-      <use href="#sd-i-kubernetes" class="sd-brand sd-c-kubernetes" x="446" y="124" width="20" height="20" />
-      <use href="#sd-i-docker" class="sd-brand sd-c-docker" x="470" y="124" width="20" height="20" />
-      <text class="sd-group-label" x="686" y="140" text-anchor="end">k3d cluster (k3s in Docker)</text>
-      <rect class="sd-ns" x="44" y="150" width="642" height="150" rx="8" />
-      <text class="sd-ns-label" x="672" y="167" text-anchor="end">namespace sweg9</text>
-      <rect class="sd-box" x="58" y="176" width="150" height="52" rx="8" />
-      <use href="#sd-i-traefikproxy" class="sd-brand sd-c-traefikproxy" x="70" y="191" width="22" height="22" />
-      <text class="sd-title" x="100" y="198">Ingress</text>
-      <text class="sd-sub" x="100" y="215">Traefik · TLS</text>
-      <rect class="sd-box sd-strong" x="248" y="176" width="214" height="52" rx="8" />
-      <use href="#sd-i-fastapi" class="sd-brand sd-c-fastapi" x="260" y="191" width="22" height="22" />
-      <use href="#sd-i-sqlite" class="sd-brand sd-c-sqlite" x="286" y="191" width="22" height="22" />
-      <text class="sd-title" x="316" y="198">server · 1 pod</text>
-      <text class="sd-sub" x="316" y="215">FastAPI · SQLite</text>
-      <rect class="sd-box" x="478" y="176" width="194" height="52" rx="8" />
-      <use href="#sd-l-clock" class="sd-line-icon" x="490" y="191" width="22" height="22" />
-      <text class="sd-title" x="520" y="198">backup · CronJob</text>
-      <text class="sd-sub" x="520" y="215">daily 03:00 Seoul</text>
-      <rect class="sd-box sd-planned" x="58" y="240" width="150" height="48" rx="8" />
-      <use href="#sd-i-nginx" class="sd-brand sd-c-nginx" x="70" y="253" width="22" height="22" />
-      <text class="sd-title" x="100" y="260">web</text>
-      <text class="sd-sub" x="100" y="277">nginx · app</text>
-      <rect class="sd-ns" x="44" y="314" width="642" height="120" rx="8" />
-      <text class="sd-ns-label" x="672" y="331" text-anchor="end">namespace logging</text>
-      <rect class="sd-box" x="268" y="344" width="124" height="52" rx="8" />
-      <use href="#sd-i-grafana" class="sd-brand sd-c-grafana" x="280" y="359" width="22" height="22" />
-      <text class="sd-title" x="310" y="366">Grafana</text>
-      <text class="sd-sub" x="310" y="383">dashboards</text>
-      <rect class="sd-box" x="410" y="344" width="124" height="52" rx="8" />
-      <use href="#sd-l-scroll-text" class="sd-line-icon" x="422" y="359" width="22" height="22" />
-      <text class="sd-title" x="452" y="366">Loki</text>
-      <text class="sd-sub" x="452" y="383">14 days</text>
-      <rect class="sd-box" x="552" y="344" width="120" height="52" rx="8" />
-      <use href="#sd-l-filter" class="sd-line-icon" x="564" y="359" width="22" height="22" />
-      <text class="sd-title" x="594" y="366">Alloy</text>
-      <text class="sd-sub" x="594" y="383">log agent</text>
+      <rect class="sd-zone" x="10" y="10" width="740" height="696" rx="14" />
+      <text class="sd-zone-label" x="26" y="36">Laptop at home · nothing leaves the home</text>
+      <rect class="sd-box" x="64" y="54" width="150" height="56" rx="8" />
+      <use href="#sd-l-globe" class="sd-line-icon" x="76" y="71" width="22" height="22" />
+      <text class="sd-title" x="106" y="79">Browser</text>
+      <text class="sd-sub" x="106" y="97">the resident</text>
+
+      <rect class="sd-group" x="30" y="136" width="700" height="378" rx="10" />
+      <use href="#sd-i-kubernetes" class="sd-brand sd-c-kubernetes" x="492" y="144" width="20" height="20" />
+      <use href="#sd-i-docker" class="sd-brand sd-c-docker" x="516" y="144" width="20" height="20" />
+      <text class="sd-group-label" x="716" y="160" text-anchor="end">k3d cluster (k3s in Docker)</text>
+      <rect class="sd-ns" x="46" y="176" width="668" height="188" rx="8" />
+      <text class="sd-ns-label" x="686" y="194" text-anchor="end">namespace sweg9</text>
+      <rect class="sd-box" x="64" y="210" width="150" height="58" rx="8" />
+      <use href="#sd-i-traefikproxy" class="sd-brand sd-c-traefikproxy" x="76" y="228" width="22" height="22" />
+      <text class="sd-title" x="106" y="235">Ingress</text>
+      <text class="sd-sub" x="106" y="253">Traefik · TLS</text>
+      <rect class="sd-box sd-strong" x="268" y="210" width="190" height="58" rx="8" />
+      <use href="#sd-i-fastapi" class="sd-brand sd-c-fastapi" x="280" y="228" width="22" height="22" />
+      <use href="#sd-i-sqlite" class="sd-brand sd-c-sqlite" x="306" y="228" width="22" height="22" />
+      <text class="sd-title" x="336" y="235">server · 1 pod</text>
+      <text class="sd-sub" x="336" y="253">FastAPI · SQLite</text>
+      <rect class="sd-box" x="486" y="210" width="198" height="58" rx="8" />
+      <use href="#sd-l-clock" class="sd-line-icon" x="498" y="228" width="22" height="22" />
+      <text class="sd-title" x="528" y="235">backup · CronJob</text>
+      <text class="sd-sub" x="528" y="253">daily 03:00 Seoul</text>
+      <rect class="sd-box sd-planned" x="64" y="296" width="150" height="52" rx="8" />
+      <use href="#sd-i-nginx" class="sd-brand sd-c-nginx" x="76" y="311" width="22" height="22" />
+      <text class="sd-title" x="106" y="318">web</text>
+      <text class="sd-sub" x="106" y="335">nginx · app</text>
+      <rect class="sd-ns" x="46" y="382" width="668" height="108" rx="8" />
+      <text class="sd-ns-label" x="686" y="400" text-anchor="end">namespace logging</text>
+      <rect class="sd-box" x="270" y="414" width="124" height="58" rx="8" />
+      <use href="#sd-i-grafana" class="sd-brand sd-c-grafana" x="282" y="432" width="22" height="22" />
+      <text class="sd-title" x="312" y="439">Grafana</text>
+      <text class="sd-sub" x="312" y="457">dashboards</text>
+      <rect class="sd-box" x="436" y="414" width="110" height="58" rx="8" />
+      <use href="#sd-l-scroll-text" class="sd-line-icon" x="448" y="432" width="22" height="22" />
+      <text class="sd-title" x="478" y="439">Loki</text>
+      <text class="sd-sub" x="478" y="457">14 days</text>
+      <rect class="sd-box" x="578" y="414" width="102" height="58" rx="8" />
+      <use href="#sd-l-filter" class="sd-line-icon" x="590" y="432" width="22" height="22" />
+      <text class="sd-title" x="620" y="439">Alloy</text>
+      <text class="sd-sub" x="620" y="457">log agent</text>
+
       <!-- hub process -->
-      <rect class="sd-box sd-strong" x="30" y="480" width="400" height="86" rx="10" />
-      <text class="sd-title" x="48" y="508">hub · uv run backend hub</text>
-      <use href="#sd-i-python" class="sd-brand sd-c-python" x="336" y="491" width="22" height="22" />
-      <use href="#sd-i-uv" class="sd-brand sd-c-uv" x="364" y="491" width="22" height="22" />
-      <use href="#sd-i-opencv" class="sd-brand sd-c-opencv" x="392" y="491" width="22" height="22" />
-      <text class="sd-sub" x="48" y="530">camera, YOLO models, Safety Guard, RAL</text>
-      <text class="sd-sub" x="48" y="550">outside k8s: needs the USB webcam and the Arduino</text>
+      <rect class="sd-box sd-strong" x="30" y="586" width="420" height="96" rx="10" />
+      <text class="sd-title" x="48" y="616">hub · uv run backend hub</text>
+      <use href="#sd-i-python" class="sd-brand sd-c-python" x="356" y="599" width="22" height="22" />
+      <use href="#sd-i-uv" class="sd-brand sd-c-uv" x="384" y="599" width="22" height="22" />
+      <use href="#sd-i-opencv" class="sd-brand sd-c-opencv" x="412" y="599" width="22" height="22" />
+      <text class="sd-sub" x="48" y="644">camera, YOLO models, Safety Guard, RAL</text>
+      <text class="sd-sub" x="48" y="666">outside k8s: needs the USB webcam and the Arduino</text>
 
       <!-- data folder -->
-      <rect class="sd-box sd-data" x="450" y="480" width="250" height="86" rx="10" />
-      <use href="#sd-l-folder" class="sd-line-icon" x="466" y="491" width="22" height="22" />
-      <text class="sd-title" x="494" y="508">~/sweg9-data</text>
-      <text class="sd-sub" x="468" y="530">app.db, crops, backups, logs</text>
-      <text class="sd-sub" x="468" y="550">hostPath, outside the cluster</text>
+      <rect class="sd-box sd-data" x="490" y="586" width="240" height="96" rx="10" />
+      <use href="#sd-l-folder" class="sd-line-icon" x="506" y="599" width="22" height="22" />
+      <text class="sd-title" x="534" y="616">~/sweg9-data</text>
+      <text class="sd-sub" x="508" y="644">app.db, crops, backups, logs</text>
+      <text class="sd-sub" x="508" y="666">hostPath, outside the cluster</text>
 
       <!-- edges inside the laptop -->
-      <path class="sd-edge" d="M105 104 V176" marker-end="url(#sd-arrow)" />
-      <text class="sd-edge-label" x="112" y="140">HTTPS</text>
-      <path class="sd-edge" d="M208 202 H248" marker-end="url(#sd-arrow)" />
-      <text class="sd-edge-label" x="228" y="195" text-anchor="middle">/api</text>
-      <path class="sd-edge sd-planned-edge" d="M133 228 V240" marker-end="url(#sd-arrow)" />
-      <path class="sd-edge sd-accent" d="M220 480 V215 H208" marker-start="url(#sd-arrow-accent)" marker-end="url(#sd-arrow-accent)" />
-      <text class="sd-edge-label sd-accent-text" x="228" y="468">WSS /api/ws/hub</text>
-      <path class="sd-edge" d="M401 228 V466 H462 V480" marker-end="url(#sd-arrow)" />
-      <text class="sd-edge-label" x="408" y="258">app.db</text>
-      <path class="sd-edge" d="M672 202 H679 V480" marker-end="url(#sd-arrow)" />
-      <path class="sd-edge" d="M612 480 V396" marker-end="url(#sd-arrow)" />
-      <text class="sd-edge-label" x="618" y="440">hub-logs/</text>
-      <path class="sd-edge" d="M552 370 H534" marker-end="url(#sd-arrow)" />
-      <path class="sd-edge" d="M392 370 H410" marker-end="url(#sd-arrow)" />
-      <path class="sd-edge" d="M430 523 H450" marker-end="url(#sd-arrow)" />
-      <!-- hardware in the room -->
-      <rect class="sd-box" x="30" y="626" width="110" height="52" rx="8" />
-      <use href="#sd-l-webcam" class="sd-line-icon" x="42" y="641" width="22" height="22" />
-      <text class="sd-title" x="72" y="648">Webcam</text>
-      <text class="sd-sub" x="72" y="665">C270</text>
-      <rect class="sd-box" x="152" y="626" width="170" height="52" rx="8" />
-      <use href="#sd-i-arduino" class="sd-brand sd-c-arduino" x="164" y="641" width="22" height="22" />
-      <text class="sd-title" x="194" y="648">Arduino Nano</text>
-      <text class="sd-sub" x="194" y="665">BTS7960 · actuators</text>
-      <rect class="sd-box" x="334" y="626" width="130" height="52" rx="8" />
-      <use href="#sd-l-toggle-right" class="sd-line-icon" x="346" y="641" width="22" height="22" />
-      <text class="sd-title" x="376" y="648">Wall switch</text>
-      <text class="sd-sub" x="376" y="665">pressed</text>
-      <rect class="sd-box" x="476" y="626" width="115" height="52" rx="8" />
-      <use href="#sd-l-lightbulb" class="sd-line-icon" x="488" y="641" width="22" height="22" />
-      <text class="sd-title" x="518" y="648">Lamp, fan</text>
-      <text class="sd-sub" x="518" y="665">checked</text>
-      <rect class="sd-box sd-planned" x="603" y="626" width="107" height="52" rx="8" />
-      <text class="sd-title" x="656.5" y="648" text-anchor="middle">Wi-Fi, IR</text>
-      <text class="sd-sub" x="656.5" y="665" text-anchor="middle">not in demo</text>
-      <text class="sd-zone-label" x="30" y="702">In the room</text>
-      <path class="sd-edge" d="M80 566 V626" marker-start="url(#sd-arrow)" />
-      <text class="sd-edge-label" x="86" y="606">USB</text>
-      <path class="sd-edge" d="M232 566 V626" marker-end="url(#sd-arrow)" />
-      <text class="sd-edge-label" x="239" y="606">USB serial</text>
-      <path class="sd-edge" d="M322 652 H334" marker-end="url(#sd-arrow)" />
-      <path class="sd-edge" d="M464 652 H476" marker-end="url(#sd-arrow)" />
-      <path class="sd-edge sd-planned-edge" d="M400 566 V598 H656 V626" marker-end="url(#sd-arrow)" />
-      <text class="sd-edge-label" x="530" y="614" text-anchor="middle">LAN</text>
-      <path class="sd-edge sd-planned-edge" d="M603 652 H591" marker-end="url(#sd-arrow)" />
+      <path class="sd-edge" d="M139 110 V210" marker-end="url(#sd-arrow)" />
+      <text class="sd-edge-label" x="147" y="164">HTTPS</text>
+      <path class="sd-edge" d="M214 232 H268" marker-end="url(#sd-arrow)" />
+      <text class="sd-edge-label" x="241" y="225" text-anchor="middle">/api</text>
+      <path class="sd-edge sd-planned-edge" d="M139 268 V296" marker-end="url(#sd-arrow)" />
+      <path class="sd-edge sd-accent" d="M246 586 V254 H214" marker-start="url(#sd-arrow-accent)" marker-end="url(#sd-arrow-accent)" />
+      <text class="sd-edge-label sd-accent-text" x="254" y="556">WSS /api/ws/hub</text>
+      <path class="sd-edge" d="M408 268 V562 H520 V586" marker-end="url(#sd-arrow)" />
+      <text class="sd-edge-label" x="415" y="300">app.db</text>
+      <path class="sd-edge" d="M684 239 H700 V586" marker-end="url(#sd-arrow)" />
+      <path class="sd-edge" d="M629 586 V472" marker-end="url(#sd-arrow)" />
+      <text class="sd-edge-label" x="621" y="556" text-anchor="end">hub-logs/</text>
+      <path class="sd-edge" d="M578 443 H546" marker-end="url(#sd-arrow)" />
+      <path class="sd-edge" d="M394 443 H436" marker-end="url(#sd-arrow)" />
+      <path class="sd-edge" d="M450 634 H490" marker-end="url(#sd-arrow)" />
+
+      <!-- in the room -->
+      <rect class="sd-zone" x="10" y="754" width="740" height="116" rx="14" />
+      <text class="sd-zone-label" x="26" y="856">In the room · physical devices</text>
+      <rect class="sd-box" x="30" y="774" width="110" height="58" rx="8" />
+      <use href="#sd-l-webcam" class="sd-line-icon" x="42" y="792" width="22" height="22" />
+      <text class="sd-title" x="72" y="799">Webcam</text>
+      <text class="sd-sub" x="72" y="816">C270</text>
+      <rect class="sd-box" x="158" y="774" width="170" height="58" rx="8" />
+      <use href="#sd-i-arduino" class="sd-brand sd-c-arduino" x="170" y="792" width="22" height="22" />
+      <text class="sd-title" x="200" y="799">Arduino Nano</text>
+      <text class="sd-sub" x="200" y="816">BTS7960 · actuators</text>
+      <rect class="sd-box" x="348" y="774" width="130" height="58" rx="8" />
+      <use href="#sd-l-toggle-right" class="sd-line-icon" x="360" y="792" width="22" height="22" />
+      <text class="sd-title" x="390" y="799">Wall switch</text>
+      <text class="sd-sub" x="390" y="816">pressed</text>
+      <rect class="sd-box" x="498" y="774" width="116" height="58" rx="8" />
+      <use href="#sd-l-lightbulb" class="sd-line-icon" x="510" y="792" width="22" height="22" />
+      <text class="sd-title" x="540" y="799">Lamp, fan</text>
+      <text class="sd-sub" x="540" y="816">checked</text>
+      <rect class="sd-box sd-planned" x="634" y="774" width="96" height="58" rx="8" />
+      <text class="sd-title" x="682" y="799" text-anchor="middle">Wi-Fi, IR</text>
+      <text class="sd-sub" x="682" y="816" text-anchor="middle">not in demo</text>
+      <path class="sd-edge" d="M85 682 V774" marker-start="url(#sd-arrow)" />
+      <text class="sd-edge-label" x="93" y="734">USB</text>
+      <path class="sd-edge" d="M243 682 V774" marker-end="url(#sd-arrow)" />
+      <text class="sd-edge-label" x="251" y="734">USB serial</text>
+      <path class="sd-edge" d="M328 803 H348" marker-end="url(#sd-arrow)" />
+      <path class="sd-edge" d="M478 803 H498" marker-end="url(#sd-arrow)" />
+      <path class="sd-edge sd-planned-edge" d="M420 682 V732 H682 V774" marker-end="url(#sd-arrow)" />
+      <text class="sd-edge-label" x="551" y="726" text-anchor="middle">LAN</text>
+      <path class="sd-edge sd-planned-edge" d="M634 803 H614" marker-end="url(#sd-arrow)" />
+
       <!-- legend -->
-      <path class="sd-edge" d="M30 742 H66" marker-end="url(#sd-arrow)" />
-      <text class="sd-sub" x="74" y="746">used now</text>
-      <path class="sd-edge sd-planned-edge" d="M170 742 H206" marker-end="url(#sd-arrow)" />
-      <text class="sd-sub" x="214" y="746">planned, not in the demo</text>
-      <path class="sd-edge sd-accent" d="M400 742 H436" marker-end="url(#sd-arrow-accent)" />
-      <text class="sd-sub" x="444" y="746">hub messages and ack</text>
+      <path class="sd-edge" d="M14 904 H50" marker-end="url(#sd-arrow)" />
+      <text class="sd-sub" x="58" y="908">used now</text>
+      <path class="sd-edge sd-planned-edge" d="M170 904 H206" marker-end="url(#sd-arrow)" />
+      <text class="sd-sub" x="214" y="908">planned, not in the demo</text>
+      <path class="sd-edge sd-accent" d="M400 904 H436" marker-end="url(#sd-arrow-accent)" />
+      <text class="sd-sub" x="444" y="908">hub messages and ack</text>
     </svg>
   </figure>
 </template>
@@ -163,7 +167,7 @@
   display: block;
   width: 100%;
   min-width: 560px;
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
   height: auto;
   font-family: var(--vp-font-family-base);
