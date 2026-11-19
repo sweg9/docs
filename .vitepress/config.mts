@@ -15,7 +15,7 @@ function skillItems() {
 
 export default defineConfig({
   title: 'sweg9 Docs',
-  description: 'Development wiki for vision-based recognition and actuation of unconnected home controls',
+  description: 'Development wiki for NOVA: Non-connected Object Vision and Actuation for Smart Home Routines',
   base,
   cleanUrls: true,
   lastUpdated: true,

@@ -4,7 +4,7 @@ outline: false
 
 # Proposal
 
-**Vision-Based Recognition and Actuation of Unconnected Home Controls.** Geonhak Lee, Jemin An, Jiwon Han, Hyunseo Choi. Department of Information Systems, Hanyang University.
+**NOVA: Non-connected Object Vision and Actuation for Smart Home Routines.** Geonhak Lee, Jemin An, Jiwon Han, Hyunseo Choi. Department of Information Systems, Hanyang University.
 
 This paper is the reference for every page in this wiki. When a page and the paper disagree, the paper wins.
 
@@ -15,4 +15,4 @@ This paper is the reference for every page in this wiki. When a page and the pap
 Everything else follows the paper.
 :::
 
-<PdfViewer src="/papers/proposal.pdf" title="Vision-Based Recognition and Actuation of Unconnected Home Controls" />
+<PdfViewer src="/papers/proposal.pdf" title="NOVA: Non-connected Object Vision and Actuation for Smart Home Routines" />

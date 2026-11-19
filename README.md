@@ -1,6 +1,6 @@
 # docs
 
-Documentation for **Vision-Based Recognition and Actuation of Unconnected Home Controls**: a camera finds wall switches, toggles and power strips, the system works out which device each one operates, and routines use them through wireless channels or, when those fail, a physical press by a robot (linear actuators on a cart in the prototype). The reference document is the [proposal](public/papers/proposal.pdf).
+Documentation for **NOVA: Non-connected Object Vision and Actuation for Smart Home Routines**: a camera finds wall switches, toggles and power strips, the system works out which device each one operates, and routines use them through wireless channels or, when those fail, a physical press by a robot (linear actuators on a cart in the prototype). The reference document is the [proposal](public/papers/proposal.pdf).
 
 ## Wiki
 
