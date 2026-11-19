@@ -203,8 +203,8 @@
 .sd-c-uv { fill: #de5fe9; }
 .sd-c-opencv { fill: #5c3ee8; }
 .sd-c-arduino { fill: #00878f; }
-:global(.dark) .sd-c-sqlite { fill: #6cb4dc; }
-:global(.dark) .sd-c-python { fill: #5a9bd5; }
-:global(.dark) .sd-c-opencv { fill: #8b74f2; }
+.dark .sd-c-sqlite { fill: #6cb4dc; }
+.dark .sd-c-python { fill: #5a9bd5; }
+.dark .sd-c-opencv { fill: #8b74f2; }
 .sd-line-icon { fill: none; stroke: var(--vp-c-text-2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 </style>
