@@ -1,7 +1,7 @@
 # Stack
 
 ::: warning Draft
-A first proposal for the detailed stack. Library choices marked *proposed* are open until the demo devices are bought and the first measurements are in.
+The stack for the demo. Libraries marked *not in the demo* are for wireless channels: the demo device has none, so no plug or blaster is bought and the adapters are tested with stubs (see the [live-demo plan](/live-demo/PLAN)).
 :::
 
 The [architecture](./architecture) says what the parts are. This page says which machine runs each part, how the machines talk, and which libraries they use. The tables are in [Database](./database), and the code layout in [Modules](./modules).
@@ -44,9 +44,9 @@ If the connection drops (for example while the server pod restarts), the hub fin
 | Time triggers | APScheduler | In process, no separate queue |
 | Recognition | Ultralytics YOLO11 (CPU): control detector, control state classifier, device detector. DINOv2 small, OpenCV 4 | In `ai-engine`, imported by the hub. All local, no model API (see [Models](/product/models)) |
 | Serial | `pyserial` | Hub to Arduino |
-| Wi-Fi plug | `python-kasa` (TP-Link Tapo or Kasa) or `tinytuya` (Tuya) | *Proposed*, depends on the plug we buy |
-| IR | `python-broadlink` (Broadlink RM4 mini) | *Proposed*, depends on the blaster we buy |
-| Bluetooth | `bleak` | *Proposed* |
+| Wi-Fi plug | `python-kasa` (TP-Link Tapo or Kasa) or `tinytuya` (Tuya) | *Not in the demo*; depends on the plug chosen later |
+| IR | `python-broadlink` (Broadlink RM4 mini) | *Not in the demo*; depends on the blaster chosen later |
+| Bluetooth | `bleak` | *Not in the demo* |
 | Logging | Standard `logging` with a JSON formatter | One JSON object per line; see [Logging](#logging) |
 
 ### Interfaces inside the hub
