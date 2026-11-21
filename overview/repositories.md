@@ -22,7 +22,7 @@ harness: build, test and release checks for every repo
 ```
 
 - Photos and labels in `dataset` train and evaluate the detector in `ai-engine`.
-- `backend-server` calls `ai-engine` on the hub, and stores mappings, routines and the log in the server's database.
+- `backend-server` calls `ai-engine` inside the Nitro Enclave on AWS, and stores mappings, routines and the log in the hub's database at home.
 - `sim-demo` is meant to connect to the Python hub through a WebSocket and stand in for the real hand (see [Simulator](/product/simulator)).
 - Every repo uses the requirement numbers 1 to 12 from the [requirements](/product/requirements).
 

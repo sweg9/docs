@@ -13,34 +13,34 @@ The team moved the server to AWS on 2026-11-20 (5th meeting). The 2026-11-17 pla
 | Place | Runs | Parts | Requirements |
 |---|---|---|---|
 | Home: robot | Camera, Arduino Nano, linear actuators | Takes photos on request, presses on command | FR-01, FR-11 |
-| Home: `hub` | A laptop at home, directly (`uv run`), outside Kubernetes | Reader (asks the robot for photos over USB, talks to the server), SQLite with every record, Safety Guard, Dashboard (Streamlit), Control Orchestrator, channel adapters, Robot Abstraction Layer | FR-02 to FR-05, FR-07, FR-10 to FR-12 |
-| AWS: `server` | A pod on k3s on one EC2 instance | Ingress (Traefik, TLS), FastAPI, the web app, Monitoring (Grafana, Loki) | FR-12 (monitoring) |
-| AWS: Nitro Enclave | An isolated enclave on the same EC2 instance, reached only over vsock | ML Engine from `ai-engine` (YOLO11n, Linker, MobileNet) and the autonomy Policy | FR-01, FR-02, FR-06, FR-08 |
-| AWS: S3 and KMS | Managed services | S3 keeps encrypted crops and model files. KMS keeps the key that decrypts the crops | C-05 |
+| Home: `hub` | A laptop at home, directly (`uv run`), outside Kubernetes | Reader (asks the robot for photos over USB and seals them), SQLite with every record, Mapping Registry, Routine Engine and triggers, Control Orchestrator, channel adapters, Safety Guard, Robot Abstraction Layer, learning and the run log, Dashboard (Streamlit) | FR-02 to FR-05, FR-07, FR-10 to FR-12 |
+| AWS: `server` | A pod on k3s on one EC2 instance | Ingress (Traefik, TLS); FastAPI, which relays the hub's requests to the enclave and the app's calls to the hub and puts sealed photos in S3; the web app; Monitoring (Grafana, Loki) | FR-12 (monitoring) |
+| AWS: Nitro Enclave | An isolated enclave on the same EC2 instance, reached only over vsock | ML Engine from `ai-engine` (YOLO11n, Linker, MobileNet, the people detector, the motion planner) and the autonomy Policy | FR-01, FR-02, FR-06, FR-08, FR-09 |
+| AWS: S3 and KMS | Managed services | S3 keeps sealed photos and model files. KMS keeps the key that opens the photos | C-05 |
 | AWS: training instance | A separate EC2 instance, started only to train (offline) | Collect (team dataset and photos), train (PyTorch), publish the model | A-05, A-06 |
 
 - **The hub stays at home and outside Kubernetes** because it needs the webcam and the Arduino's serial port.
-- **The hub keeps the records.** There is no database on AWS; the hub sends the context a decision needs with each request.
-- **The hub connects over TLS.** It opens a WebSocket to the server through the ingress (`wss://`) and keeps it open. The server returns decisions on this connection, and the hub sends photos, progress and results.
+- **The hub keeps the records.** There is no database on AWS. The hub sends the context a decision needs with each request, and the server relays the web app's calls to the hub. So the app works only while the hub is connected.
+- **The hub connects over TLS.** It opens a WebSocket to the server through the ingress (`wss://`) and keeps it open. Requests and answers go over it (see [Hub messages](/api/hub-messages)).
 
 **The TEE.**
-- The hub encrypts every crop before it leaves the home.
-- FastAPI only passes the encrypted crop to the enclave over vsock.
-- Inside the enclave, the crop is decrypted with a KMS key. KMS releases that key only to an enclave whose attestation matches the published image.
-- So the EC2 instance, its administrators and S3 never see a crop in the clear.
-- Whole frames never leave the hub.
+- The hub seals every photo before it leaves the home: a new data key from KMS for each photo, AES-256-GCM.
+- FastAPI passes the sealed photo to the enclave over vsock unopened, and puts it in S3 as it is.
+- Inside the enclave, the data key is decrypted by KMS. KMS does this only for an enclave whose attestation matches the published image.
+- So the EC2 instance, its administrators and S3 never see a photo in the clear.
+- No video leaves the home: the hub sends a single photo only when a step needs one.
 
 ![NOVA architecture: the robot and the hub at home; on AWS, S3, KMS and one EC2 instance with k3s (ingress, FastAPI, monitoring) and a Nitro Enclave (ML Engine, Policy); a separate EC2 instance for offline training](/architecture.png)
 
 ### One run, end to end
 
-1. A trigger fires on the hub (the scheduler or the resident in the app). The Reader asks the robot for a photo and sends the encrypted crop to the server with the run's context: the device, its risk, the mapping.
-2. FastAPI passes it to the enclave. The ML Engine recognizes the control (FR-01), and the Policy decides act, ask or suggest (FR-06). The decision goes back to the hub.
-3. If the decision is act, or the resident said yes, the hub ranks the channels and sends the command (FR-07). If wireless fails, it runs the Safety Guard and presses (FR-10, FR-11).
-4. The hub sends the before and after crops. MobileNet in the enclave checks the effect (FR-08).
-5. The hub writes the run to its SQLite log and updates scores and confidence (FR-12). The Dashboard and the web app show the result.
+1. A trigger fires on the hub: the scheduler, a sensor, or the resident in the app. The Routine Engine builds the context (device, risk, mapping, confidence) and sends `decide` (FR-05).
+2. The Policy in the enclave answers act, ask or suggest (FR-06). With ask, the hub waits for the resident's answer in the app.
+3. The hub ranks the channels and sends the command (FR-07). If wireless fails, it re-finds the control and gets a press plan (`refind`), the Safety Guard checks for people (`people`), and the hub presses (FR-09 to FR-11).
+4. The hub sends sealed photos from before and after (`check`). MobileNet in the enclave answers yes, no or unsure (FR-08).
+5. The hub writes the run entry, updates scores and confidence (FR-12), and sends `app.event`. The Dashboard and the web app show the result.
 
-If the connection drops, the hub finishes or cancels the run it holds. It keeps its messages in an outbox file until the server confirms them with `ack` (see [Delivery](/api/hub-messages#delivery)).
+If the connection drops, a request without an answer is handled on the safe side: no decision means the system only suggests, no people check means no press, no check means `unsure` (see [Answers that do not come](/api/hub-messages#answers-that-do-not-come)).
 
 ## Libraries
 
@@ -53,9 +53,10 @@ If the connection drops, the hub finishes or cancels the run it holds. It keeps 
 | Web framework | FastAPI, Uvicorn | The server API and the WebSocket endpoints, on AWS |
 | Database | SQLite in WAL mode, SQLAlchemy 2, Alembic | Hub only, at home; no database on AWS. Alembic records every schema change. Tables in [Database](./database) |
 | Time triggers | APScheduler | On the hub, in process, no separate queue |
-| Recognition | Ultralytics YOLO11n, Linker (probability table), MobileNetV3-small (PyTorch, CPU) | In `ai-engine`, built into the Nitro Enclave image. No model API (see [Models](/product/models)) |
-| TEE | AWS Nitro Enclaves (`nitro-cli`, vsock), AWS KMS | Decrypts crops only inside the attested enclave (C-05) |
-| Storage | Amazon S3, `boto3` | Encrypted crops and model files |
+| Recognition | Ultralytics YOLO11n, Linker (probability table), MobileNetV3-small, a pretrained YOLO for people (PyTorch, CPU) | In `ai-engine`, built into the Nitro Enclave image. No model API (see [Models](/product/models)) |
+| TEE | AWS Nitro Enclaves (`nitro-cli`, vsock), AWS KMS | Opens photos only inside the attested enclave (C-05) |
+| Sealing | `cryptography` (AES-256-GCM), KMS data keys | The hub seals each photo before it sends it |
+| Storage | Amazon S3, `boto3` | Sealed photos and model files |
 | Dashboard | Streamlit | On the hub; reads the hub's SQLite and works offline |
 | Serial | `pyserial` | Hub to Arduino |
 | Wi-Fi plug | `python-kasa` (TP-Link Tapo or Kasa) or `tinytuya` (Tuya) | *Not in the demo*; depends on the plug chosen later |
@@ -89,7 +90,13 @@ The Unity simulator is a WebSocket client of the hub and uses the same messages 
 
 ## Hub to server messages
 
-Being revised for the 2026-11-20 design (see [Open questions](#open-questions)). The 2026-11-17 messages are JSON objects over the hub's WebSocket: a scan (`scan.start`, `control.found`, `scan.done`), a mapping candidate (`mapping.candidate`), watching for uses (`watch.set`, `control.used`), a run (`run.start`, `run.progress`, `run.result`), the emergency `stop`, the `hub.status` heartbeat, and `ack`. The payloads are in [Hub messages](/api/hub-messages).
+Requests and answers over the hub's WebSocket:
+- `recognize`, `check`, `refind`, `people` and `decide` go to the enclave through the server, and their answers come back.
+- `app.request` brings the web app's calls down to the hub, which answers with `app.response`.
+- `app.event` and the `hub.status` heartbeat go up for the live screen and monitoring.
+- `stop` comes down and is answered with `stop.done`.
+
+The payloads are in [Hub messages](/api/hub-messages).
 
 ## Sign-in
 
@@ -97,15 +104,15 @@ The server answers nothing without a sign-in: it is on the internet. The app and
 
 | Who | How | Secret |
 |---|---|---|
-| Web app | One resident account with a password. `POST /login` checks it and sets a session cookie: `HttpOnly`, `Secure`, `SameSite=Strict`. Every API call and the app's WebSocket must carry it, or get `401` | `APP_PASSWORD_HASH` (argon2), a Kubernetes Secret |
+| Web app | One resident account with a password. `POST /login` is relayed to the hub, which checks the password and creates the session; the server sets the cookie: `HttpOnly`, `Secure`, `SameSite=Strict`. Every API call and the app's WebSocket must carry it, or get `401` | `APP_PASSWORD_HASH` (argon2), in the hub's environment |
 | Hub | `Authorization: Bearer <token>` when it opens its WebSocket. A wrong token closes the connection | `HUB_TOKEN`, in the same Secret and in the hub's environment |
 | Grafana | Its own admin account | `GRAFANA_ADMIN_PASSWORD`, a Kubernetes Secret |
 
-- **Sessions** last 30 days and are renewed while the app is used, so the emergency stop in the app is not lost to an expired sign-in in the middle of a demo. `POST /logout` ends one for good. The 2026-11-17 design kept them as rows in the server's database; the server now has none, so where they live is open (see [Open questions](#open-questions)).
+- **Sessions** are rows in the hub's database (see [Database](./database#sessions)). The server passes the cookie with every relayed call, and the hub checks it, so `POST /logout` ends a session for good. A session lasts 30 days and is renewed while the app is used, so the emergency stop in the app is not lost to an expired sign-in in the middle of a demo.
 - **The stop needs no app.** The key on the hub and the switch on the power adapter work without signing in (FR-10).
 - **Same origin.** The ingress serves the app at `/` and the API under `/api` from one host, so the browser sends the cookie on its own and `SameSite=Strict` blocks requests from other sites. The domain and the source of its TLS certificate are open (see [Open questions](#open-questions)).
 - **Guessing.** After 5 wrong passwords within a minute, `POST /login` answers `429` for a minute.
-- **No secrets in a repo** (C-10). Secrets are created with `kubectl create secret` on the EC2 instance, never committed. `backend hash-password` prints the hash for a new password.
+- **No secrets in a repo** (C-10). Secrets are created with `kubectl create secret` on the EC2 instance or set in the hub's environment, never committed. `backend hash-password` prints the hash for a new password.
 
 ## Deployment on AWS
 
@@ -113,8 +120,8 @@ The server runs on a one-node k3s cluster on one EC2 instance that supports Nitr
 
 | Workload | Kind | Image | Notes |
 |---|---|---|---|
-| `server` | Deployment, 1 replica | `sweg9/backend-server` | FastAPI. Holds no database. Readiness and liveness on `GET /healthz` |
-| `ml-engine` | Deployment, 1 replica, with the Nitro Enclaves device plugin | `sweg9/ml-engine` | Starts the enclave image (EIF) built from `ai-engine` with `nitro-cli`, and relays vsock to `server` |
+| `server` | Deployment, 1 replica | `sweg9/backend-server` | FastAPI. Holds no database; relays to the hub and the enclave and puts sealed photos in S3. Readiness and liveness on `GET /healthz` |
+| `ml-engine` | Deployment, 1 replica, with the Nitro Enclaves device plugin | `sweg9/ml-engine` | Starts the enclave image (EIF) built from `ai-engine` with `nitro-cli`, and runs the vsock proxy the enclave uses for KMS. The server reaches the enclave over vsock |
 | `web` | Deployment, 1 replica | `sweg9/live-demo` (nginx with the app build) | Static files only |
 | `loki` | StatefulSet, 1 replica | `grafana/loki` | See [Logging](#logging) |
 | `alloy` | DaemonSet | `grafana/alloy` | Reads the pods' logs and sends them to Loki |
@@ -128,15 +135,16 @@ The server runs on a one-node k3s cluster on one EC2 instance that supports Nitr
 
 - **Images** are built by GitHub Actions and pushed to the GitHub Container Registry (GHCR). k3s pulls them from there.
 - **The enclave image** is rebuilt when a new model is published. Its attestation value then changes, so the KMS key policy is updated with it.
-- **Data.** Loki's files are on the instance's EBS volume. Crops and model files are in S3, encrypted. Nothing else is kept on AWS.
+- **Data.** Loki's files are on the instance's EBS volume. Sealed photos and model files are in S3. Nothing else is kept on AWS.
 - **Settings.** `settings/server.yaml` goes into a ConfigMap. The Policy runs in the enclave, which has no network, so `settings/risk.yaml` is passed to it over vsock when it starts. No image holds settings (C-12).
 - **Training** runs on a separate instance with a GPU, started only to train. Its output goes to S3 as a new model and into a new enclave image.
 - **Tests** still run with `uv run pytest` outside the cluster.
+- **Setting up the instance** (k3s, the Nitro Enclaves allocator and device plugin, the KMS key policy, the S3 bucket) is in `backend-server/deploy/README.md`.
 
 ```bash
-kubectl create secret generic app -n sweg9 --from-literal=HUB_TOKEN=... --from-literal=APP_PASSWORD_HASH=...
+kubectl create secret generic app -n sweg9 --from-literal=HUB_TOKEN=...
 kubectl apply -k deploy/k8s                         # on the EC2 instance
-HUB_TOKEN=... uv run backend hub                    # the hub, on the laptop at home
+HUB_TOKEN=... APP_PASSWORD_HASH=... uv run backend hub   # the hub, on the laptop at home
 ```
 
 ## Logging
@@ -155,7 +163,7 @@ Two kinds of logs, kept apart:
   - Loki labels are few: `mode`, `level`, `module`.
 - **Content.** No images, no base64, no fingerprints, no secrets, no cookies (C-05, C-10, as L-07 asks of the run log). A message is logged by its `type` and `id`, never with its payload. The enclave logs nothing but counts and timings.
 - **Retention.** Loki keeps 14 days, then deletes. The run log is not affected.
-- **Dashboards.** Grafana gets one dashboard, provisioned from the repo: errors per module, gaps in `hub.status`, the outbox size, and a search by `run_id`.
+- **Dashboards.** Grafana gets one dashboard, provisioned from the repo: errors per module, gaps in `hub.status`, requests without an answer, and a search by `run_id`.
 
 ## Backups
 
@@ -163,7 +171,7 @@ The hub's SQLite file holds every mapping, routine and run, so the hub backs it 
 
 1. At 03:00 Seoul time the hub runs `sqlite3 app.db ".backup backups/app-<date>.db"`. `.backup` gives a consistent copy while the hub keeps writing in WAL mode. It keeps the last 7 days and deletes older ones.
 2. To restore, stop the hub, put the backup file in place of `app.db`, and start it again. Alembic upgrades an older schema at start.
-3. S3 keeps versions of the encrypted crops and the model files.
+3. S3 keeps versions of the sealed photos and the model files.
 
 **Known limit.** Every copy of the records is on the hub laptop, so a lost or broken laptop loses them. The team accepts this: the database holds demo data that a new scan recreates.
 
@@ -173,7 +181,4 @@ The hub's SQLite file holds every mapping, routine and run, so the hub backs it 
 |---|---|
 | Which Wi-Fi plug and IR blaster to support | Decides the adapter libraries. The demo device has no wireless channel (see the [live-demo plan](/live-demo/PLAN)), so none is bought for the demo, and the adapters are tested with stubs |
 | The server's domain and TLS certificate | The ingress needs a public name and a certificate, for example from Let's Encrypt |
-| How the web app reads the hub's records | AWS keeps no database, so the lists the app shows must come from the hub through the server |
-| Where the app's sign-in sessions live | They were rows in the server's database, which no longer exists: signed cookies on the server, or rows in the hub's database checked through the hub |
-| Whether photos may be used for training | Crops are decrypted only in the enclave, which has no GPU. Training uses the team dataset unless the resident agrees and a separate decryption step is designed |
-| The protocol pages | [Hub messages](/api/hub-messages) and the [backend-server API](/api/backend-server) still describe the 2026-11-17 split and are being revised |
+| Whether photos may be used for training | Photos are opened only in the enclave, which has no GPU. Training uses the team dataset unless the resident agrees and a separate opening step is designed |

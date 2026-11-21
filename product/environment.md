@@ -24,7 +24,7 @@ We reuse existing software and build only the parts that connect it.
 | Linear actuators and a driver board | 12 V, 100 mm actuators mounted side by side on the cart, placed so that one of them faces the control. A BTS7960 motor driver module powers an actuator in either direction (out or back), and an Arduino Nano takes `push` and `release` from the Python hub over USB and tells the driver what to do. A 12 V, 2 A adapter supplies the power. No joints, so nothing to plan: the system chooses the actuator and how long to push |
 | VLA models (RT-2, OpenVLA, π0) | Candidates to replace the motion script later |
 | FastAPI, SQLite | Backend framework on AWS, and the hub's database for the registry, routines and log |
-| AWS EC2, Nitro Enclaves, KMS, S3 | The server, the TEE for the models, the key that only the enclave can use, and the encrypted crops |
+| AWS EC2, Nitro Enclaves, KMS, S3 | The server, the TEE for the models, the key that only the enclave can use, and the sealed photos |
 | Streamlit | The hub's Dashboard |
 | Docker, k3s, kubectl | Container images and a one-node Kubernetes cluster on the EC2 instance |
 | Grafana Loki, Grafana Alloy, Grafana | Collecting, storing and searching the operational logs |

@@ -4,17 +4,17 @@
 
 | Place | What runs there |
 |---|---|
-| Edge hub (inside the home, Python) | Reader (asks the robot for photos, talks to the server), the records in SQLite (Mapping Registry, routines, the log), channel adapters (IR, Wi-Fi, Bluetooth), control of the hand through the Robot Abstraction Layer, Safety Guard, Dashboard (Streamlit). Whole frames never leave the hub |
-| Server (AWS EC2, FastAPI on k3s) | The API, the web app and monitoring. Keeps no database (decision of 2026-11-20, for scalability) |
-| Nitro Enclave (on the same EC2 instance) | ML Engine (YOLO11n, Linker, MobileNet) and the autonomy policy. Crops are decrypted only here, with a KMS key released to the attested enclave |
-| S3 | Encrypted crops and model files |
+| Edge hub (inside the home, Python) | Reader (asks the robot for photos and seals them), the records in SQLite (Mapping Registry, routines, the log), Routine Engine and triggers, Control Orchestrator, channel adapters (IR, Wi-Fi, Bluetooth), control of the hand through the Robot Abstraction Layer, Safety Guard, learning, Dashboard (Streamlit). No video leaves the hub |
+| Server (AWS EC2, FastAPI on k3s) | The API for the web app, relayed to the hub; the way from the hub to the enclave; the web app and monitoring. Keeps no database (decision of 2026-11-20, for scalability) |
+| Nitro Enclave (on the same EC2 instance) | ML Engine (YOLO11n, Linker, MobileNet, the people detector, the motion planner) and the autonomy policy. Photos are opened only here, with a KMS key released to the attested enclave |
+| S3 | Sealed photos and model files |
 | Training instance (AWS EC2, offline) | Collects the team dataset and photos, trains, publishes a new model to the enclave image |
 | Logging (Loki and Grafana on k3s) | The operational logs of the hub and the server, for finding faults. The run log of FR-12 stays in the hub's database |
 | Private GitHub repository | Photo dataset |
 | Web app (React, TypeScript) | The resident's screens: mappings, routine feedback, log, notifications, emergency stop |
 | Robot or simulator | In the prototype, 12 V linear actuators on a wheeled cart that a team member pushes to each spot. An Arduino Nano takes push and release commands from the hub over USB and drives a BTS7960 motor driver; a 12 V 2 A adapter powers them. Or the Unity simulator or a simple script. All behind the RAL, so a general-purpose home robot can replace them later |
 
-Only small encrypted crops of controls and short notes go to the server. Both the edge hub and the backend run from the `backend-server` repository, in its `hub` and `server` modes; the hub keeps a WebSocket open to the server over TLS. See [Stack](./stack) for the libraries and messages.
+Only sealed photos and short notes go to the server. Both the edge hub and the backend run from the `backend-server` repository, in its `hub` and `server` modes; the hub keeps a WebSocket open to the server over TLS. See [Stack](./stack) for the libraries and messages.
 
 ## Main parts
 

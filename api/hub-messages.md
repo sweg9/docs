@@ -1,15 +1,12 @@
 # Hub messages
 
 ::: warning Draft
-A first proposal for the messages between the hub and the server. `backend-server` owns the contract and changes this page as it builds both modes. Numbers are starting values and belong in settings files.
+A first proposal for the messages between the hub and the server, for the design of 2026-11-20. `backend-server` owns the contract and changes this page as it builds the modes. Numbers are starting values and belong in settings files.
 :::
 
-The hub opens one WebSocket to the server and keeps it open (see [Stack](/overview/stack#where-each-part-runs)).
+The hub keeps every record and carries out every run, at home. The server on AWS keeps no records. It is the hub's way to the Nitro Enclave, where the models and the autonomy policy run, and the web app's way to the hub (see [Stack](/overview/stack#where-each-part-runs)).
 
-::: info Being revised
-The messages below follow the 2026-11-17 split, where the server kept the records and the hub ran the models. Since 2026-11-20 the hub keeps the records and the models run in the Nitro Enclave on AWS, so recognition requests go from the hub to the server and decisions come back. The payloads change as the code is built.
-:::
- The hub signs in with `HUB_TOKEN` when it connects (see [Sign-in](/overview/stack#sign-in)). This page lists every message on that connection, with its payload. Names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
+The hub opens one WebSocket to the server through the ingress (`wss://`) and keeps it open. It signs in with `HUB_TOKEN` when it connects (see [Sign-in](/overview/stack#sign-in)). This page lists every message on that connection, with its payload. Names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
 
 ## Envelope
 
@@ -17,245 +14,171 @@ Every message is one JSON object.
 
 | Field | Type | Rule |
 |---|---|---|
-| `v` | integer | Contract version, `1` |
+| `v` | integer | Contract version, `2` |
 | `type` | string | One of the types below |
-| `id` | string | Unique per message. The receiver ignores an `id` it has already seen, so a message resent after a reconnect is handled once |
+| `id` | string | Unique per message |
+| `re` | string or `null` | In an answer, the `id` of the request it answers |
 | `run_id` | string or `null` | Set on every message that belongs to a run |
 | `sent_at` | UTC ISO 8601 | |
 | `payload` | object | Depends on `type` |
 
 ```json
-{"v":1,"type":"run.progress","id":"m-h-000412","run_id":"r-0007","sent_at":"2026-11-17T12:05:03.120Z","payload":{}}
+{"v":2,"type":"decide","id":"m-h-000412","re":null,"run_id":"r-0007","sent_at":"2026-11-20T12:05:03.120Z","payload":{}}
 ```
 
 ## Shared shapes
 
 | Shape | Fields | Notes |
 |---|---|---|
-| `crop` | `crop_id`, `jpeg_b64`, `w`, `h` | A JPEG of one control or one device, longest side at most 256 px, base64. The hub names it; the log refers to it only by `crop_id` (L-07) |
+| `sealed` | `photo_id`, `key`, `nonce`, `data`, `w`, `h` | One JPEG photo, encrypted by the hub (see [Sealed photos](#sealed-photos)). `key` is the photo's data key, encrypted by KMS; `data` is the photo, encrypted with AES-256-GCM. Both base64 |
 | `box` | `[x1, y1, x2, y2]` | Ratios from 0 to 1 of the image size |
 | `spot_id` | string | A place where the cart stands. In the prototype, a name the team member picks in the hub settings, such as `living_wall_1` |
 
-The hub never sends a whole frame. Before it sends a crop it runs the person detector on it and drops the crop if a person is in it (C-05).
+### Sealed photos
+
+- The hub never sends video. It takes a single photo only when a step needs one, with the longest side at most 1,280 px.
+- For each photo it asks AWS KMS for a new data key, encrypts the photo with it, and sends the photo together with the data key that KMS has encrypted.
+- The KMS key policy lets only an enclave whose attestation matches the published image decrypt that data key (C-05). So the server, the EC2 instance and S3 see only ciphertext.
+- The server stores every sealed photo in S3 as it is, under `photo_id`. The log refers to a photo only by `photo_id` (L-07).
 
 ## Messages at a glance
 
-| Direction | `type` | When | Stage |
-|---|---|---|---|
-| server to hub | `scan.start` | The presenter starts a scan in the app | S1, S2 |
-| hub to server | `control.found` | The detector finds a control | S1 |
-| hub to server | `scan.done` | The scan ends | S1 |
-| hub to server | `mapping.candidate` | A control changed and a device changed with it | S2 |
-| server to hub | `watch.set` | Which controls to watch for uses, or stop watching | S3 |
-| hub to server | `control.used` | The resident flipped a watched control | S3 |
-| server to hub | `run.start` | A run is decided as `act` | S4 |
-| hub to server | `run.progress` | Each step of the run | S5, S6 |
-| hub to server | `run.result` | The run ends, in any way | S7 |
-| server to hub | `stop` | Emergency stop | Any |
-| hub to server | `hub.status` | Every 5 s | Any |
-| both | `ack` | A message was handled (see [Delivery](#delivery)) | Any |
+| Direction | `type` | Answer | When | Stage |
+|---|---|---|---|---|
+| hub to server | `recognize` | `recognize.result` | Find controls in a photo: during a scan, and while watching for uses | S1, S2, S3 |
+| hub to server | `check` | `check.result` | Compare a photo before with one after: which device changed, or did the command work | S2, S5, S6 |
+| hub to server | `refind` | `refind.result` | Find a saved control at the press spot and plan the press | S6 |
+| hub to server | `people` | `people.result` | Is anyone in the work area, just before a press | S6 |
+| hub to server | `decide` | `decide.result` | Act, ask or suggest, for a run that a trigger opened | S4 |
+| hub to server | `app.event` | none | A record changed or a run moved on, for the app's live screen | Any |
+| hub to server | `hub.status` | none | Every 5 s | Any |
+| server to hub | `app.request` | `app.response` | The web app called the API | Any |
+| server to hub | `stop` | `stop.done` | Emergency stop from the app | Any |
 
-`scan.done` is new compared with the first list in [Stack](/overview/stack): the app needs it to know when a scan is over. All recognition and every camera check run on the hub (see [Models](/product/models)), so no message asks the server to look at a picture.
+The server hands `recognize`, `check`, `refind`, `people` and `decide` to the enclave over vsock, unopened, and sends the enclave's answer back with `re` set. The enclave answers in the same shapes as the [ai-engine interface](/api/ai-engine): every result has `confidence` and `reason` (A-02), and below its threshold a result is `unknown` or `unsure` (A-03).
 
-## Setup: S1 and S2
+## Requests to the enclave
 
-### `scan.start` (server to hub)
+### `recognize` (hub to server)
 
 | Field | Type | Rule |
 |---|---|---|
-| `scan_id` | string | Made by the server |
-| `spot_id` | string | Where the cart stands for this scan |
-| `scan_s` | integer | How long to look for controls, for example `10` |
-| `watch_s` | integer | How long to keep watching the found controls for a flip afterwards (FR-02 watching). `0` turns watching off |
+| `purpose` | `scan` `watch` | |
+| `spot_id` | string | Where the cart stands |
+| `room` | room type | From the hub settings; the Linker uses it |
+| `photo` | sealed | |
+| `known` | array or `null` | For `watch`: the controls to look for, each with `control_id`, `kind` and the last `box` at this spot |
+
+### `recognize.result` (server to hub)
+
+| Field | Type | Rule |
+|---|---|---|
+| `controls` | array | One item per control found |
+| `controls[].kind` | `switch` `toggle` `power_strip` | M-S1a |
+| `controls[].box` | box | |
+| `controls[].score` | number | The detector's confidence |
+| `controls[].clear` | boolean | Clear enough to save (FR-01) |
+| `controls[].state` | `on` `off` `unknown` | M-S1b; `unknown` until that model exists |
+| `controls[].state_confidence` | number | |
+| `controls[].gang` | object | `count` and `index` of the key on its plate |
+| `controls[].link_guess` | object | The device class the key most likely runs and its probability, from the Linker (M-S2a) |
+| `controls[].control_id` | string or `null` | For `watch`: the known control this one is |
+| `person` | boolean | A person is in the photo. The hub then saves nothing from it (C-05) |
 
 ```json
-{"scan_id":"sc-0003","spot_id":"living_wall_1","scan_s":10,"watch_s":120}
+{"controls":[{"kind":"switch","box":[0.42,0.31,0.51,0.44],"score":0.91,"clear":true,"state":"off","state_confidence":0.93,"gang":{"count":2,"index":1},"link_guess":{"device_class":"ceiling_light","p":0.74},"control_id":null}],"person":false}
 ```
 
-### `control.found` (hub to server)
-
-One message per control. The hub has already found the control (M-S1a) and read its state (M-S1b), and sends only controls whose crop is clear (FR-01). The server compares the fingerprint with the saved controls and either creates a `Control` or updates the one it matches. The hub keeps no registry.
+### `check` (hub to server)
 
 | Field | Type | Rule |
 |---|---|---|
-| `scan_id` | string | |
-| `local_id` | string | The hub's name for this control during the scan, used again in `mapping.candidate` |
-| `kind` | `switch` `toggle` `power_strip` | The detector's class |
-| `score` | number | The detector's confidence |
-| `state` | `on` `off` `unknown` | From the state classifier; `unknown` below its threshold |
-| `state_confidence` | number | |
-| `box` | box | In the frame |
-| `panel_point` | `[x, y]` or `null` | From the ArUco homography; `null` when no marker is in view |
-| `fingerprint` | array of 384 numbers | DINOv2 small embedding of the crop |
-| `crop` | crop | |
-| `spot_id` | string | |
+| `purpose` | `map` `verify` | `map` while finding which device a control runs (FR-02); `verify` after a command (FR-08) |
+| `before`, `after` | list of sealed | The same view just before and after: one photo, or a few about 0.2 s apart when motion matters, as for a `fan` |
+| `device_box` | box or `null` | For `verify`: where the device is in view. `null` for `map` |
+| `device_type` | device type or `null` | For `verify` |
+| `action` | `on` `off` or `null` | For `verify`: what the command should have done |
 
-```json
-{"scan_id":"sc-0003","local_id":"c1","kind":"switch","score":0.91,"state":"off","state_confidence":0.93,"box":[0.42,0.31,0.51,0.44],"panel_point":[0.12,0.40],"fingerprint":[0.013,-0.207,"…"],"crop":{"crop_id":"cr-h-0121","jpeg_b64":"/9j/4AAQ…","w":180,"h":256},"spot_id":"living_wall_1"}
-```
-
-The server pushes the new or updated control to the app and sends nothing back to the hub. A control the detector cannot tell clearly is not sent (FR-01).
-
-### `scan.done` (hub to server)
+### `check.result` (server to hub)
 
 | Field | Type | Rule |
 |---|---|---|
-| `scan_id` | string | |
-| `found` | integer | Number of `control.found` sent |
-| `skipped` | integer | Detections dropped as unclear or with a person in the crop |
-| `reason` | string or `null` | Set when the scan did not run, for example `"camera not ready"` or `"a run is in progress"` |
+| `change` | `off_to_on` `on_to_off` `none` | What changed, from MobileNet (M-S5) |
+| `answer` | `yes` `no` `unsure` or `null` | For `verify`: did the command work. `null` for `map` |
+| `device_box` | box or `null` | The region that changed |
+| `device_type` | device type or `null` | `null` when no device was found in the region; then a mapping cannot become `Verified` (C-08) |
+| `confidence`, `reason` | | A-02 |
 
-Watching for flips continues after `scan.done` for `watch_s` seconds.
-
-### `mapping.candidate` (hub to server)
-
-The hub saw a found control change state, and within the watch window (about 3 s, FR-02) a region outside the control changed too, such as a lamp lighting up. The hub sends the control and the before and after crops of that region. It also runs the device detector (M-S2) on that region. The server finds or creates the device (see [Which device changed](#which-device-changed)) and creates a `Pending` mapping. The mapping becomes `Verified` only when the change is clear (`change_score` above its threshold) and the device detector found a device in the region (C-08).
+### `refind` (hub to server)
 
 | Field | Type | Rule |
 |---|---|---|
-| `scan_id` | string | |
-| `local_id` | string | The control from `control.found` |
-| `method` | `watch` `test` | `watch` when the resident flipped it. `test` is for later, when the actuator presses to test; not in the demo |
-| `control_state` | `{"before": "off", "after": "on"}` | As the hub saw it |
-| `device_box` | box | The region that changed |
-| `before` | crop | The region just before the flip |
-| `after` | crop | The same region at the end of the watch window |
-| `change_score` | number | How much the region changed, 0 to 1 (OpenCV frame difference) |
-| `device_type` | device type or `null` | From the device detector; `null` when it found no device in the region |
-| `device_score` | number or `null` | The device detector's confidence |
-| `spot_id` | string | Saved with the mapping when it becomes `Verified` (FR-02) |
-| `room` | string | The room of `spot_id`, from the hub settings |
+| `photo` | sealed | Taken at the press spot |
+| `control` | object | `control_id`, `kind`, `box` (the saved box at this spot), `fingerprint` (`null` until fingerprints exist) |
+| `actuators` | array | From the hub settings: `id` and `faces`, the part of the image each actuator faces |
 
-```json
-{"scan_id":"sc-0003","local_id":"c1","method":"watch","control_state":{"before":"off","after":"on"},"device_box":[0.70,0.10,0.88,0.45],"before":{"crop_id":"cr-h-0130","jpeg_b64":"…","w":200,"h":256},"after":{"crop_id":"cr-h-0131","jpeg_b64":"…","w":200,"h":256},"change_score":0.64,"device_type":"light","device_score":0.88,"spot_id":"living_wall_1","room":"living_room"}
-```
-
-The server stores `device_box` with the mapping and sends it back in `run.start`, so the hub knows where to look when it checks the device later.
-
-### Which device changed
-
-The resident does not register devices by hand (proposal, section I-B, second problem). The server finds or creates the `Device` from the candidate:
-
-1. It takes the device type from `device_type`. When it is `null`, the mapping stays `Pending` and the app asks the resident which device it is.
-2. It ranks the saved devices with the hints of FR-02: same `room`, same type, and a `device_box` that overlaps the new one at the same `spot_id`. If one fits, the mapping points to it.
-3. If none fits, it creates a `Device`: `name` and `type` from `device_type`, `room` from the candidate, `risk` from the risk sorting in the settings file (FR-06), `channels` empty until FR-03 registers them.
-4. A type that is not in the risk sorting, or `other`, gets `risk: high`, the safe side, until the resident sets it.
-
-The mapping card in the app shows the device it points to. The resident can rename the device, change its room or risk, or reject the mapping. A changed risk takes effect from the next run.
-
-## Uses for habits: S3
-
-A habit (FR-04) is the same device and action at about the same time on several days, so the server needs to know each time the resident uses a device by hand. While proactive features are on, the hub keeps watching the controls in view at the spot where the cart stands, between scans and runs. Frames stay on the hub; only the control and its new state go up (C-05).
-
-### `watch.set` (server to hub)
-
-The current list, sent whenever it changes: when the hub connects, when the resident turns proactive features on or off, when a mapping becomes `Verified`, `Stale` or `Rejected`, and when a run or a scan ends (the cart may stand somewhere else). Each `watch.set` replaces the last one.
+### `refind.result` (server to hub)
 
 | Field | Type | Rule |
 |---|---|---|
-| `enabled` | boolean | `false` while proactive features are off or paused (C-05, C-06). Off until the resident turns them on |
-| `controls` | array | Controls with a `Verified` mapping: `control_id`, `kind`, `fingerprint`, `seen_spot_id`, `box` (last box at that spot) |
+| `found` | boolean | The same kind near the saved box |
+| `box` | box or `null` | |
+| `plan` | object or `null` | `actuator` and `push_ms`, from the motion planner (FR-09) |
+| `confidence`, `reason` | | |
 
-```json
-{"enabled":true,"controls":[{"control_id":"ctl-0005","kind":"switch","fingerprint":["…"],"seen_spot_id":"living_wall_1","box":[0.42,0.31,0.51,0.44]}]}
-```
-
-The hub watches only the controls whose `seen_spot_id` is the spot where the cart stands now: the spot of the last scan, or the press spot of the last run.
-
-### Watching on the hub
-
-Every `watch.interval_s` (2 s) the hub takes a frame, re-finds each watched control near its box (the same check as before a press, FR-09), and reads its state (M-S1b). A flip counts when the new state is read the same way twice in a row, neither read is `unknown`, and it differs from the last state. The hub does not watch:
-
-- during a scan, which has its own watching for `mapping.candidate`;
-- during a run, and for `watch.quiet_s` (10 s) after it ends, so that the system's own presses are not counted as the resident's;
-- while `enabled` is `false`.
-
-### `control.used` (hub to server)
+### `people` (hub to server)
 
 | Field | Type | Rule |
 |---|---|---|
-| `control_id` | string | |
-| `before`, `after` | `on` `off` | The states read before and after the flip |
-| `at` | UTC ISO 8601 | The time of the first read of the new state |
-| `confidence` | number | The lower state confidence of the two reads |
+| `photo` | sealed | Taken just before the press |
+| `work_area` | box | The actuator's work area |
 
-```json
-{"control_id":"ctl-0005","before":"off","after":"on","at":"2026-11-17T12:04:58.000Z","confidence":0.91}
-```
+`people.result` has `clear` (boolean), `confidence` and `reason`. The Safety Guard on the hub presses only on `clear: true` (FR-10).
 
-The server writes one row in `uses` for each `Verified` mapping of the control, with `action` equal to `after`: a switch that is on means its device has power. No crop is sent.
+### `decide` (hub to server)
 
-## Runtime: S4 to S7
-
-### `run.start` (server to hub)
-
-The server resolves the intent (FR-05) and applies the autonomy policy (FR-06) before it sends `run.start`. It sends it only when the decision is `act`, or when the resident answered yes to an `ask`. The hub never asks the resident itself. It still checks the risk class in the Safety Guard before a press (FR-10).
+The Routine Engine on the hub sends it when a trigger opens a run (FR-05). No photo is needed.
 
 | Field | Type | Rule |
 |---|---|---|
-| `mapping_id` | string | Always `Verified` (C-08) |
-| `device` | object | `device_id`, `name`, `risk` |
+| `trigger` | `sensor` `time` `routine` | |
+| `device` | object | `type` and `risk` |
 | `action` | `on` `off` | |
-| `decision` | `act` `ask` | `ask` means the resident already said yes |
-| `control` | object | `control_id`, `kind`, `fingerprint`, `panel_point`, `press_spot_id` |
-| `check` | object | `device_box`, `spot_id` (where the device is in view), `device_type`, which picks the measure of M-S5 |
-| `channels` | array | One item per channel the device has: `channel`, `success_score`, `latency_ms`. Empty when the device has no wireless channel; `ARM` is never listed, it is always the last resort |
+| `mapping` | object | `status` and `confidence` |
+| `routine` | object or `null` | `independence` and the share of accepted answers |
+| `confidence` | number | The run's confidence (FR-05) |
 
-```json
-{"mapping_id":"mp-0002","device":{"device_id":"dev_lamp_01","name":"lamp","risk":"low"},"action":"on","decision":"act","control":{"control_id":"ctl-0005","kind":"switch","fingerprint":["…"],"panel_point":[0.12,0.40],"press_spot_id":"living_wall_1"},"check":{"device_box":[0.70,0.10,0.88,0.45],"spot_id":"living_wall_1","device_type":"light"},"channels":[]}
-```
+`decide.result` has `decision` (`act` `ask` `suggest`), `confidence` and `reason`, from the autonomy policy and `risk.yaml` (FR-06, C-03). With `ask`, the hub asks the resident through the app and acts only on yes. It never asks the resident itself.
 
-The hub holds one run at a time. A `run.start` that arrives while another run is in progress is answered at once with `run.result`, `result: cancelled`, `reason: "another run is in progress"`.
+## Toward the app
 
-### `run.progress` (hub to server)
+### `app.request` (server to hub)
 
-One message per step, for the live screen. The log does not depend on these: `run.result` carries the full record, so a lost `run.progress` changes nothing but the screen.
+The web app calls the [backend-server API](/api/backend-server) on the server, and the server relays each call to the hub, which answers from its database.
 
 | Field | Type | Rule |
 |---|---|---|
-| `stage` | `S5` `S6` | |
-| `step` | `channel` `gate` `move` `press` `check` | |
-| `status` | `started` `ok` `fail` `unsure` `skipped` | |
-| `channel` | `IR` `WIFI` `BT` `ARM` or `null` | |
-| `detail` | string or `null` | Short note for the screen, for example `"no wireless channel"`, `"person in work area"` |
-| `latency_ms` | integer or `null` | Set when a step ends |
+| `method`, `path`, `query`, `body` | | The app's call, as it came |
+| `session` | string or `null` | The value of the app's session cookie. The hub checks it against its `sessions` table and answers `401` when it is missing or expired |
 
-```json
-{"stage":"S6","step":"gate","status":"ok","channel":"ARM","detail":null,"latency_ms":420}
-```
+`app.response` has `status`, `body` and, for `POST /login` and `POST /logout`, `set_session`: the cookie the server sets or clears. When the hub is offline or does not answer within 5 s, the server answers the app with `503`, `"hub offline"`.
 
-For the demo device, scenario 3 sends, in order: `S5 channel skipped "no wireless channel"`, `S6 move started` (the team member pushes the cart; the hub waits for the presenter to confirm in the app), `S6 gate ok`, `S6 press ok`, `S6 check started`, `S6 check ok`.
-
-### Camera check on the hub
-
-The hub runs the check of FR-08 itself (M-S5): it compares the device crop before the command with the crop after the wait for effect (up to 3 s), with the measure for `check.device_type`. An `unsure` result gets one second look after about 3 s, without operating the device, and then the run stops (FR-08). It is never followed by another press (FR-11).
-
-### `run.result` (hub to server)
-
-Sent once per run, for every ending: success, failure, unsure, cancelled, or emergency stop. It carries the parts of the [run entry](/standards/execution-log) that the hub knows. The server adds `trigger`, `intent`, `confidence`, `decision` and `explanation`, writes the entry, and updates the channel scores and the mapping confidence (FR-12).
+### `app.event` (hub to server)
 
 | Field | Type | Rule |
 |---|---|---|
-| `result` | `success` `failure` `unsure` `cancelled` | |
-| `reason` | string or `null` | Required unless `success` |
-| `channel` | `IR` `WIFI` `BT` `ARM` or `null` | Channel of the last attempt |
-| `checks` | object | `main`, `second`, `disagree`, as in the run entry |
-| `stages` | array | `stage`, `status`, `latency_ms`, `reason`, for S5 and S6 |
-| `attempts` | array | `channel`, `latency_ms`, `answer`, and `gate` for `ARM` (L-04, L-05) |
-| `press_spot_id` | string or `null` | Set after a successful press; the server saves it as the control's press spot (FR-12) |
-| `last_crop_id` | string or `null` | Set when `unsure`, so the app can show the resident the picture (FR-08) |
+| `kind` | `control` `mapping` `routine` `scan` `run.progress` `run.result` `notification` | |
+| `data` | object | The record or the step, in the API's shapes |
 
-```json
-{"result":"success","reason":null,"channel":"ARM","checks":{"main":"yes","second":null,"disagree":false},"stages":[{"stage":"S5","status":"skipped","latency_ms":3,"reason":"no wireless channel"},{"stage":"S6","status":"ok","latency_ms":6400,"reason":null}],"attempts":[{"channel":"ARM","latency_ms":6400,"answer":"yes","gate":"pass"}],"press_spot_id":"living_wall_1","last_crop_id":null}
-```
+The server pushes it to the app's WebSocket and keeps nothing. A lost `app.event` changes only the screen; the app reads the lists again after a reconnect.
 
 ### `stop` (server to hub)
 
 | Field | Type | Rule |
 |---|---|---|
-| `source` | `app` `key` | Who pressed it |
+| `source` | `app` | The key on the hub and the power switch work without the server |
 
-The hub sends `STOP` to the RAL before it does anything else, then ends the current run with `run.result`, `result: cancelled`, `reason: "emergency stop"`. With no run in progress, it only reports `ral: stopped` in the next `hub.status`, which it sends at once.
+The hub sends `STOP` to the RAL before it does anything else, then ends the current run as `cancelled`, `reason: "emergency stop"`, and answers `stop.done` once `ral.stop()` has returned. Without `stop.done` within 2 s, the app tells the resident to use the key on the hub or the power switch.
 
 ### `hub.status` (hub to server)
 
@@ -264,54 +187,33 @@ The hub sends `STOP` to the RAL before it does anything else, then ends the curr
 | `camera` | `ok` `down` | |
 | `ral` | object | `impl` (`linear_actuators` `unity_sim` `script`), `state` (`idle` `busy` `stopped` `error`) |
 | `run_id` | string or `null` | The run the hub holds |
-| `queued` | integer | Messages waiting to be sent after a reconnect |
-| `watching` | integer | Number of controls watched now; `0` when watching is off or no watched control is at this spot |
+| `watching` | integer | Number of controls watched now |
 
-The server marks the hub offline after 3 missed heartbeats and does not send `run.start` until it is back.
+The server marks the hub offline after 3 missed heartbeats, shows it in the app, and answers the app's calls with `503` until it is back.
 
-## Delivery
+## Answers that do not come
 
-A WebSocket can drop a message that was written just before the connection broke, and either side can restart. So the messages that change a record are confirmed with `ack`, and only the hub ever sends a message again.
+The records are written on the hub before anything is sent, and the server keeps no state. So no message is sent again after a reconnect. A request that gets no answer in time is handled on the safe side:
 
-### `ack` (both directions)
-
-| Field | Type | Rule |
+| Request | Waits | Without an answer |
 |---|---|---|
-| `ids` | array of strings | The `id`s of the messages handled since the last `ack`. A side may collect them for up to 200 ms and send one `ack` |
+| `recognize` | 10 s | A scan ends as interrupted; watching skips the round |
+| `check` | 10 s | `verify`: the result is `unsure` (FR-08), and the device is never pressed again (FR-11). `map`: no mapping is made |
+| `refind` | 10 s | The press is cancelled, `reason: "control not found"` |
+| `people` | 3 s | Not clear: the press is cancelled (FR-10) |
+| `decide` | 5 s | The system only suggests (FR-05) |
 
-`ack` itself is never confirmed.
+The times are in the hub settings.
 
-### Which messages are confirmed
+## Traffic
 
-| Message | Confirmed when | If no `ack` comes |
-|---|---|---|
-| `control.found`, `scan.done`, `mapping.candidate`, `control.used`, `run.result` (hub to server) | The server has committed the message and its `id` to the database in one transaction | The hub sends it again after the next reconnect |
-| `scan.start` (server to hub) | The hub has started the scan, or answered with `scan.done` and a `reason` | After 5 s the app shows that the scan did not start. Not sent again |
-| `run.start` (server to hub) | The hub holds the run, or has already answered it with `run.result` `cancelled` | The run stays open and the server waits for the hub's own word (see below). Not sent again |
-| `watch.set` (server to hub) | The hub has applied the list | Sent again when the hub reconnects, like every `watch.set`. It holds a state, not a command, so a late one does no harm |
-| `stop` (server to hub) | The hub's `ral.stop()` has returned | After 2 s the app says the stop was not confirmed and tells the resident to use the key on the hub or the power switch. Sent again at once if the hub reconnects, because a stop is always safe |
-| `run.progress`, `hub.status` | Never | Lost. Progress is only for the screen, and the next status replaces the last one |
-
-**Why the server does not send `run.start` again.** A command that arrives late would switch a device at a moment the resident did not choose. The hub cancels a run it cannot report anyway (`reason: "server not reached"`), so a run is started by the server once or not at all.
-
-### The hub's outbox
-
-The hub appends every message that needs an `ack` to `outbox.jsonl` in its data folder before it sends it, and removes it when the `ack` arrives. After a reconnect, or after the hub restarts, it sends what is left in the original order. `hub.status.queued` is the number of messages in the file. Messages older than 7 days are dropped with a warning in the hub's own log, because the server forgets handled `id`s after 7 days.
-
-### How the server ends a run
-
-The server closes a run that went to the hub only from the hub's own word:
-
-1. `run.result` arrives: the run entry is written as usual.
-2. The hub reconnects, its outbox is empty (`queued: 0`), and its `run_id` is not this run: the hub never got `run.start`, or its result is lost with its outbox file. If the server had an `ack` for `run.start`, the run ends as `unsure`, `reason: "the hub's result was lost; check the device"`, and the resident chooses what to do (C-09). Otherwise it ends as `cancelled`, `reason: "the hub did not get the start"`.
-
-While the hub stays offline, the run stays open and the app shows the hub as offline. A run is never closed as `success` by the server alone.
+Photos go up only when a step needs one: each photo of a scan, one photo every `watch_interval_s` while watching for uses (FR-04), and the photos of a run's press and check. If the connection is too slow, `watch_interval_s` is raised first (5th meeting); scans and runs are not slowed down.
 
 ## When the connection drops
 
 | Situation | Hub | Server |
 |---|---|---|
-| During a scan | Ends the scan; its messages wait in the outbox | Shows the scan as interrupted until `scan.done` arrives |
-| During a run, before a press | Cancels the run: `reason: "server not reached"` | Keeps the run open (see [How the server ends a run](#how-the-server-ends-a-run)) |
-| During a run, after the press started | Finishes the press and the check; `run.result` waits in the outbox | Keeps the run open |
-| After reconnect | Sends the outbox in order, then `hub.status` | Handles each message once, by its `id`, and answers with `ack` |
+| During a scan | Ends the scan as interrupted | Answers the app's calls with `503` |
+| During a run, before a press | No decision means suggest only; no `people` answer means no press | |
+| During a run, after the press started | Finishes the press; the check without an answer is `unsure` | |
+| After reconnect | Sends `hub.status` at once | Shows the hub online again; the app reads its lists again |

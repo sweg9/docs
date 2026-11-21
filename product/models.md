@@ -1,6 +1,6 @@
 # Models
 
-All recognition runs in the Nitro Enclave on AWS with models we train (decision of 2026-11-20). The proposal sends crops to a cloud VLM; the team replaced it with our own models (decision of 2026-11-17), so no crop is sent to a model API and nothing is paid per call. The current models are those of the `ai-engine` branch `yolo11n-640-synth`: YOLO11n, Linker and MobileNet. The rules for every model are the [AI output rules](/standards/ai-output) (A-01 to A-08).
+All recognition runs in the Nitro Enclave on AWS with models we train (decision of 2026-11-20). The proposal sends crops to a cloud VLM; the team replaced it with our own models (decision of 2026-11-17), so no photo is sent to a model API and nothing is paid per call. The current models are those of the `ai-engine` branch `yolo11n-640-synth`: YOLO11n, Linker and MobileNet. The rules for every model are the [AI output rules](/standards/ai-output) (A-01 to A-08).
 
 ## List
 
@@ -8,8 +8,8 @@ All recognition runs in the Nitro Enclave on AWS with models we train (decision 
 |---|---|---|---|---|---|
 | M-S1a | S1 Recognize | FR-01 | Camera frame | Boxes of controls with kind: `switch`, `toggle`, `power_strip` | YOLO11n detector, fine-tuned on our photos and synthetic Blender renders (exists) |
 | M-S2a | S2 Map, before a press | FR-02 | Room type, gang count and key position | The device class each key most likely runs | Linker: a probability table from rules and team labels, then an assignment per room (exists, not checked on real links) |
-| M-S1b | S1 Recognize | FR-01 | Crop of one control | State `on`, `off` or `unknown` | YOLO classifier on the crop. Below the confidence threshold the state is `unknown` |
-| M-S2 | S2 Map | FR-02 | Region that changed after a control was used | Device type and box, such as `light` or `fan` | YOLO detector for devices, trained on our photos of devices |
+| M-S1b | S1 Recognize | FR-01 | Crop of one control | State `on`, `off` or `unknown` | YOLO classifier on the crop. Below the confidence threshold the state is `unknown`. Planned; until it exists the state is `unknown` |
+| M-S2 | S2 Map | FR-02 | Region that changed after a control was used | Device type and box, such as `light` or `fan` | YOLO detector for devices, trained on our photos of devices. Planned; until it exists no mapping can become `Verified` (C-08) |
 | M-S5 | S5, S6 Verify | FR-08 | Device crop before and after the command, the expected effect | `yes`, `no` or `unsure` | MobileNetV3-small siamese network trained on synthetic before and after pairs (exists, not checked on real photos). The measure below is the baseline |
 
 Intent (S4, FR-05) needs no model. The Routine Engine takes the device and the action from the routine that fired.

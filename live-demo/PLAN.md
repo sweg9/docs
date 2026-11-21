@@ -31,7 +31,7 @@ A front end that shows the whole process running on real hardware: a camera find
 ## 5. Demo setup
 
 ```text
-USB webcam ────────────────> edge hub ──> backend-server ──> live-demo (screens)
+USB webcam ──> edge hub ⇄ backend-server on AWS (Nitro Enclave) ──> live-demo (screens)
                                  │
                                  └──> linear actuators on a cart ──> wall switch ──> lamp
 ```

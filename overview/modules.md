@@ -1,38 +1,41 @@
 # Modules
 
 ::: warning Draft
-A first proposal for the layout of the `backend-server` repository. The repository owns its layout and changes this page as it is built.
+The layout of the `backend-server` repository for the design of 2026-11-20. The code in the repository still follows the 2026-11-17 layout and moves to this one as it is built (see its README). The repository owns its layout and changes this page as it is built.
 :::
 
-::: info Being revised
-The import rules below follow the 2026-11-17 split. Since 2026-11-20 the database lives on the hub and `ai-engine` runs in the Nitro Enclave on AWS (see [Stack](./stack#where-each-part-runs)); the code moves as it is built.
-:::
+[Stack](./stack) says where each part runs. `backend-server` holds three of them:
+- `hub`, on a laptop at home;
+- `server`, a pod on k3s on AWS EC2;
+- `enclave`, the program in the Nitro Enclave on the same instance.
 
-[Stack](./stack) says that `backend-server` runs in two modes, `hub` and `server`. This page says how the code is split so that both modes live in one repository without getting in each other's way, and which module serves which requirement.
+This page says how the code is split so that the three live in one repository without getting in each other's way, and which module serves which requirement.
 
 ## Layout
 
 ```text
 backend-server/
-├── pyproject.toml          uv project; the hub extra pulls in ai-engine
-├── Dockerfile              the server image (no YOLO, no PyTorch)
+├── pyproject.toml          uv project; extras: hub, server, enclave (the enclave extra pulls in ai-engine)
+├── Dockerfile              the server image (no models)
+├── enclave/                Dockerfile of the enclave image, turned into an EIF with nitro-cli
 ├── settings/
-│   ├── hub.yaml            spots, rooms, RAL choice, camera, time limits, log file
-│   ├── server.yaml         thresholds, weights, habit rule, backup, time zone
-│   └── risk.yaml           risk sorting of device types (FR-06)
+│   ├── hub.yaml            spots, rooms, RAL choice, camera, time limits, thresholds, weights, habit rule, backup, time zone
+│   ├── server.yaml         ports, time limits, the S3 bucket
+│   └── risk.yaml           risk sorting of device types (FR-06), passed to the enclave when it starts
 ├── src/backend/
-│   ├── cli.py              `backend hub`, `backend server`, `backend backup`, `backend export-runs`,
-│   │                       `backend seed-demo`, `backend hash-password`
-│   ├── common/             used by both modes
-│   ├── hub/                runs on a laptop at home
-│   └── server/             runs as a pod on k3s on AWS EC2
-├── migrations/             Alembic, server only
+│   ├── cli.py              `backend hub`, `backend server`, `backend enclave`, `backend backup`,
+│   │                       `backend export-runs`, `backend seed-demo`, `backend hash-password`
+│   ├── common/             used by every part
+│   ├── hub/                runs on a laptop at home; owns the database
+│   ├── server/             runs as a pod on k3s on AWS EC2; no database
+│   └── enclave/            runs in the Nitro Enclave; the only part that calls ai-engine
+├── migrations/             Alembic, the hub's database
 ├── deploy/
-│   ├── k3d.yaml            a local test cluster
+│   ├── README.md           setting up the EC2 instance
 │   └── k8s/                kustomization: namespaces, server, ml-engine, web, ingress, logging
 ├── firmware/               Arduino sketch for the actuators
 └── tests/
-    ├── common/  hub/  server/
+    ├── common/  hub/  server/  enclave/
     └── contract/           hub messages and the OpenAPI spec
 ```
 
@@ -40,11 +43,14 @@ backend-server/
 
 | Module | May import | Never imports |
 |---|---|---|
-| `common` | Pydantic, the standard library | `hub`, `server`, `ai_engine` |
-| `hub` | `common`, `ai_engine` | `server` |
-| `server` | `common` | `hub`, `ai_engine` |
+| `common` | Pydantic, the standard library | `hub`, `server`, `enclave`, `ai_engine` |
+| `hub` | `common` | `server`, `enclave`, `ai_engine` |
+| `server` | `common` | `hub`, `enclave`, `ai_engine` |
+| `enclave` | `common`, `ai_engine` | `hub`, `server` |
 
-The two modes talk only through the [hub messages](/api/hub-messages), whose models are in `common`. So the server image needs no YOLO and no PyTorch and stays small, and the hub can be tested without a database. A test in `tests/` checks the rules with `import-linter`.
+- The hub and the server talk only through the [hub messages](/api/hub-messages).
+- The server and the enclave talk only over vsock, in the same message shapes. The models of those shapes are in `common`.
+- So only the enclave image carries YOLO and PyTorch, the server image stays small, and each part can be tested alone. A test in `tests/` checks the rules with `import-linter`.
 
 ## `common`
 
@@ -58,59 +64,76 @@ The two modes talk only through the [hub messages](/api/hub-messages), whose mod
 
 ## `hub`
 
-One Python process with `asyncio`. Camera capture runs in its own thread, and model calls run in a worker thread, so a slow detection never delays the heartbeat or a `stop`.
+One Python process with `asyncio`. Photos are taken in their own thread, so a slow request never delays the heartbeat or a `stop`.
 
 | Module | Job | Requirement |
 |---|---|---|
 | `main.py` | Starts the parts below from `hub.yaml` | |
-| `link.py` | WebSocket client to the server: connect, reconnect, `hub.status` every 5 s, the outbox file, and `ack`s for the server's messages ([Delivery](/api/hub-messages#delivery)) | Hub messages |
-| `camera.py` | Reads the webcam, keeps the newest frame and a short history for before and after crops | FR-01, FR-08 |
-| `scan.py` | Runs a scan: detect every fifth frame, read state, fingerprint, drop crops with a person in them, send `control.found`; then watch for flips and send `mapping.candidate` | FR-01, FR-02 |
-| `watch.py` | Watches the controls of `watch.set` at the current spot between scans and runs and sends `control.used` | FR-04 |
-| `orchestrator.py` | Runs one run from `run.start`: tries the wireless channels in the order given, then the press; sends `run.progress` and `run.result` | FR-07, FR-11 |
-| `verifier.py` | Decides each command's result: the platform's report or the camera check, with the second look after `unsure` | FR-08 |
-| `safety.py` | The gate before every movement: person or pet in the work area, risk, position reliable | FR-10 |
-| `press.py` | At the press spot: re-finds the control and gets a press plan from `ai-engine` (the motion planner lives there), runs the gate, presses through the RAL | FR-09, FR-11 |
+| `link.py` | WebSocket client to the server: connect, reconnect, `hub.status` every 5 s, requests with their time limits, `app.request` handed to `app.py` | Hub messages |
+| `seal.py` | Gets a data key from KMS for each photo and encrypts it (AES-256-GCM) | C-05 |
+| `camera.py` | The Reader: asks the robot's camera for a photo when a step needs one | FR-01, FR-08 |
+| `db/` | SQLAlchemy models of the [database](./database) | FR-12 |
+| `scan.py` | Runs a scan: sends `recognize`, saves clear controls (same control or new one), then watches for a flip and sends `check` with `purpose: map` | FR-01, FR-02 |
+| `registry.py` | Finds or creates the device and creates and updates mappings | FR-02 |
+| `watch.py` | Watches the controls with a `Verified` mapping at the current spot and writes `uses` | FR-04 |
+| `routines.py` | Finds habits once a day, handles feedback and demotion | FR-04 |
+| `triggers.py` | Time triggers from APScheduler, sensor and routine triggers, merges duplicates within 10 s, opens a run and sends `decide` | FR-05, FR-06 |
+| `orchestrator.py` | Runs one run: tries the wireless channels in order, then the press; sends `app.event` for each step | FR-07, FR-11 |
+| `verifier.py` | Decides each command's result: the platform's report, or `check` with `purpose: verify` and the second look after `unsure` | FR-08 |
+| `safety.py` | The gate before every movement: `people`, risk, position reliable; no answer means no press | FR-10 |
+| `press.py` | At the press spot: `refind` for the box and the press plan, the gate, the press through the RAL | FR-09, FR-11 |
+| `runs.py` | Writes the run entry when a run ends | FR-12, L-01 |
+| `learning.py` | Channel scores, mapping confidence and `Stale`, press spot, routine priority, in the run's transaction | FR-12 |
+| `explain.py` | Fixed sentence templates for the plain-language explanation | C-07 |
+| `app.py` | Answers `app.request`: one handler per API route, the session check, login and logout | Sign-in |
+| `dashboard.py` | The Streamlit Dashboard, read-only on the database; works without the server | |
+| `backup.py` | The daily copy of the database | |
 | `channels/` | `base.py` (`reachable`, `send`), `wifi.py`, `ir.py`, `bt.py`, `stub.py` | FR-03, FR-07 |
 | `ral/` | `base.py` (`go_to_spot`, `press`, `release`, `stop`), `linear_actuators.py` (serial), `unity_sim.py` (WebSocket), `script.py` | FR-11, C-13 |
 
-**Stop comes first.** `link.py` handles a `stop` message itself: it calls `ral.stop()` before it hands anything to the rest of the hub, then cancels the run task. The firmware stops the actuators on its own as well if the hub goes silent (see [Arduino firmware](./stack#arduino-firmware)).
+**Stop comes first.** `link.py` handles a `stop` message itself. It calls `ral.stop()` before it hands anything to the rest of the hub, then cancels the run task. The firmware stops the actuators on its own as well if the hub goes silent (see [Arduino firmware](./stack#arduino-firmware)).
 
-**One run at a time.** `orchestrator.py` holds at most one run task, as the hub messages require.
+**One run at a time.** `orchestrator.py` holds at most one run task.
 
-**`go_to_spot` in the prototype.** `linear_actuators.py` sends a `run.progress` with `step: move` and waits until the presenter confirms in the app that the cart is in place.
+**`go_to_spot` in the prototype.** `linear_actuators.py` sends an `app.event` with the step `move` and waits until the presenter confirms in the app that the cart is in place.
 
 ## `server`
 
-One FastAPI process with **one worker**, in one pod: SQLite, the APScheduler jobs and the hub's WebSocket all live in that process, and a second worker or pod would run every scheduled trigger twice. It logs JSON lines to stdout (see [Logging](./stack#logging)) and answers `GET /healthz` for Kubernetes.
+One FastAPI process in one pod. It keeps no database. It logs JSON lines to stdout (see [Logging](./stack#logging)) and answers `GET /healthz` for Kubernetes.
 
 | Module | Job | Requirement |
 |---|---|---|
-| `main.py` | FastAPI app, the scheduler, the database | |
-| `db/` | SQLAlchemy models of the [database](./database), sessions | FR-12 |
-| `api/` | One router per tag of the [API](/api/backend-server): `controls`, `devices`, `mappings`, `routines`, `runs`, `safety` | |
-| `auth.py` | Password check, sessions, the `401` for every route but `POST /login`, the login limit, the hub token check | Sign-in |
-| `live.py` | WebSocket to the app: pushes new controls, mappings, routines, run progress | |
-| `hub_gateway.py` | WebSocket for the hub: checks the hub token, skips message `id`s already handled, sends each message to the module below, and sends `ack` after the commit | Hub messages |
-| `registry.py` | Same control or new one, finds or creates the device, creates and updates mappings | FR-01, FR-02 |
-| `routines.py` | Writes `uses` from `control.used`, finds habits once a day, handles feedback and demotion, sends `watch.set` when the list changes | FR-04 |
-| `triggers.py` | Time triggers from APScheduler, sensor and routine triggers, merges duplicates within 10 s, opens a run | FR-05 |
-| `policy.py` | Act, ask or suggest from risk and confidence | FR-06, C-03 |
-| `runs.py` | Sends `run.start`, writes the run entry when `run.result` arrives, ends runs that never got one | FR-12, L-01 |
-| `learning.py` | Channel scores, mapping confidence and `Stale`, press spot, routine priority, in the run's transaction | FR-12 |
-| `explain.py` | Fixed sentence templates for the plain-language explanation | C-07 |
+| `main.py` | FastAPI app | |
+| `api/` | One router per tag of the [API](/api/backend-server): `controls`, `devices`, `mappings`, `routines`, `runs`, `safety`. Each call is relayed to the hub as `app.request`; `503` while the hub is offline | |
+| `auth.py` | The hub token check and the login limit; the session itself is checked by the hub | Sign-in |
+| `live.py` | WebSocket to the app: pushes each `app.event` | |
+| `hub_gateway.py` | WebSocket for the hub: checks the hub token, passes requests to the enclave and the answers back, relays `app.request` and `stop` | Hub messages |
+| `enclave_link.py` | vsock client to the enclave | |
+| `store.py` | Puts each sealed photo in S3 under its `photo_id` | C-05 |
 
-## What the hub needs from `ai-engine`
+## `enclave`
 
-The hub imports `ai_engine` and calls one `Engine` object for every model step: detecting controls and devices, reading state, fingerprints, the change and effect checks, finding people, re-finding a control and planning a press (FR-09). The calls and their results are in [ai-engine interface](/api/ai-engine). The hub passes images and gets answers; it never loads a model itself.
+One process in the Nitro Enclave. It has no network and no disk. It talks only to the server over vsock and to KMS through the server's vsock proxy.
+
+| Module | Job | Requirement |
+|---|---|---|
+| `main.py` | vsock server; loads the `Engine` and `risk.yaml` once at start | |
+| `unseal.py` | Decrypts a sealed photo with KMS, using the enclave's attestation document | C-05 |
+| `handlers.py` | `recognize`, `check`, `refind`, `people`: calls into `ai_engine` | FR-01, FR-02, FR-08 to FR-10 |
+| `policy.py` | Act, ask or suggest from risk and confidence (`decide`) | FR-06, C-03 |
+
+## What the enclave needs from `ai-engine`
+
+The enclave imports `ai_engine` and calls one `Engine` object for every model step: detecting controls, reading state, the link guess, the change and effect checks, finding people, re-finding a control and planning a press (FR-09). The calls and their results are in [ai-engine interface](/api/ai-engine). The enclave passes the opened photos and gets answers; it never loads a model itself.
 
 ## Tests
 
 | Folder | What | How |
 |---|---|---|
 | `tests/common` | Message and run entry models | Examples from the wiki pages must parse |
-| `tests/hub` | Orchestrator, verifier, safety, press | Fake camera with recorded frames, `stub` channels, `script` RAL. No hardware |
-| `tests/server` | API, registry, policy, learning | SQLite in memory, a fake hub on the WebSocket |
-| `tests/contract` | Both modes against each other | A real hub and server in one test, with fakes for the camera and the RAL |
+| `tests/hub` | Orchestrator, verifier, safety, press, registry, routines, learning | SQLite in memory, a fake server, `stub` channels, `script` RAL. No hardware |
+| `tests/server` | API relay, hub gateway | A fake hub and a fake enclave |
+| `tests/enclave` | Handlers and policy | A fake KMS; the `Engine` with its not-trained answers |
+| `tests/contract` | The parts against each other | A real hub, server and enclave process in one test, with fakes for the camera, KMS and the RAL |
 
 Every test names its requirement with `@pytest.mark.fr("FR-07")` (C-01). The `check-fr-coverage` skill reads these marks.

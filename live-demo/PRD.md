@@ -15,11 +15,11 @@
 
 | Stage | Name | Where it is processed | What the screen shows |
 |---|---|---|---|
-| S1 | Recognize | Edge hub | Boxes, type, state and whether the picture is clear |
-| S2 | Map | Edge hub, backend | Candidate devices, confidence, status (`Pending`, `Verified`, `Rejected`, `Stale`) |
+| S1 | Recognize | Edge hub, Nitro Enclave | Boxes, type, state and whether the picture is clear |
+| S2 | Map | Edge hub, Nitro Enclave | Candidate devices, confidence, status (`Pending`, `Verified`, `Rejected`, `Stale`) |
 | S3 | Routines | Backend | The added routine, with keep, change and remove |
 | S4 | Trigger and intent | Backend | Trigger, intent, target device, confidence |
-| S5 | Wireless control | Backend, edge hub | Channel order, result per channel (reported state, or main and second checks for IR) |
+| S5 | Wireless control | Edge hub, Nitro Enclave | Channel order, result per channel (reported state, or main and second checks for IR) |
 | S6 | Actuator press | Edge hub, actuators | Safety gate result, press, tries, reason for a cancellation |
 | S7 | Learning and log | Backend | Channel scores, mapping confidence, plain-language explanation |
 
@@ -56,7 +56,7 @@ Priority is M (must), S (should) or C (could).
 
 | Item | Rule | How to check |
 |---|---|---|
-| Privacy | Video stays on the edge hub. Only encrypted crops and short notes go to the server on AWS, and the crops are decrypted only in the Nitro Enclave. The front end calls only `backend-server` | Inspect browser and server request records |
+| Privacy | No video leaves the home. Photos go to the server on AWS sealed and are opened only in the Nitro Enclave. The front end calls only `backend-server` | Inspect browser and server request records |
 | Emergency stop | The button sends the stop at once, which turns off the actuators' motors (FR-10) | Stop test |
 | Explanations | What the screen shows matches the log | Compare screen and log |
 | Live updates | New controls, routines and run progress appear without a reload | Scenario 1 and 3 |

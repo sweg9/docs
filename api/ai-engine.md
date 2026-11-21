@@ -1,10 +1,10 @@
 # ai-engine interface
 
 ::: warning Draft
-A first proposal for the Python interface that the hub calls. `ai-engine` owns it and changes this page as it builds it. Numbers are starting values and belong in `ai-engine`'s `settings.yaml` (C-12).
+A first proposal for the Python interface that the enclave calls. `ai-engine` owns it and changes this page as it builds it. Numbers are starting values and belong in `ai-engine`'s `settings.yaml` (C-12).
 :::
 
-Since 2026-11-20 `ai-engine` runs inside the Nitro Enclave on AWS, and the server reaches it over vsock (see [Stack](/overview/stack#where-each-part-runs)). This page lists every call; the caller moves from the hub to the enclave as the code is built. Today `ai-engine` has only the training code of the control detector, so all of it is still to be built. The models behind each call are in [Models](/product/models); the rules for their answers are the [AI output rules](/standards/ai-output).
+Since 2026-11-20 `ai-engine` runs inside the Nitro Enclave on AWS (see [Stack](/overview/stack#where-each-part-runs)). The enclave program imports it, opens the sealed photos the hub sends, and calls it for each request of the [hub messages](/api/hub-messages). This page lists every call. Today `ai-engine` has only the training code of the control detector, so all of it is still to be built. The models behind each call are in [Models](/product/models); the rules for their answers are the [AI output rules](/standards/ai-output).
 
 ## Use
 
@@ -18,14 +18,14 @@ found = engine.detect_controls(frame)    # list[ControlBox]
 | Rule | |
 |---|---|
 | Package | `ai_engine`, in the `ai-engine` repo next to the training code (`detector/`) |
-| Loading | `Engine.load(settings_path=None)` loads every model file named in the settings and fails at once if one is missing. The hub calls it at start, not during a run |
+| Loading | `Engine.load(settings_path=None)` loads every model file named in the settings and fails at once if one is missing. The enclave program calls it at start, not during a run |
 | Images | NumPy arrays as OpenCV gives them: `uint8`, height × width × 3, BGR |
 | Boxes and points | Ratios from 0 to 1 of the image size, `[x1, y1, x2, y2]`, the same as in the [hub messages](/api/hub-messages#shared-shapes) |
-| Threads | One call at a time. The hub calls the engine from one worker thread |
+| Threads | One call at a time. The enclave program calls the engine from one worker thread |
 | Results | Frozen Pydantic models, checked when they are made (A-01). Every result has `confidence` (0 to 1) and `reason`, one sentence from a fixed template (A-02) |
 | Unsure | Below its threshold a call answers `unknown` or `unsure` and does not guess (A-03) |
-| Errors | A bad input (empty image, box outside 0 to 1) raises `ValueError`. A model failure raises `EngineError` with a reason; the hub fails the stage with it (A-04) |
-| Not trained yet | A call whose model does not exist yet still answers, safely: `read_state` gives `unknown`, `detect_devices` gives nothing, `check_effect` gives `unsure`. So the hub can be built and tested before the models are trained |
+| Errors | A bad input (empty image, box outside 0 to 1) raises `ValueError`. A model failure raises `EngineError` with a reason; the enclave answers the request with it, and the hub fails the stage (A-04) |
+| Not trained yet | A call whose model does not exist yet still answers, safely: `read_state` gives `unknown`, `detect_devices` gives nothing, `check_effect` gives `unsure`. So the hub and the enclave program can be built and tested before the models are trained |
 
 ## Calls
 
@@ -45,7 +45,7 @@ found = engine.detect_controls(frame)    # list[ControlBox]
 
 ### `detect_controls(frame)` (FR-01)
 
-Runs the control detector on one frame. The hub decides which frames to pass (every fifth, FR-01).
+Runs the control detector on one photo. The hub decides when to send a photo (FR-01).
 
 | `ControlBox` field | Type | Rule |
 |---|---|---|
@@ -87,13 +87,13 @@ Compares two crops of the same region, taken before and after the resident flipp
 
 | `ChangeResult` field | Type | Rule |
 |---|---|---|
-| `change_score` | number | 0 to 1, sent as `change_score` in `mapping.candidate` |
+| `change_score` | number | 0 to 1, returned in `check.result` while mapping |
 | `clear` | boolean | Above `change.threshold`, the clear change that C-08 needs |
 | `confidence`, `reason` | | `"region got 38% brighter"` |
 
 ### `detect_devices(image)` (FR-02)
 
-Runs the device detector on the region that changed (the hub crops it with some margin).
+Runs the device detector on the region that changed (the enclave crops it with some margin).
 
 | `DeviceBox` field | Type | Rule |
 |---|---|---|
@@ -116,7 +116,7 @@ The camera check of one command. `before` and `after` are short lists of whole f
 | `measures` | object | The raw numbers, for example `{"brightness_change": 0.42}`, to tune the thresholds |
 | `confidence`, `reason` | | `"lamp area 42% brighter; room 9% brighter"` |
 
-`action: off` uses the same measure with the sign reversed. The hub, not the engine, decides on the second look after `unsure` and never presses again because of it (C-09).
+`action: off` uses the same measure with the sign reversed. The hub's verifier, not the engine, decides on the second look after `unsure` and never presses again because of it (C-09).
 
 ### `find_people(image)` (FR-10, C-05)
 
@@ -171,14 +171,14 @@ New sections in `ai-engine`'s `settings.yaml`, next to the existing `detector` a
 | `people.weights`, `people.conf` | `yolo11s.pt`, 0.25 | `find_people` |
 | `press.push_ms` | `{switch: 400, toggle: 400, power_strip: 400}` | `plan_press` |
 
-Model files used by the hub go in `models/` with a model card each (A-05); `runs/` stays for training output.
+Model files used by the enclave go in `models/` with a model card each (A-05); `runs/` stays for training output.
 
-## Testing the hub without models
+## Testing without models
 
-`ai_engine.testing.FakeEngine` has the same calls and answers from a script given in the test, for example "the next `check_effect` answers `yes`". The hub's tests use it, so they need no model files (see [Modules](/overview/modules#tests)).
+`ai_engine.testing.FakeEngine` has the same calls and answers from a script given in the test, for example "the next `check_effect` answers `yes`". The enclave program's tests use it, so they need no model files (see [Modules](/overview/modules#tests)).
 
 ## Open questions
 
 | Question | Why it matters |
 |---|---|
-| How fast the calls are on the enclave's CPU | The enclave has no GPU, and the detector, the link guess and the check share its vCPUs. To be measured on the EC2 instance |
+| How fast the calls are on the enclave's CPU | The enclave has no GPU, and the detector, the link guess, the people check and the effect check share its vCPUs. To be measured on the EC2 instance |

@@ -4,14 +4,14 @@
 A first proposal for the hub's tables. `backend-server` owns the schema; Alembic migrations are the source, and this page follows them once they exist.
 :::
 
-The hub keeps everything the system remembers (see [What the system remembers](./architecture#what-the-system-remembers)) in one SQLite file, `app.db`, in WAL mode, at home. The server on AWS keeps no database (decision of 2026-11-20): the hub sends what a decision needs with each request (see [Stack](./stack#where-each-part-runs)). Field names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
+The hub keeps everything the system remembers (see [What the system remembers](./architecture#what-the-system-remembers)) in one SQLite file, `app.db`, in WAL mode, at home. The server on AWS keeps no database (decision of 2026-11-20): the hub sends what the enclave needs with each request, and the web app reads the records through the server, which relays its calls to the hub (see [Hub messages](/api/hub-messages)). Field names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
 
 ## Rules for every table
 
 - **Identifiers** are text: a prefix and a ULID, for example `ctl_01JD3Q…`. They sort by creation time and are never reused. Prefixes: `ctl` control, `dev` device, `mp` mapping, `rt` routine, `r` run, `sc` scan, `cr` crop, `use` use, `fb` feedback.
-- **Times** are text, UTC ISO 8601 with milliseconds. The one exception is a routine's time of day, which is local time (`"21:00"`); the time zone is in the server settings file (`Asia/Seoul`).
+- **Times** are text, UTC ISO 8601 with milliseconds. The one exception is a routine's time of day, which is local time (`"21:00"`); the time zone is in the hub settings file (`Asia/Seoul`).
 - **Enumerations** are text with a `CHECK` constraint that lists the exact values of the data model.
-- **Lists and small objects** (a box, a point, a list of actions) are JSON text. Anything the server searches or joins on is a real column.
+- **Lists and small objects** (a box, a point, a list of actions) are JSON text. Anything the hub searches or joins on is a real column.
 - **Foreign keys** are on (`PRAGMA foreign_keys = ON`). Nothing is deleted with `CASCADE`: records that a run refers to are kept, and a removed routine is only marked `removed_at`.
 - **Every number** that the code compares against (thresholds, weights, the number of days for a habit) is in the settings file, not in a table.
 
@@ -19,20 +19,19 @@ The hub keeps everything the system remembers (see [What the system remembers](.
 
 | Table | One row per | Written by | Requirement |
 |---|---|---|---|
-| `scans` | Scan started from the app | `scan.start`, `scan.done` | FR-01 |
-| `crops` | Picture the hub sent | `control.found`, `mapping.candidate` | FR-01, FR-02, FR-08 |
-| `controls` | Physical control | `control.found`, `run.result` | FR-01, FR-09, FR-12 |
-| `devices` | Device | `mapping.candidate`, the resident | FR-02, FR-06 |
-| `mappings` | Link from a control to a device | `mapping.candidate`, the resident, learning | FR-02, FR-12 |
+| `scans` | Scan started from the app | The scan | FR-01 |
+| `crops` | Picture the hub keeps for a record | The scan, mapping, the check of a run | FR-01, FR-02, FR-08 |
+| `controls` | Physical control | `recognize.result`, the end of a run | FR-01, FR-09, FR-12 |
+| `devices` | Device | `check.result` while mapping, the resident | FR-02, FR-06 |
+| `mappings` | Link from a control to a device | `check.result` while mapping, the resident, learning | FR-02, FR-12 |
 | `channels` | Device and channel | FR-03 tests, learning | FR-03, FR-07, FR-12 |
 | `uses` | Time the resident used a device | Watching | FR-04 |
 | `routines` | Routine | Habit finder, the resident | FR-04, FR-06 |
 | `feedback` | Answer from the resident | The app | FR-04, FR-05, FR-06 |
 | `open_runs` | Run that has started but not ended | Routine Engine | FR-05, FR-06 |
-| `runs` | Ended run, the log | `run.result` | FR-12 |
-| `hub_messages` | Message `id` already handled | Every hub message | Hub messages |
+| `runs` | Ended run, the log | The end of a run | FR-12 |
 | `app_state` | Setting the resident can change | The app | FR-06 |
-| `sessions` | Signed-in app | `POST /login` | Sign-in |
+| `sessions` | Signed-in app | `POST /login`, relayed by the server | Sign-in |
 
 ## Setup: S1 and S2
 
@@ -41,19 +40,19 @@ The hub keeps everything the system remembers (see [What the system remembers](.
 | Column | Type | Rule |
 |---|---|---|
 | `scan_id` | text, key | |
-| `spot_id` | text | From `scan.start` |
+| `spot_id` | text | Where the cart stands for the scan |
 | `started_at` | time | |
-| `done_at` | time or null | Null until `scan.done`; the app shows a scan with no `done_at` after a disconnect as interrupted |
-| `found`, `skipped` | integer or null | From `scan.done` |
-| `reason` | text or null | From `scan.done` |
+| `done_at` | time or null | Null until the scan ends |
+| `found`, `skipped` | integer or null | Controls saved, and detections dropped as unclear or with a person in the photo |
+| `reason` | text or null | Set when the scan did not run or was interrupted, for example `"server not reached"` |
 
 ### `crops`
 
-The JPEG files are on disk, not in the database, so the database stays small. The daily [backup](./stack#backups) copies the folder with the file.
+The JPEG files are on the hub's disk, at home, not in the database, so the database stays small. The daily [backup](./stack#backups) copies the folder with the file. The photos sent to the enclave are a separate thing: they are sealed, and S3 keeps them under their `photo_id`.
 
 | Column | Type | Rule |
 |---|---|---|
-| `crop_id` | text, key | The hub's `crop_id` (`cr-h-…`), kept as it is |
+| `crop_id` | text, key | `cr-h-…`, made by the hub |
 | `kind` | `control` `device_before` `device_after` `check` | |
 | `path` | text | Relative to the crop folder in the settings file, for example `2026/11/cr-h-0121.jpg` |
 | `w`, `h` | integer | |
@@ -71,14 +70,14 @@ Crops are never shown in the log (L-07); a run names a crop only by `crop_id`. A
 | `state_confidence` | number | |
 | `actions` | JSON list | From the kind, for example `["press"]` for a `switch` |
 | `panel_point` | JSON `[x, y]` or null | Null when no marker was in view |
-| `fingerprint` | blob | 384 float32 numbers, little-endian (1,536 bytes) |
+| `fingerprint` | blob or null | 384 float32 numbers, little-endian (1,536 bytes). Null until the enclave computes fingerprints (DINOv2 is planned, not in the current models) |
 | `crop_id` | text → `crops` | The newest clear crop, for the app |
 | `seen_spot_id` | text | Where it was last seen |
 | `press_spot_id` | text or null | Saved after a successful press (FR-12) |
 | `seen_at` | time | |
 | `created_at` | time | |
 
-**Same control or new one.** On `control.found` the server compares the fingerprint with every saved control of the same `kind` (cosine similarity, in Python; a home has tens of controls, so no vector index is needed). Above the threshold in the settings file, it updates that row. Otherwise it inserts a new one. If the best match is close but its `panel_point` moved more than the set distance, the control's `Verified` mappings become `Stale` (FR-02).
+**Same control or new one.** For each clear control in a `recognize.result`, the hub looks for a saved control of the same `kind` at the same spot whose box overlaps, and compares fingerprints once they exist (cosine similarity, in Python; a home has tens of controls, so no vector index is needed). Above the threshold in the settings file, it updates that row. Otherwise it inserts a new one. If the best match is close but its `panel_point` moved more than the set distance, the control's `Verified` mappings become `Stale` (FR-02).
 
 ### `devices`
 
@@ -87,7 +86,7 @@ Crops are never shown in the log (L-07); a run names a crop only by `crop_id`. A
 | `device_id` | text, key | |
 | `name` | text | Starts as the type, for example `light`; the resident can rename it |
 | `type` | device type | |
-| `room` | text | From the candidate; the resident can change it |
+| `room` | text | The room of the spot, from the hub settings; the resident can change it |
 | `risk` | `low` `high` | From the risk sorting in the settings file; `high` for an unknown type. The resident can change it |
 | `created_at`, `updated_at` | time | |
 
@@ -99,16 +98,16 @@ The `channels` list in the API is read from the `channels` table.
 |---|---|---|
 | `mapping_id` | text, key | |
 | `control_id` | text → `controls` | |
-| `device_id` | text → `devices`, or null | Null only while `Pending` and the device detector found no device; the app then asks the resident which device it is |
+| `device_id` | text → `devices`, or null | Null only while `Pending` and the check found no device; the app then asks the resident which device it is |
 | `status` | `Pending` `Verified` `Rejected` `Stale` | |
 | `confidence` | number | 0 to 1 |
 | `method` | `watch` `test` | |
-| `control_before`, `control_after` | `on` `off` `unknown` | From `control_state` |
-| `device_box` | JSON box | Sent back in `run.start` |
+| `control_before`, `control_after` | `on` `off` `unknown` | The control's state before and after, as the hub saw it |
+| `device_box` | JSON box | Where the device is in view; sent in the `check` of every run |
 | `verify_spot_id` | text | Where the change was seen; the robot goes here for a camera check |
 | `change_score` | number | |
-| `device_type_seen` | device type or null | What the device detector said |
-| `device_score` | number or null | |
+| `device_type_seen` | device type or null | What `check.result` said |
+| `device_score` | number or null | The confidence of `check.result` |
 | `before_crop_id`, `after_crop_id` | text → `crops` | |
 | `status_reason` | text or null | Why it was last changed, for example `"rejected by the resident"`, `"confidence below 0.2"` |
 | `created_at`, `updated_at` | time | |
@@ -129,13 +128,13 @@ The Channel record of the data model. One row per device and channel that FR-03 
 | `tries` | integer | |
 | `updated_at` | time | |
 
-`run.start` lists the device's wireless rows, best first; `ARM` is never listed (see [`run.start`](/api/hub-messages#run-start-server-to-hub)).
+The Control Orchestrator tries the device's wireless rows best first; `ARM`, the physical press, always comes last (C-09).
 
 ## Routines: S3 and S4
 
 ### `uses`
 
-Each time the resident is seen using a device by hand, from `control.used` (see [Uses for habits](/api/hub-messages#uses-for-habits-s3)). The habit finder of FR-04 reads this table.
+Each time the resident is seen using a device by hand: while watching, the hub sends a photo every `watch_interval_s` (`recognize` with `purpose: watch`) and counts a flip when the new state is read the same way twice in a row. The habit finder of FR-04 reads this table.
 
 | Column | Type | Rule |
 |---|---|---|
@@ -180,7 +179,7 @@ Every answer from the resident, kept as it was given. `confidence` in a run (FR-
 
 ## Runs: S4 to S7
 
-A run has two parts in the database. While it is going on, it is a row in `open_runs`. When `run.result` arrives (or the server cancels it), the server writes the full [run entry](/standards/execution-log) to `runs` and deletes the `open_runs` row in the same transaction.
+A run has two parts in the database. While it is going on, it is a row in `open_runs`. When it ends in any way, the hub writes the full [run entry](/standards/execution-log) to `runs` and deletes the `open_runs` row in the same transaction.
 
 ### `open_runs`
 
@@ -193,11 +192,11 @@ A run has two parts in the database. While it is going on, it is a row in `open_
 | `action` | `on` `off` | |
 | `decision` | `act` `ask` `suggest` | |
 | `confidence`, `risk` | | As decided at the start |
-| `phase` | `waiting_answer` `sent` `running` | `waiting_answer` while an `ask` waits for the resident; `sent` once `run.start` went to the hub; `running` once the hub's `ack` for it came |
+| `phase` | `waiting_answer` `running` | `waiting_answer` while an `ask` waits for the resident; `running` once the Control Orchestrator has it |
 | `started_at` | time | |
 | `dedup_key` | text | Trigger and routine; a second trigger with the same key within 10 s joins this run (FR-05) |
 
-When the server starts, it ends every row still in `waiting_answer` as `cancelled`, `reason: "server restarted"`: the resident's answer may come too late. Rows in `sent` or `running` wait for the hub, as [How the server ends a run](/api/hub-messages#how-the-server-ends-a-run) says.
+When the hub starts, it ends every row still in `waiting_answer` as `cancelled`, `reason: "hub restarted"`, because the resident's answer may come too late. A row still in `running` ends as `unsure`, `reason: "the hub restarted during the run; check the device"`, and the resident chooses what to do (C-09).
 
 ### `runs`
 
@@ -221,17 +220,13 @@ Learning (FR-12) runs in the same transaction as the insert: it updates `channel
 
 ## Other tables
 
-### `hub_messages`
-
-The `id` of every hub message already handled, so a message resent after a reconnect is handled once. Columns: `id` (key), `type`, `received_at`. Rows older than 7 days are deleted; the hub drops outbox messages older than that (see [Delivery](/api/hub-messages#delivery)).
-
 ### `app_state`
 
 Key and JSON value, for the few settings the resident changes in the app. In the prototype, one key: `proactive_paused` (`PUT /proactive`).
 
 ### `sessions`
 
-One row per signed-in app (see [Sign-in](./stack#sign-in)).
+One row per signed-in app (see [Sign-in](./stack#sign-in)). The server keeps no sessions: it passes the cookie with every relayed call, and the hub checks it here.
 
 | Column | Type | Rule |
 |---|---|---|
@@ -243,6 +238,6 @@ One row per signed-in app (see [Sign-in](./stack#sign-in)).
 
 ## What is not stored
 
-- **Frames and video.** They never leave the hub.
+- **Video.** The hub records none. The photos it sends to the enclave are sealed, and S3 keeps them sealed (see [Sealed photos](/api/hub-messages#sealed-photos)).
 - **Spots and rooms.** `spot_id` and room names come from the hub settings file; the database keeps them as text.
-- **Hub status.** `hub.status` is kept in memory; after a server restart the hub counts as offline until its next heartbeat.
+- **Hub status.** The server keeps `hub.status` in memory; after a server restart the hub counts as offline until its next heartbeat.

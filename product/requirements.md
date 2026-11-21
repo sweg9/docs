@@ -1,6 +1,6 @@
 # Requirements
 
-What the system must do, and how each requirement is built. The resident gives feedback on routines and has the final say. The robot moves to a control and presses it when needed; in the prototype it is linear actuators on a cart. The smart-home hub sends IR, Wi-Fi and Bluetooth commands. All recognition runs on the hub with our own models (see [Models](./models)); the proposal's cloud VLM is not used.
+What the system must do, and how each requirement is built. The resident gives feedback on routines and has the final say. The robot moves to a control and presses it when needed; in the prototype it is linear actuators on a cart. The smart-home hub sends IR, Wi-Fi and Bluetooth commands. All recognition runs in the Nitro Enclave on AWS with our own models (see [Models](./models)); the proposal's cloud VLM is not used.
 
 All numbers are **starting values** to be tuned after the first measurements. Keep them in settings files, not in code.
 

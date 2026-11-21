@@ -68,7 +68,7 @@ The starting thresholds are 0.8 (high) and 0.5 (low). If the resident keeps reje
 
 ## Privacy
 
-Whole frames never leave the home. The hub encrypts the small crops of controls it sends to the server on AWS (decision of 2026-11-20). They are decrypted only inside a Nitro Enclave, a trusted execution environment on the EC2 instance, so neither the instance, its administrators nor S3 see them in the clear. The records stay in the hub's database at home. Proactive features stay off until the resident turns them on.
+No video leaves the home. When a step needs a picture, the hub seals a single photo and sends it to the server on AWS (decision of 2026-11-20). It is opened only inside a Nitro Enclave, a trusted execution environment on the EC2 instance, so neither the instance, its administrators nor S3 see it in the clear. The records stay in the hub's database at home. Proactive features stay off until the resident turns them on.
 
 ## Where to go next
 
