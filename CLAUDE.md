@@ -6,5 +6,9 @@ This repo (docs) is the development wiki. Its reference document is the proposal
 - Numbers from the proposal are starting values to be tuned, not facts.
 - Write everything in English. Write ranges as "S1 to S3", not with a tilde.
 - Model changes follow the rules in `product/models.md`.
-- The team made two known changes to the proposal on 2026-11-17, and pages describe the new design: the cloud VLM is replaced with local models on the hub, and the backend runs on the laptop at home (mode `server`, on k8s) instead of AWS EC2, so nothing leaves the home.
+- The team changed the proposal twice, and pages describe the result:
+  - On 2026-11-17 the cloud VLM was replaced with local models.
+  - On 2026-11-20 (5th meeting) the server moved back to AWS EC2 (mode `server`, on k3s), for scalability.
+  - The hub at home keeps the records, the Safety Guard and the Dashboard.
+  - The models and the autonomy policy run in a Nitro Enclave (TEE) on the EC2 instance. Crops are encrypted at the hub and decrypted only there.
 - Standards and skills live in https://github.com/sweg9/harness. The wiki copies them at build time; do not edit them here.

@@ -4,7 +4,12 @@
 A first proposal for the messages between the hub and the server. `backend-server` owns the contract and changes this page as it builds both modes. Numbers are starting values and belong in settings files.
 :::
 
-The hub opens one WebSocket to the server and keeps it open (see [Stack](/overview/stack#two-run-modes-of-one-backend)). The hub signs in with `HUB_TOKEN` when it connects (see [Sign-in](/overview/stack#sign-in)). This page lists every message on that connection, with its payload. Names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
+The hub opens one WebSocket to the server and keeps it open (see [Stack](/overview/stack#where-each-part-runs)).
+
+::: info Being revised
+The messages below follow the 2026-11-17 split, where the server kept the records and the hub ran the models. Since 2026-11-20 the hub keeps the records and the models run in the Nitro Enclave on AWS, so recognition requests go from the hub to the server and decisions come back. The payloads change as the code is built.
+:::
+ The hub signs in with `HUB_TOKEN` when it connects (see [Sign-in](/overview/stack#sign-in)). This page lists every message on that connection, with its payload. Names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
 
 ## Envelope
 

@@ -4,7 +4,7 @@
 A first proposal for the Python interface that the hub calls. `ai-engine` owns it and changes this page as it builds it. Numbers are starting values and belong in `ai-engine`'s `settings.yaml` (C-12).
 :::
 
-The hub imports `ai-engine` as a package (see [Modules](/overview/modules)). This page lists everything the hub may call. Today `ai-engine` has only the training code of the control detector, so all of it is still to be built. The models behind each call are in [Models](/product/models); the rules for their answers are the [AI output rules](/standards/ai-output).
+Since 2026-11-20 `ai-engine` runs inside the Nitro Enclave on AWS, and the server reaches it over vsock (see [Stack](/overview/stack#where-each-part-runs)). This page lists every call; the caller moves from the hub to the enclave as the code is built. Today `ai-engine` has only the training code of the control detector, so all of it is still to be built. The models behind each call are in [Models](/product/models); the rules for their answers are the [AI output rules](/standards/ai-output).
 
 ## Use
 
@@ -181,4 +181,4 @@ Model files used by the hub go in `models/` with a model card each (A-05); `runs
 
 | Question | Why it matters |
 |---|---|
-| How fast the calls are on the hub's CPU | The detector on every fifth frame, fingerprints for each control and the check all share one CPU. To be measured on the demo laptop |
+| How fast the calls are on the enclave's CPU | The enclave has no GPU, and the detector, the link guess and the check share its vCPUs. To be measured on the EC2 instance |

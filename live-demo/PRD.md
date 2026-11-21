@@ -56,7 +56,7 @@ Priority is M (must), S (should) or C (could).
 
 | Item | Rule | How to check |
 |---|---|---|
-| Privacy | Video stays on the edge hub, only crops and short notes go to the server, and nothing leaves the home. The front end calls only `backend-server` | Inspect browser and server request records |
+| Privacy | Video stays on the edge hub. Only encrypted crops and short notes go to the server on AWS, and the crops are decrypted only in the Nitro Enclave. The front end calls only `backend-server` | Inspect browser and server request records |
 | Emergency stop | The button sends the stop at once, which turns off the actuators' motors (FR-10) | Stop test |
 | Explanations | What the screen shows matches the log | Compare screen and log |
 | Live updates | New controls, routines and run progress appear without a reload | Scenario 1 and 3 |

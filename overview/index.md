@@ -68,7 +68,7 @@ The starting thresholds are 0.8 (high) and 0.5 (low). If the resident keeps reje
 
 ## Privacy
 
-Frames are processed at the edge, inside the home. Only small crops of controls and short notes go to the server, which also runs on the laptop at home, so nothing leaves the home (decision of 2026-11-17; the proposal puts the server on AWS). Proactive features stay off until the resident turns them on.
+Whole frames never leave the home. The hub encrypts the small crops of controls it sends to the server on AWS (decision of 2026-11-20). They are decrypted only inside a Nitro Enclave, a trusted execution environment on the EC2 instance, so neither the instance, its administrators nor S3 see them in the clear. The records stay in the hub's database at home. Proactive features stay off until the resident turns them on.
 
 ## Where to go next
 

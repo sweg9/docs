@@ -1,10 +1,10 @@
 # Database
 
 ::: warning Draft
-A first proposal for the server's tables. `backend-server` owns the schema; Alembic migrations are the source, and this page follows them once they exist.
+A first proposal for the hub's tables. `backend-server` owns the schema; Alembic migrations are the source, and this page follows them once they exist.
 :::
 
-The server keeps everything the system remembers (see [What the system remembers](./architecture#what-the-system-remembers)) in one SQLite file, `app.db`, in WAL mode. The hub keeps no database: it gets what a run needs in `run.start` (see [Hub messages](/api/hub-messages)). Field names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
+The hub keeps everything the system remembers (see [What the system remembers](./architecture#what-the-system-remembers)) in one SQLite file, `app.db`, in WAL mode, at home. The server on AWS keeps no database (decision of 2026-11-20): the hub sends what a decision needs with each request (see [Stack](./stack#where-each-part-runs)). Field names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
 
 ## Rules for every table
 

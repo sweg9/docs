@@ -5,8 +5,8 @@ The project is split into seven repos in the [sweg9](https://github.com/sweg9) o
 | Repo | Role |
 |---|---|
 | [dataset](https://github.com/sweg9/dataset) | Photos of switch panels and their labels for the detector: collection, drafting boxes, correction |
-| [ai-engine](https://github.com/sweg9/ai-engine) | Recognition and checking, run on the hub: YOLO control detector, state classifier, device detector, result check, fingerprints (DINOv2), motion planner |
-| [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend in two run modes: `server` (on k8s on the laptop at home) for the Mapping Registry, routines, log and learning; `hub` (the laptop at home) for the Control Orchestrator, channel adapters, safety gate and the hand. See [Stack](/overview/stack) |
+| [ai-engine](https://github.com/sweg9/ai-engine) | Recognition and checking, run in the Nitro Enclave on AWS: YOLO11n control detector, Linker (which device a key runs), MobileNet result check, motion planner |
+| [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend in two run modes: `server` (on k3s on AWS EC2) for the API, the web app and monitoring; `hub` (a laptop at home) for the records, the orchestrator, channel adapters, safety gate, dashboard and the hand. The models and the autonomy policy run in a Nitro Enclave on the same EC2 instance. See [Stack](/overview/stack) |
 | [sim-demo](https://github.com/sweg9/sim-demo) | Unity simulator, an auxiliary tool for the rough demo and for tests without the real hardware |
 | [live-demo](https://github.com/sweg9/live-demo) | The one front end: the resident's web app and the presenter's demo screens |
 | [docs](https://github.com/sweg9/docs) | This wiki |

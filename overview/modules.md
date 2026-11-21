@@ -4,6 +4,10 @@
 A first proposal for the layout of the `backend-server` repository. The repository owns its layout and changes this page as it is built.
 :::
 
+::: info Being revised
+The import rules below follow the 2026-11-17 split. Since 2026-11-20 the database lives on the hub and `ai-engine` runs in the Nitro Enclave on AWS (see [Stack](./stack#where-each-part-runs)); the code moves as it is built.
+:::
+
 [Stack](./stack) says that `backend-server` runs in two modes, `hub` and `server`. This page says how the code is split so that both modes live in one repository without getting in each other's way, and which module serves which requirement.
 
 ## Layout
@@ -20,12 +24,12 @@ backend-server/
 │   ├── cli.py              `backend hub`, `backend server`, `backend backup`, `backend export-runs`,
 │   │                       `backend seed-demo`, `backend hash-password`
 │   ├── common/             used by both modes
-│   ├── hub/                runs on the laptop itself
-│   └── server/             runs as a pod on k8s
+│   ├── hub/                runs on a laptop at home
+│   └── server/             runs as a pod on k3s on AWS EC2
 ├── migrations/             Alembic, server only
 ├── deploy/
-│   ├── k3d.yaml            the one-node cluster: port 443, the data folders
-│   └── k8s/                kustomization: namespaces, server, web, backup, ingress, logging
+│   ├── k3d.yaml            a local test cluster
+│   └── k8s/                kustomization: namespaces, server, ml-engine, web, ingress, logging
 ├── firmware/               Arduino sketch for the actuators
 └── tests/
     ├── common/  hub/  server/

@@ -31,7 +31,7 @@ Standards and skills are not stored here. The wiki copies them from [harness](ht
 |---|---|
 | [dataset](https://github.com/sweg9/dataset) | Photos of switch panels and their labels for the detector |
 | [ai-engine](https://github.com/sweg9/ai-engine) | All recognition on the hub: detectors, state classifier, result check, fingerprints, motion planner |
-| [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend in two run modes: `server` (on k8s on the laptop at home) for the registry, routines, log and learning; `hub` (the laptop at home) for the orchestrator, channel adapters, safety gate and the hand |
+| [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend in two run modes: `server` (on k3s on AWS EC2) for the API, the web app and monitoring; `hub` (a laptop at home) for the records, the orchestrator, channel adapters, safety gate, dashboard and the hand. The models and the autonomy policy run in a Nitro Enclave on the same EC2 instance |
 | [sim-demo](https://github.com/sweg9/sim-demo) | Unity simulator, an auxiliary tool for the rough demo and tests without the real hardware |
 | [live-demo](https://github.com/sweg9/live-demo) | The one front end: the resident's web app and the presenter's demo screens |
 | [docs](https://github.com/sweg9/docs) | This wiki |
