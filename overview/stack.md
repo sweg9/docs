@@ -52,7 +52,7 @@ If the connection drops, the hub finishes or cancels the run it holds. It keeps 
 | Models and settings | Pydantic v2, YAML settings files | Every number in settings, not in code |
 | Web framework | FastAPI, Uvicorn | The server API and the WebSocket endpoints, on AWS |
 | Database | SQLite in WAL mode, SQLAlchemy 2, Alembic | Hub only, at home; no database on AWS. Alembic records every schema change. Tables in [Database](./database) |
-| Time triggers | APScheduler | In process, no separate queue |
+| Time triggers | APScheduler | On the hub, in process, no separate queue |
 | Recognition | Ultralytics YOLO11n, Linker (probability table), MobileNetV3-small (PyTorch, CPU) | In `ai-engine`, built into the Nitro Enclave image. No model API (see [Models](/product/models)) |
 | TEE | AWS Nitro Enclaves (`nitro-cli`, vsock), AWS KMS | Decrypts crops only inside the attested enclave (C-05) |
 | Storage | Amazon S3, `boto3` | Encrypted crops and model files |
@@ -89,7 +89,7 @@ The Unity simulator is a WebSocket client of the hub and uses the same messages 
 
 ## Hub to server messages
 
-JSON objects over the hub's WebSocket: a scan (`scan.start`, `control.found`, `scan.done`), a mapping candidate (`mapping.candidate`), watching for uses (`watch.set`, `control.used`), a run (`run.start`, `run.progress`, `run.result`), the emergency `stop`, the `hub.status` heartbeat, and `ack`. The payloads are in [Hub messages](/api/hub-messages).
+Being revised for the 2026-11-20 design (see [Open questions](#open-questions)). The 2026-11-17 messages are JSON objects over the hub's WebSocket: a scan (`scan.start`, `control.found`, `scan.done`), a mapping candidate (`mapping.candidate`), watching for uses (`watch.set`, `control.used`), a run (`run.start`, `run.progress`, `run.result`), the emergency `stop`, the `hub.status` heartbeat, and `ack`. The payloads are in [Hub messages](/api/hub-messages).
 
 ## Sign-in
 
@@ -101,7 +101,7 @@ The server answers nothing without a sign-in: it is on the internet. The app and
 | Hub | `Authorization: Bearer <token>` when it opens its WebSocket. A wrong token closes the connection | `HUB_TOKEN`, in the same Secret and in the hub's environment |
 | Grafana | Its own admin account | `GRAFANA_ADMIN_PASSWORD`, a Kubernetes Secret |
 
-- **Sessions** are rows in the database (see [Database](./database#sessions)), so `POST /logout` ends one for good. A session lasts 30 days and is renewed while the app is used, so the emergency stop in the app is not lost to an expired sign-in in the middle of a demo.
+- **Sessions** last 30 days and are renewed while the app is used, so the emergency stop in the app is not lost to an expired sign-in in the middle of a demo. `POST /logout` ends one for good. The 2026-11-17 design kept them as rows in the server's database; the server now has none, so where they live is open (see [Open questions](#open-questions)).
 - **The stop needs no app.** The key on the hub and the switch on the power adapter work without signing in (FR-10).
 - **Same origin.** The ingress serves the app at `/` and the API under `/api` from one host, so the browser sends the cookie on its own and `SameSite=Strict` blocks requests from other sites. The domain and the source of its TLS certificate are open (see [Open questions](#open-questions)).
 - **Guessing.** After 5 wrong passwords within a minute, `POST /login` answers `429` for a minute.
@@ -129,7 +129,7 @@ The server runs on a one-node k3s cluster on one EC2 instance that supports Nitr
 - **Images** are built by GitHub Actions and pushed to the GitHub Container Registry (GHCR). k3s pulls them from there.
 - **The enclave image** is rebuilt when a new model is published. Its attestation value then changes, so the KMS key policy is updated with it.
 - **Data.** Loki's files are on the instance's EBS volume. Crops and model files are in S3, encrypted. Nothing else is kept on AWS.
-- **Settings.** `settings/server.yaml` and `settings/risk.yaml` go into a ConfigMap; the image never holds settings (C-12).
+- **Settings.** `settings/server.yaml` goes into a ConfigMap. The Policy runs in the enclave, which has no network, so `settings/risk.yaml` is passed to it over vsock when it starts. No image holds settings (C-12).
 - **Training** runs on a separate instance with a GPU, started only to train. Its output goes to S3 as a new model and into a new enclave image.
 - **Tests** still run with `uv run pytest` outside the cluster.
 
@@ -174,5 +174,6 @@ The hub's SQLite file holds every mapping, routine and run, so the hub backs it 
 | Which Wi-Fi plug and IR blaster to support | Decides the adapter libraries. The demo device has no wireless channel (see the [live-demo plan](/live-demo/PLAN)), so none is bought for the demo, and the adapters are tested with stubs |
 | The server's domain and TLS certificate | The ingress needs a public name and a certificate, for example from Let's Encrypt |
 | How the web app reads the hub's records | AWS keeps no database, so the lists the app shows must come from the hub through the server |
+| Where the app's sign-in sessions live | They were rows in the server's database, which no longer exists: signed cookies on the server, or rows in the hub's database checked through the hub |
 | Whether photos may be used for training | Crops are decrypted only in the enclave, which has no GPU. Training uses the team dataset unless the resident agrees and a separate decryption step is designed |
 | The protocol pages | [Hub messages](/api/hub-messages) and the [backend-server API](/api/backend-server) still describe the 2026-11-17 split and are being revised |

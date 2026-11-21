@@ -34,7 +34,7 @@ Only small encrypted crops of controls and short notes go to the server. Both th
 
 ## Main flow
 
-A trigger becomes a run on the server; the hub carries it out and checks it; the result goes back to learning. Wireless channels come first (1), the press only after them (2), and every press passes the Safety Guard. The numbers are the requirements.
+A trigger fires on the hub. The Routine Engine sends the context to the Nitro Enclave on AWS, where the autonomy policy decides; the hub carries out the run. Recognition and the result check also run in the enclave, on encrypted crops, and the result goes back to learning on the hub. Wireless channels come first (1), the press only after them (2), and every press passes the Safety Guard. The numbers are the requirements. Where each part runs is on the [Stack](./stack#where-each-part-runs) page.
 
 <ArchitectureDiagram />
 

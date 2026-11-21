@@ -5,10 +5,11 @@
     <svg viewBox="0 0 720 716" role="img" aria-labelledby="ad-title ad-desc">
       <title id="ad-title">Main flow between the parts</title>
       <desc id="ad-desc">
-        A trigger reaches the Routine Engine and the autonomy policy on the server, which sends run.start to the
-        Control Orchestrator on the hub. The orchestrator tries the wireless channel adapters first, then passes the
-        Safety Guard and the motion planner to press through the RAL. The State Verifier checks the result from camera
-        crops and sends it to learning, which updates the Mapping Registry.
+        A trigger on the hub reaches the Routine Engine, which sends the context to the autonomy policy in the Nitro
+        Enclave on AWS. The decision goes to the Control Orchestrator on the hub, which tries the wireless channel
+        adapters first, then passes the Safety Guard and the motion planner to press through the RAL. Recognition and
+        the State Verifier also run in the enclave on encrypted camera crops; the result goes to learning on the hub,
+        which updates the Mapping Registry.
       </desc>
       <defs>
         <marker id="ad-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -33,15 +34,10 @@
         <symbol id="ad-l-hand" viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" /><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" /><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" /><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></symbol>
         <symbol id="ad-l-lightbulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></symbol>
         <symbol id="ad-l-toggle-right" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="6" ry="6" /><circle cx="16" cy="12" r="2" /></symbol>
+        <symbol id="ad-l-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol>
         <symbol id="ad-l-laptop" viewBox="0 0 24 24"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16" /></symbol>
       </defs>
 
-      <rect class="sd-group" x="10" y="40" width="700" height="210" rx="10" />
-      <use href="#ad-i-kubernetes" class="sd-brand sd-c-kubernetes" x="24" y="46" width="18" height="18" />
-      <text class="sd-group-label" x="48" y="60">server · a pod on k8s</text>
-      <rect class="sd-group" x="10" y="270" width="700" height="292" rx="10" />
-      <use href="#ad-l-laptop" class="sd-line-icon" x="24" y="276" width="18" height="18" />
-      <text class="sd-group-label" x="48" y="290">hub · on the laptop, outside k8s</text>
       <rect class="sd-zone" x="10" y="576" width="700" height="92" rx="10" />
       <text class="sd-zone-label" x="696" y="662" text-anchor="end">In the room</text>
       <rect class="sd-box" x="44" y="80" width="186" height="56" rx="8" />
@@ -52,7 +48,7 @@
       <use href="#ad-l-repeat" class="sd-line-icon" x="272" y="97" width="22" height="22" />
       <text class="sd-title" x="302" y="104">Routine Engine</text>
       <text class="sd-sub" x="302" y="121">habits · FR-04, FR-05</text>
-      <rect class="sd-box" x="490" y="80" width="210" height="56" rx="8" />
+      <rect class="sd-box sd-enclave" x="490" y="80" width="210" height="56" rx="8" />
       <use href="#ad-l-scale" class="sd-line-icon" x="502" y="97" width="22" height="22" />
       <text class="sd-title" x="532" y="104">Autonomy policy</text>
       <text class="sd-sub" x="532" y="121">act/ask/suggest · FR-06</text>
@@ -68,18 +64,18 @@
       <use href="#ad-l-camera" class="sd-line-icon" x="56" y="327" width="22" height="22" />
       <text class="sd-title" x="86" y="334">Camera</text>
       <text class="sd-sub" x="86" y="351">frames stay here</text>
-      <rect class="sd-box" x="260" y="310" width="200" height="56" rx="8" />
+      <rect class="sd-box sd-enclave" x="260" y="310" width="200" height="56" rx="8" />
       <use href="#ad-l-scan-search" class="sd-line-icon" x="272" y="327" width="22" height="22" />
       <text class="sd-title" x="302" y="334">Recognition</text>
-      <text class="sd-sub" x="302" y="351">YOLO, DINOv2 · FR-01</text>
+      <text class="sd-sub" x="302" y="351">YOLO11n, Linker · FR-01</text>
       <rect class="sd-box sd-strong" x="490" y="310" width="210" height="56" rx="8" />
       <use href="#ad-l-split" class="sd-line-icon" x="502" y="327" width="22" height="22" />
       <text class="sd-title" x="532" y="334">Orchestrator</text>
       <text class="sd-sub" x="532" y="351">channel order · FR-07</text>
-      <rect class="sd-box" x="44" y="400" width="186" height="56" rx="8" />
+      <rect class="sd-box sd-enclave" x="44" y="400" width="186" height="56" rx="8" />
       <use href="#ad-l-badge-check" class="sd-line-icon" x="56" y="417" width="22" height="22" />
       <text class="sd-title" x="86" y="424">State Verifier</text>
-      <text class="sd-sub" x="86" y="441">result check · FR-08</text>
+      <text class="sd-sub" x="86" y="441">MobileNet · FR-08</text>
       <rect class="sd-box" x="260" y="400" width="200" height="56" rx="8" />
       <use href="#ad-l-radio" class="sd-line-icon" x="272" y="417" width="22" height="22" />
       <text class="sd-title" x="302" y="424">Channel adapters</text>
@@ -105,13 +101,13 @@
       <text class="sd-title" x="302" y="624">Wall switch</text>
       <text class="sd-sub" x="302" y="641">pressed</text>
       <path class="sd-edge" d="M230 108 H260" marker-end="url(#ad-arrow)" />
-      <path class="sd-edge" d="M460 108 H490" marker-end="url(#ad-arrow)" />
-      <path class="sd-edge" d="M460 188 H560 V136" marker-end="url(#ad-arrow)" />
-      <text class="sd-edge-label" x="514" y="206" text-anchor="middle">Verified mapping</text>
+      <path class="sd-edge sd-accent" d="M460 108 H490" marker-end="url(#ad-arrow-accent)" />
+      <path class="sd-edge sd-accent" d="M460 188 H560 V136" marker-end="url(#ad-arrow-accent)" />
+      <text class="sd-edge-label sd-accent-text" x="514" y="206" text-anchor="middle">Verified mapping</text>
       <path class="sd-edge" d="M230 188 H260" marker-end="url(#ad-arrow)" />
       <path class="sd-edge sd-accent" d="M640 136 V310" marker-end="url(#ad-arrow-accent)" />
-      <text class="sd-edge-label sd-accent-text" x="648" y="232">run.start</text>
-      <path class="sd-edge" d="M230 338 H260" marker-end="url(#ad-arrow)" />
+      <text class="sd-edge-label sd-accent-text" x="648" y="232">decision</text>
+      <path class="sd-edge sd-accent" d="M230 338 H260" marker-end="url(#ad-arrow-accent)" />
       <path class="sd-edge sd-accent" d="M360 310 V216" marker-end="url(#ad-arrow-accent)" />
       <text class="sd-edge-label sd-accent-text" x="368" y="262">candidates</text>
       <path class="sd-edge" d="M490 352 H475 V428 H460" marker-end="url(#ad-arrow)" />
@@ -120,8 +116,8 @@
       <text class="sd-edge-label" x="603" y="388">2 · press</text>
       <path class="sd-edge" d="M595 456 V490" marker-end="url(#ad-arrow)" />
       <path class="sd-edge" d="M490 518 H460" marker-end="url(#ad-arrow)" />
-      <path class="sd-edge" d="M130 366 V400" marker-end="url(#ad-arrow)" />
-      <text class="sd-edge-label" x="138" y="388">crops</text>
+      <path class="sd-edge sd-accent" d="M130 366 V400" marker-end="url(#ad-arrow-accent)" />
+      <text class="sd-edge-label sd-accent-text" x="138" y="388">crops</text>
       <path class="sd-edge sd-accent" d="M44 428 H20 V188 H44" marker-end="url(#ad-arrow-accent)" />
       <text class="sd-edge-label sd-accent-text" x="24" y="236">result</text>
       <path class="sd-edge" d="M360 546 V600" marker-end="url(#ad-arrow)" />
@@ -129,9 +125,12 @@
       <path class="sd-edge" d="M260 428 H245 V580 H130 V600" marker-end="url(#ad-arrow)" />
       <text class="sd-edge-label" x="140" y="594">wireless</text>
       <path class="sd-edge" d="M30 696 H66" marker-end="url(#ad-arrow)" />
-      <text class="sd-sub" x="74" y="700">inside one mode</text>
-      <path class="sd-edge sd-accent" d="M200 696 H236" marker-end="url(#ad-arrow-accent)" />
-      <text class="sd-sub" x="244" y="700">between hub and server (hub messages)</text>
+      <text class="sd-sub" x="74" y="700">at home</text>
+      <path class="sd-edge sd-accent" d="M150 696 H186" marker-end="url(#ad-arrow-accent)" />
+      <text class="sd-sub" x="194" y="700">to or from the enclave, encrypted</text>
+      <rect class="sd-box sd-enclave" x="420" y="688" width="22" height="16" rx="3" />
+      <use href="#ad-l-lock" class="sd-line-icon" x="425" y="690" width="12" height="12" />
+      <text class="sd-sub" x="450" y="700">runs in the Nitro Enclave on AWS</text>
     </svg>
   </figure>
 </template>
@@ -159,6 +158,7 @@
 .sd-box { fill: var(--vp-c-bg-soft); stroke: var(--vp-c-text-3); stroke-width: 1.2; }
 .sd-strong { stroke: var(--vp-c-brand-1); stroke-width: 1.8; }
 .sd-data { fill: var(--vp-c-bg-alt); }
+.sd-enclave { fill: var(--vp-c-brand-soft); stroke: var(--vp-c-brand-1); stroke-width: 1.6; stroke-dasharray: 5 3; }
 .sd-planned { stroke-dasharray: 5 4; fill: var(--vp-c-bg); }
 .sd-title { fill: var(--vp-c-text-1); font-size: 14px; font-weight: 600; }
 .sd-sub { fill: var(--vp-c-text-2); font-size: 12px; }
