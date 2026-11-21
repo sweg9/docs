@@ -1,7 +1,7 @@
 # Modules
 
 ::: warning Draft
-The layout of the `backend-server` repository for the design of 2026-11-20. The code in the repository still follows the 2026-11-17 layout and moves to this one as it is built (see its README). The repository owns its layout and changes this page as it is built.
+The layout of the `backend-server` repository for the design of 2026-11-20. Many modules are still docstrings that say what they will do (see the repository's README). The repository owns its layout and changes this page as it is built.
 :::
 
 [Stack](./stack) says where each part runs. `backend-server` holds three of them:
@@ -15,7 +15,7 @@ This page says how the code is split so that the three live in one repository wi
 
 ```text
 backend-server/
-├── pyproject.toml          uv project; extras: hub, server, enclave (the enclave extra pulls in ai-engine)
+├── pyproject.toml          uv project; extras: hub, server, enclave (ai-engine goes into the enclave image)
 ├── Dockerfile              the server image (no models)
 ├── enclave/                Dockerfile of the enclave image, turned into an EIF with nitro-cli
 ├── settings/
