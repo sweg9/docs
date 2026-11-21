@@ -30,11 +30,7 @@ The team moved the server to AWS on 2026-11-20 (5th meeting). The 2026-11-17 pla
 - So the EC2 instance, its administrators and S3 never see a crop in the clear.
 - Whole frames never leave the hub.
 
-<StackDiagram />
-
-::: info Diagram
-The diagram above still shows the 2026-11-17 design. It is replaced by the new architecture figure once it is final.
-:::
+![NOVA architecture: the robot and the hub at home; on AWS, S3, KMS and one EC2 instance with k3s (ingress, FastAPI, monitoring) and a Nitro Enclave (ML Engine, Policy); a separate EC2 instance for offline training](/architecture.png)
 
 ### One run, end to end
 
