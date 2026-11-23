@@ -24,7 +24,7 @@ found = engine.detect_controls(frame)    # list[ControlBox]
 | Threads | One call at a time. The enclave program calls the engine from one worker thread |
 | Results | Frozen Pydantic models, checked when they are made (A-01). Every result has `confidence` (0 to 1) and `reason`, one sentence from a fixed template (A-02) |
 | Unsure | Below its threshold a call answers `unknown` or `unsure` and does not guess (A-03) |
-| Errors | A bad input (empty image, box outside 0 to 1) raises `ValueError`. A model failure raises `EngineError` with a reason; the enclave answers the request with it, and the hub fails the stage (A-04) |
+| Errors | A bad input (empty image, box outside 0 to 1) raises `ValueError`. A model failure raises `EngineError` with a reason. The enclave then sends no answer and logs only the error's class; the hub handles the missing answer on the safe side and fails the stage (A-04, see [Answers that do not come](/api/hub-messages#answers-that-do-not-come)) |
 | Not trained yet | A call whose model does not exist yet still answers, safely: `read_state` gives `unknown`, `detect_devices` gives nothing, `check_effect` gives `unsure`, `fingerprint` gives `null`. So the hub and the enclave program can be built and tested before the models are trained. `detect_controls` and `find_people` instead raise `EngineError` without their model, because an empty answer would read as "nothing there" (C-04) |
 
 ## Calls
@@ -103,6 +103,7 @@ Compares two crops of the same region, taken before and after the resident flipp
 |---|---|---|
 | `change_score` | number | 0 to 1, returned in `check.result` while mapping |
 | `clear` | boolean | Above `change.threshold`, the clear change that C-08 needs |
+| `direction` | `brighter` `darker` `none` | Which way the changed cells moved; `none` without a clear change. The enclave turns it into `change` of `check.result` while mapping |
 | `confidence`, `reason` | | `"region got 38% brighter"` |
 
 ### `detect_devices(image)` (FR-02)

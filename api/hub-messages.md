@@ -103,7 +103,7 @@ The server hands `recognize`, `check`, `refind`, `people` and `decide` to the en
 
 | Field | Type | Rule |
 |---|---|---|
-| `change` | `off_to_on` `on_to_off` `none` | What changed, from MobileNet (M-S5) |
+| `change` | `off_to_on` `on_to_off` `none` | What changed. `map`: the direction of `measure_change` on the whole photo. `verify`: from `check_effect`, `none` unless the answer is `yes`. The learned MobileNet check (M-S5) is not wired in yet |
 | `answer` | `yes` `no` `unsure` or `null` | For `verify`: did the command work. `null` for `map` |
 | `device_box` | box or `null` | The region that changed |
 | `device_type` | device type or `null` | `null` when no device was found in the region; then a mapping cannot become `Verified` (C-08) |
