@@ -36,7 +36,7 @@ found = engine.detect_controls(frame)    # list[ControlBox]
 | `is_clear(crop, score)` | `ClearResult` | S1 | Sharpness and score thresholds |
 | `link_guess(controls, room)` | `list[LinkGuess]` | S1, S2 | M-S2a Linker |
 | `fingerprint(crop)` | `Fingerprint` or `null` | S1, S6 | DINOv2 small, not built: `null` |
-| `measure_change(before, after)` | `ChangeResult` | S2 | Frame difference on an 8 × 8 grid (NumPy) |
+| `measure_change(before, after)` | `ChangeResult` | S2 | Frame difference on a grid of cells (NumPy) |
 | `detect_devices(image)` | `list[DeviceBox]` | S2 | M-S2 |
 | `check_effect(before, after, device_box, device_type, action)` | `CheckResult` | S5, S6 | M-S5 baseline measure; the learned MobileNet check is not wired in yet |
 | `find_people(image)` | `list[PersonBox]` | S1, S6 | Pretrained YOLO |
@@ -185,7 +185,7 @@ Sections in `ai-engine`'s `settings.yaml`. Values below are starting values. The
 | `linker.alpha`, `linker.floor`, `linker.plate_gap` | 3.0, 0.1, 1.0 | `link_guess` |
 | `state.threshold` | 0.7 | `read_state` |
 | `clear.min_score`, `clear.min_sharpness` | 0.5, 80 | `is_clear` |
-| `change.cell_min`, `change.threshold` | 0.06, 0.3 | `measure_change` |
+| `change.grid`, `change.cell_min`, `change.threshold` | 8, 0.06, 0.3 | `measure_change` |
 | `devices.conf` | 0.5 | `detect_devices` |
 | `check.light.upper`, `check.light.lower` | 0.25, 0.05 | `check_effect`, on the lamp area |
 | `check.light.scene_upper`, `check.light.scene_lower` | 0.08, 0.02 | `check_effect`, on the whole frame (`second`) |
@@ -193,6 +193,7 @@ Sections in `ai-engine`'s `settings.yaml`. Values below are starting values. The
 | `people.conf` | 0.25 | `find_people` |
 | `fingerprint.similarity_to_refind` | 0.7 | `refind_control` |
 | `refind.max_shift`, `refind.require_fingerprint` | 0.1, `true` | `refind_control` |
+| `press.planner` | `script` | `plan_press`: which planner answers (C-13). An unknown name fails `load` |
 | `press.push_ms` | `{switch: 400, toggle: 400, power_strip: 400}` | `plan_press` |
 
 Model files used by the enclave go in `models/` with a model card each (A-05); `runs/` stays for training output.
