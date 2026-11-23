@@ -4,7 +4,7 @@
 A first proposal for the Python interface that the enclave calls. `ai-engine` owns it and changes this page as it builds it. Numbers are starting values and belong in `ai-engine`'s `settings.yaml` (C-12).
 :::
 
-Since 2026-11-20 `ai-engine` runs inside the Nitro Enclave on AWS (see [Stack](/overview/stack#where-each-part-runs)). The enclave program imports it, opens the sealed photos the hub sends, and calls it for each request of the [hub messages](/api/hub-messages). This page lists every call. The hub and the server never import `ai_engine`. Today `ai-engine` has the control detector, the Linker and the effect check as separate scripts on the branch `yolo11n-640-synth`, and the `Engine` on the branch `engine` (calls marked below as not built or not trained answer safely). The models behind each call are in [Models](/product/models); the rules for their answers are the [AI output rules](/standards/ai-output).
+Since 2026-11-20 `ai-engine` runs inside the Nitro Enclave on AWS (see [Stack](/overview/stack#where-each-part-runs)). The enclave program imports it, opens the sealed photos the hub sends, and calls it for each request of the [hub messages](/api/hub-messages). This page lists every call. The hub and the server never import `ai_engine`. The `Engine` is on the `ai-engine` branch `yolo11n-640-synth`, next to the training scripts of the control detector, the Linker and the effect check. Calls marked below as not built or not trained answer safely. The models behind each call are in [Models](/product/models); the rules for their answers are the [AI output rules](/standards/ai-output).
 
 ## Use
 
