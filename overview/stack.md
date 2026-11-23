@@ -136,7 +136,7 @@ The server runs on a one-node k3s cluster on one EC2 instance that supports Nitr
 - **Images** are built by GitHub Actions and pushed to the GitHub Container Registry (GHCR). k3s pulls them from there.
 - **The enclave image** is rebuilt when a new model is published. Its attestation value then changes, so the KMS key policy is updated with it.
 - **Data.** Loki's files are on the instance's EBS volume. Sealed photos and model files are in S3. Nothing else is kept on AWS.
-- **Settings.** `settings/server.yaml` goes into a ConfigMap. The Policy runs in the enclave, which has no network, so `settings/risk.yaml` is passed to it over vsock when it starts. No image holds settings (C-12).
+- **Settings.** `settings/server.yaml` goes into a ConfigMap. The Policy runs in the enclave, which has no network, so `settings/risk.yaml` and `ai-engine`'s `settings.yaml` go into the ConfigMap too and are passed to it over vsock when it starts. No image holds settings (C-12).
 - **Training** runs on a separate instance with a GPU, started only to train. Its output goes to S3 as a new model and into a new enclave image.
 - **Tests** still run with `uv run pytest` outside the cluster.
 - **Setting up the instance** (k3s, the Nitro Enclaves allocator and device plugin, the KMS key policy, the S3 bucket) is in `backend-server/deploy/README.md`.

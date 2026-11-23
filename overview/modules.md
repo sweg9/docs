@@ -117,7 +117,7 @@ One process in the Nitro Enclave. It has no network and no disk. It talks only t
 
 | Module | Job | Requirement |
 |---|---|---|
-| `main.py` | vsock server; loads the `Engine` and `risk.yaml` once at start | |
+| `main.py` | vsock server; at start gets `risk.yaml` and `ai-engine`'s settings over vsock and loads the `Engine` once | C-12 |
 | `unseal.py` | Decrypts a sealed photo with KMS, using the enclave's attestation document | C-05 |
 | `handlers.py` | `recognize`, `check`, `refind`, `people`: calls into `ai_engine` | FR-01, FR-02, FR-08 to FR-10 |
 | `policy.py` | Act, ask or suggest from risk and confidence (`decide`) | FR-06, C-03 |

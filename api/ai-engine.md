@@ -4,21 +4,21 @@
 A first proposal for the Python interface that the enclave calls. `ai-engine` owns it and changes this page as it builds it. Numbers are starting values and belong in `ai-engine`'s `settings.yaml` (C-12).
 :::
 
-Since 2026-11-20 `ai-engine` runs inside the Nitro Enclave on AWS (see [Stack](/overview/stack#where-each-part-runs)). The enclave program imports it, opens the sealed photos the hub sends, and calls it for each request of the [hub messages](/api/hub-messages). This page lists every call. Today `ai-engine` has only the training code of the control detector, so all of it is still to be built. The models behind each call are in [Models](/product/models); the rules for their answers are the [AI output rules](/standards/ai-output).
+Since 2026-11-20 `ai-engine` runs inside the Nitro Enclave on AWS (see [Stack](/overview/stack#where-each-part-runs)). The enclave program imports it, opens the sealed photos the hub sends, and calls it for each request of the [hub messages](/api/hub-messages). This page lists every call. The hub and the server never import `ai_engine`. Today `ai-engine` has the control detector, the Linker and the effect check as separate scripts on the branch `yolo11n-640-synth`, and no `Engine` yet, so the interface itself is still to be built. The models behind each call are in [Models](/product/models); the rules for their answers are the [AI output rules](/standards/ai-output).
 
 ## Use
 
 ```python
 from ai_engine import Engine
 
-engine = Engine.load()                   # reads settings.yaml, loads every model once
+engine = Engine.load(settings)           # settings come over vsock; loads every model once
 found = engine.detect_controls(frame)    # list[ControlBox]
 ```
 
 | Rule | |
 |---|---|
-| Package | `ai_engine`, in the `ai-engine` repo next to the training code (`detector/`) |
-| Loading | `Engine.load(settings_path=None)` loads every model file named in the settings and fails at once if one is missing. The enclave program calls it at start, not during a run |
+| Package | `ai_engine`, in the `ai-engine` repo next to the training code (`detector/`, `linker/`, `effect_check/`) |
+| Loading | `Engine.load(settings, models_dir="models")` takes the settings as a dict and loads every model file named in them from `models_dir`, failing at once if one is missing. The enclave has no disk or network and no image holds settings (C-12), so the server reads `ai-engine`'s `settings.yaml` from the ConfigMap and passes it over vsock when the enclave starts, as it does with `risk.yaml`. Model files are built into the enclave image. The enclave program calls `load` at start, not during a run. Training scripts may still read `settings.yaml` from the repo |
 | Images | NumPy arrays as OpenCV gives them: `uint8`, height × width × 3, BGR |
 | Boxes and points | Ratios from 0 to 1 of the image size, `[x1, y1, x2, y2]`, the same as in the [hub messages](/api/hub-messages#shared-shapes) |
 | Threads | One call at a time. The enclave program calls the engine from one worker thread |
@@ -34,6 +34,7 @@ found = engine.detect_controls(frame)    # list[ControlBox]
 | `detect_controls(frame)` | `list[ControlBox]` | S1 | M-S1a |
 | `read_state(crop, kind)` | `StateResult` | S1 | M-S1b |
 | `is_clear(crop, score)` | `ClearResult` | S1 | Sharpness and score thresholds |
+| `link_guess(controls, room)` | `list[LinkGuess]` | S1, S2 | M-S2a Linker |
 | `fingerprint(crop)` | `Fingerprint` | S1, S6 | DINOv2 small |
 | `measure_change(before, after)` | `ChangeResult` | S2 | OpenCV frame difference |
 | `detect_devices(image)` | `list[DeviceBox]` | S2 | M-S2 |
@@ -54,7 +55,7 @@ Runs the control detector on one photo. The hub decides when to send a photo (FR
 | `confidence` | number | The detector's score |
 | `reason` | string | `"switch found with score 0.91"` |
 
-Detections below `predict.conf` are dropped. The detector's classes become kinds through `kind_map` in the settings, and a class with no entry is dropped. A model trained on the three kinds needs no map. detector-v1 was trained on five earlier classes, so while it is in use: `switch` and `push_button` → `switch`, `toggle` → `toggle`; `knob` and `remote` are dropped. It has no `power_strip` class and finds power strip switches as `switch`, as its training labels did.
+Detections below `predict.conf` are dropped. The detector's classes become kinds through `kind_map` in the settings, and a class with no entry is dropped. The current model, `yolo11n-640-synth`, is trained on the three kinds and needs no map. The map is only for falling back to detector-v1, which was trained on five earlier classes: `switch` and `push_button` → `switch`, `toggle` → `toggle`; `knob` and `remote` are dropped. It has no `power_strip` class and finds power strip switches as `switch`, as its training labels did.
 
 ### `read_state(crop, kind)` (FR-01)
 
@@ -72,6 +73,19 @@ Detections below `predict.conf` are dropped. The detector's classes become kinds
 | `sharpness` | number | |
 | `confidence`, `reason` | | `"too blurry (sharpness 41 < 80)"` |
 
+### `link_guess(controls, room)` (FR-02)
+
+Guesses, before any press, which class of device each switch key runs. `controls` is the list from `detect_controls` for one photo; `room` is the room type from the `recognize` request. The Linker groups keys whose boxes are closer than `linker.plate_gap` key widths into one plate, then looks up P(device class | room, gang count, gang index) in its probability table. It answers one item per control, in the same order, and fills `gang` and `link_guess` of `recognize.result` (see [hub messages](/api/hub-messages#recognize-result-server-to-hub)).
+
+| `LinkGuess` field | Type | Rule |
+|---|---|---|
+| `gang` | object | `count` and `index` of the key on its plate |
+| `device_class` | string | The most likely class, such as `ceiling_light` or `exhaust_fan`; `out_of_view` when that is the most likely |
+| `p` | number | Its probability. `linker.floor` keeps every guess below 1 before a press |
+| `confidence`, `reason` | | `confidence` is `p`; `"key 1 of 2 in a living room: ceiling light (0.74)"` |
+
+A guess is never a mapping: only a press with a clear change (C-08) links a control to a device.
+
 ### `fingerprint(crop)` (FR-01, FR-09)
 
 | `Fingerprint` field | Type | Rule |
@@ -79,7 +93,7 @@ Detections below `predict.conf` are dropped. The detector's classes become kinds
 | `vector` | 384 numbers | Normalized to length 1, so the cosine similarity is a dot product |
 | `model` | string | Model file, so fingerprints of different models are never compared |
 
-`Fingerprint.similarity(other)` returns the cosine similarity and raises `ValueError` if the models differ. The server compares stored fingerprints itself (see [Database](/overview/database#controls)) with the same formula and does not import `ai_engine`.
+`Fingerprint.similarity(other)` returns the cosine similarity and raises `ValueError` if the models differ. The hub keeps the fingerprints and compares them itself (see [Database](/overview/database#controls)) with the same formula and does not import `ai_engine`. The server keeps no database.
 
 ### `measure_change(before, after)` (FR-02)
 
@@ -126,7 +140,7 @@ The camera check of one command. `before` and `after` are short lists of whole f
 | `box` | box | |
 | `confidence`, `reason` | | |
 
-Its threshold is low on purpose (`people.conf`): a missed person is worse than a cancelled press. The engine only reports what it saw. The Safety Guard in the hub decides whether the gate passes (A-08). The hub also uses this call to drop crops with a person in them before it sends them (C-05).
+Its threshold is low on purpose (`people.conf`): a missed person is worse than a cancelled press. The engine only reports what it saw. The Safety Guard in the hub decides whether the gate passes (A-08), from the enclave's `people.result`. The enclave also runs this call on every `recognize` photo and sets `person` in `recognize.result`; the hub then saves nothing from that photo (C-05).
 
 ### `refind_control(frame, saved)` (FR-09)
 
@@ -155,12 +169,13 @@ A plan with `actuator: null` cancels the run. The Safety Guard runs after the pl
 
 ## Settings
 
-New sections in `ai-engine`'s `settings.yaml`, next to the existing `detector` and `fingerprint` sections. Values below are starting values.
+Sections in `ai-engine`'s `settings.yaml`, next to the existing `detector`, `linker` and `effect_check` sections. Values below are starting values. The enclave gets this file over vsock at start (see [Use](#use)).
 
 | Key | Start | Used by |
 |---|---|---|
-| `detector.kind_map` | For detector-v1: `{switch: switch, push_button: switch, toggle: toggle}` | `detect_controls` |
-| `detector.weights` | `models/detector-v1.pt` | `detect_controls` |
+| `detector.kind_map` | None for `yolo11n-640-synth`. Only for detector-v1: `{switch: switch, push_button: switch, toggle: toggle}` | `detect_controls` |
+| `detector.weights` | `models/detector-yolo11n-640-synth.pt` | `detect_controls` |
+| `linker.prior`, `linker.floor`, `linker.plate_gap` | `linker/prior.json`, 0.1, 1.0 | `link_guess` |
 | `state.weights`, `state.threshold` | none, 0.7 | `read_state` |
 | `clear.min_score`, `clear.min_sharpness` | 0.5, 80 | `is_clear` |
 | `fingerprint.weights` | DINOv2 small, local file | `fingerprint` |
