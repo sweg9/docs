@@ -4,7 +4,7 @@
 A first proposal for the Python interface that the enclave calls. `ai-engine` owns it and changes this page as it builds it. Numbers are starting values and belong in `ai-engine`'s `settings.yaml` (C-12).
 :::
 
-Since 2026-11-20 `ai-engine` runs inside the Nitro Enclave on AWS (see [Stack](/overview/stack#where-each-part-runs)). The enclave program imports it, opens the sealed photos the hub sends, and calls it for each request of the [hub messages](/api/hub-messages). This page lists every call. The hub and the server never import `ai_engine`. Today `ai-engine` has the control detector, the Linker and the effect check as separate scripts on the branch `yolo11n-640-synth`, and no `Engine` yet, so the interface itself is still to be built. The models behind each call are in [Models](/product/models); the rules for their answers are the [AI output rules](/standards/ai-output).
+Since 2026-11-20 `ai-engine` runs inside the Nitro Enclave on AWS (see [Stack](/overview/stack#where-each-part-runs)). The enclave program imports it, opens the sealed photos the hub sends, and calls it for each request of the [hub messages](/api/hub-messages). This page lists every call. The hub and the server never import `ai_engine`. Today `ai-engine` has the control detector, the Linker and the effect check as separate scripts on the branch `yolo11n-640-synth`, and the `Engine` on the branch `engine` (calls marked below as not built or not trained answer safely). The models behind each call are in [Models](/product/models); the rules for their answers are the [AI output rules](/standards/ai-output).
 
 ## Use
 
@@ -18,14 +18,14 @@ found = engine.detect_controls(frame)    # list[ControlBox]
 | Rule | |
 |---|---|
 | Package | `ai_engine`, in the `ai-engine` repo next to the training code (`detector/`, `linker/`, `effect_check/`) |
-| Loading | `Engine.load(settings, models_dir="models")` takes the settings as a dict and loads every model file named in them from `models_dir`, failing at once if one is missing. The enclave has no disk or network and no image holds settings (C-12), so the server reads `ai-engine`'s `settings.yaml` from the ConfigMap and passes it over vsock when the enclave starts, as it does with `risk.yaml`. Model files are built into the enclave image. The enclave program calls `load` at start, not during a run. Training scripts may still read `settings.yaml` from the repo |
+| Loading | `Engine.load(settings, root=None)` takes the settings as a dict and loads every model file named under `paths` in them, relative to `root` (the repo root by default). It fails at once if a named file or a needed setting is missing; a path set to `null` means that model is not trained yet. The enclave has no disk or network and no image holds settings (C-12), so the server reads `ai-engine`'s `settings.yaml` from the ConfigMap and passes it over vsock when the enclave starts, as it does with `risk.yaml`. Model files are built into the enclave image. The enclave program calls `load` at start, not during a run. Training scripts may still read `settings.yaml` from the repo |
 | Images | NumPy arrays as OpenCV gives them: `uint8`, height × width × 3, BGR |
 | Boxes and points | Ratios from 0 to 1 of the image size, `[x1, y1, x2, y2]`, the same as in the [hub messages](/api/hub-messages#shared-shapes) |
 | Threads | One call at a time. The enclave program calls the engine from one worker thread |
 | Results | Frozen Pydantic models, checked when they are made (A-01). Every result has `confidence` (0 to 1) and `reason`, one sentence from a fixed template (A-02) |
 | Unsure | Below its threshold a call answers `unknown` or `unsure` and does not guess (A-03) |
 | Errors | A bad input (empty image, box outside 0 to 1) raises `ValueError`. A model failure raises `EngineError` with a reason; the enclave answers the request with it, and the hub fails the stage (A-04) |
-| Not trained yet | A call whose model does not exist yet still answers, safely: `read_state` gives `unknown`, `detect_devices` gives nothing, `check_effect` gives `unsure`. So the hub and the enclave program can be built and tested before the models are trained |
+| Not trained yet | A call whose model does not exist yet still answers, safely: `read_state` gives `unknown`, `detect_devices` gives nothing, `check_effect` gives `unsure`, `fingerprint` gives `null`. So the hub and the enclave program can be built and tested before the models are trained. `detect_controls` and `find_people` instead raise `EngineError` without their model, because an empty answer would read as "nothing there" (C-04) |
 
 ## Calls
 
@@ -35,13 +35,13 @@ found = engine.detect_controls(frame)    # list[ControlBox]
 | `read_state(crop, kind)` | `StateResult` | S1 | M-S1b |
 | `is_clear(crop, score)` | `ClearResult` | S1 | Sharpness and score thresholds |
 | `link_guess(controls, room)` | `list[LinkGuess]` | S1, S2 | M-S2a Linker |
-| `fingerprint(crop)` | `Fingerprint` | S1, S6 | DINOv2 small |
-| `measure_change(before, after)` | `ChangeResult` | S2 | OpenCV frame difference |
+| `fingerprint(crop)` | `Fingerprint` or `null` | S1, S6 | DINOv2 small, not built: `null` |
+| `measure_change(before, after)` | `ChangeResult` | S2 | Frame difference on an 8 × 8 grid (NumPy) |
 | `detect_devices(image)` | `list[DeviceBox]` | S2 | M-S2 |
-| `check_effect(before, after, device_box, device_type, action)` | `CheckResult` | S5, S6 | M-S5 |
+| `check_effect(before, after, device_box, device_type, action)` | `CheckResult` | S5, S6 | M-S5 baseline measure; the learned MobileNet check is not wired in yet |
 | `find_people(image)` | `list[PersonBox]` | S1, S6 | Pretrained YOLO |
 | `refind_control(frame, saved)` | `RefindResult` | S6 | M-S1a and fingerprints |
-| `plan_press(control, actuators)` | `PressPlan` | S6 | Script (FR-09) |
+| `plan_press(control, kind, actuators)` | `PressPlan` | S6 | Script (FR-09) |
 | `versions()` | `dict[str, str]` | Any | Model file names and hashes, for reports and model cards (A-05) |
 
 ### `detect_controls(frame)` (FR-01)
@@ -79,8 +79,8 @@ Guesses, before any press, which class of device each switch key runs. `controls
 
 | `LinkGuess` field | Type | Rule |
 |---|---|---|
-| `gang` | object | `count` and `index` of the key on its plate |
-| `device_class` | string | The most likely class, such as `ceiling_light` or `exhaust_fan`; `out_of_view` when that is the most likely |
+| `gang` | object or `null` | `count` and `index` of the key on its plate; `null` for a control that is not a `switch` |
+| `device_class` | string or `null` | The most likely class of the Linker's table, such as `ceiling_light` or `exhaust_fan`; `null` with `gang` |
 | `p` | number | Its probability. `linker.floor` keeps every guess below 1 before a press |
 | `confidence`, `reason` | | `confidence` is `p`; `"key 1 of 2 in a living room: ceiling light (0.74)"` |
 
@@ -93,7 +93,7 @@ A guess is never a mapping: only a press with a clear change (C-08) links a cont
 | `vector` | 384 numbers | Normalized to length 1, so the cosine similarity is a dot product |
 | `model` | string | Model file, so fingerprints of different models are never compared |
 
-`Fingerprint.similarity(other)` returns the cosine similarity and raises `ValueError` if the models differ. The hub keeps the fingerprints and compares them itself (see [Database](/overview/database#controls)) with the same formula and does not import `ai_engine`. The server keeps no database.
+Until DINOv2 is built the call returns `null`, and the hub stores no fingerprint ([Database](/overview/database#controls)). `Fingerprint.similarity(other)` returns the cosine similarity and raises `ValueError` if the models differ. The hub keeps the fingerprints and compares them itself (see [Database](/overview/database#controls)) with the same formula and does not import `ai_engine`. The server keeps no database.
 
 ### `measure_change(before, after)` (FR-02)
 
@@ -150,14 +150,14 @@ Finds the saved control again when the cart stands at the press spot. `saved` ho
 |---|---|---|
 | `found` | boolean | `true` only if a detection of the same kind near the saved box has fingerprint similarity of at least `fingerprint.similarity_to_refind` (0.7) |
 | `box` | box or `null` | |
-| `similarity` | number | |
+| `similarity` | number or `null` | `null` when no fingerprint was compared. Until fingerprints exist, `found` is `false` while `refind.require_fingerprint` is `true`; set it to `false` only for a demo, to re-find by place alone |
 | `confidence`, `reason` | | `"no switch near the saved place"` |
 
 When `found` is `false`, the run is cancelled and the resident is told (FR-09).
 
 ### `plan_press(control, actuators)` (FR-09)
 
-The motion planner: a simple script now, replaceable by a VLA model later behind the same call (C-13). `control` is the `RefindResult` and the kind. `actuators` is the layout from the hub settings: for each actuator, its id and the part of the image it faces.
+The motion planner: a simple script now, replaceable by a VLA model later behind the same call (C-13). `control` is the `RefindResult`, `kind` the control's kind. `actuators` is the layout from the hub settings: for each actuator, its id and the part of the image it faces.
 
 | `PressPlan` field | Type | Rule |
 |---|---|---|
@@ -169,28 +169,37 @@ A plan with `actuator: null` cancels the run. The Safety Guard runs after the pl
 
 ## Settings
 
-Sections in `ai-engine`'s `settings.yaml`, next to the existing `detector`, `linker` and `effect_check` sections. Values below are starting values. The enclave gets this file over vsock at start (see [Use](#use)).
+Sections in `ai-engine`'s `settings.yaml`. Values below are starting values. The enclave gets this file over vsock at start (see [Use](#use)). Model files are under `paths`, next to the paths the training scripts use, so each file is named once; `null` means not trained yet.
 
 | Key | Start | Used by |
 |---|---|---|
-| `detector.kind_map` | None for `yolo11n-640-synth`. Only for detector-v1: `{switch: switch, push_button: switch, toggle: toggle}` | `detect_controls` |
-| `detector.weights` | `models/detector-yolo11n-640-synth.pt` | `detect_controls` |
-| `linker.prior`, `linker.floor`, `linker.plate_gap` | `linker/prior.json`, 0.1, 1.0 | `link_guess` |
-| `state.weights`, `state.threshold` | none, 0.7 | `read_state` |
+| `paths.detector_weights` | `models/detector-yolo11n-640-synth.pt` | `detect_controls`, `refind_control` |
+| `paths.state_weights` | `null` | `read_state` |
+| `paths.devices_weights` | `null` | `detect_devices` |
+| `paths.people_weights` | `models/yolo11s.pt` | `find_people` |
+| `paths.fingerprint_weights` | `null` (DINOv2 small, planned) | `fingerprint` |
+| `paths.prior` | `linker/prior.json` | `link_guess` |
+| `engine.device` | `cpu` | Every model |
+| `detector.predict.conf`, `detector.predict.imgsz` | 0.3, 640 | `detect_controls` |
+| `detector.kind_map` | `null` for `yolo11n-640-synth`. Only for detector-v1: `{switch: switch, push_button: switch, toggle: toggle}` | `detect_controls` |
+| `linker.alpha`, `linker.floor`, `linker.plate_gap` | 3.0, 0.1, 1.0 | `link_guess` |
+| `state.threshold` | 0.7 | `read_state` |
 | `clear.min_score`, `clear.min_sharpness` | 0.5, 80 | `is_clear` |
-| `fingerprint.weights` | DINOv2 small, local file | `fingerprint` |
-| `change.threshold` | 0.3 | `measure_change` |
-| `devices.weights`, `devices.conf` | none, 0.5 | `detect_devices` |
-| `check.light.upper`, `check.light.lower` | 0.25, 0.05 | `check_effect` |
-| `check.fan.upper`, `check.fan.lower` | to be measured | `check_effect` |
-| `people.weights`, `people.conf` | `yolo11s.pt`, 0.25 | `find_people` |
+| `change.cell_min`, `change.threshold` | 0.06, 0.3 | `measure_change` |
+| `devices.conf` | 0.5 | `detect_devices` |
+| `check.light.upper`, `check.light.lower` | 0.25, 0.05 | `check_effect`, on the lamp area |
+| `check.light.scene_upper`, `check.light.scene_lower` | 0.08, 0.02 | `check_effect`, on the whole frame (`second`) |
+| `check.fan.upper`, `check.fan.lower` | `null`, to be measured | `check_effect` |
+| `people.conf` | 0.25 | `find_people` |
+| `fingerprint.similarity_to_refind` | 0.7 | `refind_control` |
+| `refind.max_shift`, `refind.require_fingerprint` | 0.1, `true` | `refind_control` |
 | `press.push_ms` | `{switch: 400, toggle: 400, power_strip: 400}` | `plan_press` |
 
 Model files used by the enclave go in `models/` with a model card each (A-05); `runs/` stays for training output.
 
 ## Testing without models
 
-`ai_engine.testing.FakeEngine` has the same calls and answers from a script given in the test, for example "the next `check_effect` answers `yes`". The enclave program's tests use it, so they need no model files (see [Modules](/overview/modules#tests)).
+`ai_engine.testing.FakeEngine` has the same calls and answers from a script given in the test, for example `fake.script("check_effect", result)` for "the next `check_effect` answers this". A call with nothing scripted gives the safe not-trained answer, and `detect_controls`, `measure_change` and `find_people` raise `EngineError`. The enclave program's tests use it, so they need no model files (see [Modules](/overview/modules#tests)).
 
 ## Open questions
 
