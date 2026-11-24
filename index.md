@@ -4,7 +4,7 @@ layout: home
 hero:
   name: NOVA Docs
   text: Development wiki
-  tagline: 'NOVA: Non-connected Object Vision and Actuation for Smart Home Routines. Requirements, architecture, API specs, standards and papers in one place.'
+  tagline: "NOVA is a smart-home system that uses a camera to learn how the switches in a home connect to its devices, so it can control even devices that aren't on the network. Requirements, architecture, API specs, standards and papers in one place."
   image:
     src: /hero.svg
     alt: A switch plate inside a detection box
