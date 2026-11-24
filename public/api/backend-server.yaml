@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
   title: backend-server
-  version: 0.3.0
+  version: 0.4.0
   x-status: draft
-  description: API between the resident's web app and the backend server (FastAPI) on AWS EC2 (since 2026-11-20). The server keeps no records; it relays each call to the hub at home and answers 503 while the hub is offline. Draft derived from the proposal, section IV-A. Live updates are pushed over a WebSocket.
+  description: "API between the resident's web app and the backend server (FastAPI) on AWS EC2 (since 2026-11-20). The server keeps no records; it relays each call to the hub at home and answers 503 while the hub is offline. Draft derived from the proposal, section IV-A. Live updates are pushed over a WebSocket (`/ws/app`, session cookie) as `{kind, data}`: `control`, `mapping`, `routine` (a record changed), `scan`, `run.progress`, `run.result`, `notification`, and since 0.4.0 `situation` (a Situation), `visits` (`{visits: Visit[]}`) and `robot` (a Robot). 0.4.0 adds situations, visits, the robot, retry and leave from openapi/dashboard-proposed.yaml, and the demo scenarios."
 servers:
   - url: https://nova.example.com/api
     description: The server on AWS, through the ingress. The domain is still open
@@ -26,6 +26,12 @@ tags:
     description: One action from trigger to result, and its log (FR-12).
   - name: Safety
     description: Emergency stop and pausing proactive features (FR-10).
+  - name: Situations
+    description: A trigger comes in, a plan is built device by device, wireless results come back, and the robot visits what wireless could not do (FR-05 to FR-09).
+  - name: Robot
+    description: What the robot is doing now (FR-09, FR-10).
+  - name: Demo
+    description: Fixed scenarios as a trigger source, for the web app's development and the demo. The hub answers 404 unless it runs with --demo-scenarios.
 paths:
   /login:
     post:
@@ -277,6 +283,144 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ProactiveSetting' }
+  /situations:
+    get:
+      tags: [Situations]
+      summary: Situations, newest first (the last 50)
+      x-requirements: [FR-05, FR-06]
+      responses:
+        '200':
+          description: Situations
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Situation' } }
+  /situations/{situation_id}:
+    get:
+      tags: [Situations]
+      summary: One situation with its plan
+      x-requirements: [FR-05, FR-06]
+      parameters: [{ $ref: '#/components/parameters/situation_id' }]
+      responses:
+        '200':
+          description: Situation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Situation' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /situations/{situation_id}/approve:
+    post:
+      tags: [Situations]
+      summary: Answer yes to a situation that waits for an answer (decision ask)
+      x-requirements: [FR-06]
+      parameters: [{ $ref: '#/components/parameters/situation_id' }]
+      responses:
+        '200':
+          description: Situation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Situation' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /situations/{situation_id}/dismiss:
+    post:
+      tags: [Situations]
+      summary: Answer no to a situation that waits for an answer; nothing is done
+      x-requirements: [FR-06]
+      parameters: [{ $ref: '#/components/parameters/situation_id' }]
+      responses:
+        '200':
+          description: Situation
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Situation' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /visits:
+    get:
+      tags: [Situations]
+      summary: The robot's visit order (devices wireless could not do, and retries)
+      x-requirements: [FR-07, FR-09]
+      responses:
+        '200':
+          description: Visits
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Visit' } }
+  /robot:
+    get:
+      tags: [Robot]
+      summary: The robot's state, last spot, current task and stops ahead
+      x-requirements: [FR-09, FR-10]
+      responses:
+        '200':
+          description: Robot
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Robot' }
+  /runs/{run_id}/retry:
+    post:
+      tags: [Runs]
+      summary: Try a failed, unsure or cancelled run again by pressing
+      description: The resident's choice after a failure (C-09). A new run starts; the robot visits the press spot.
+      x-requirements: [FR-11]
+      parameters: [{ $ref: '#/components/parameters/run_id' }]
+      responses:
+        '202':
+          description: Started
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Choice' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /runs/{run_id}/leave:
+    post:
+      tags: [Runs]
+      summary: Leave a failed, unsure or cancelled run as it is
+      x-requirements: [FR-11]
+      parameters: [{ $ref: '#/components/parameters/run_id' }]
+      responses:
+        '200':
+          description: Recorded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Choice' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /scenarios:
+    get:
+      tags: [Demo]
+      summary: The demo scenarios
+      responses:
+        '200':
+          description: Scenarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [name, description]
+                  properties: { name: { type: string }, description: { type: string } }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /scenarios/{name}/start:
+    post:
+      tags: [Demo]
+      summary: Play a demo scenario (new_control, leave_home)
+      description: Fixed answers stand in for the sensors, the enclave, the wireless platforms and the camera; the runs, records and events are the hub's own. Watch it on /ws/app.
+      parameters:
+        - { name: name, in: path, required: true, schema: { type: string } }
+        - { name: speed, in: query, schema: { type: number, minimum: 0.1, maximum: 20 }, description: 2 plays twice as fast }
+      responses:
+        '202':
+          description: Started
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [started, speed]
+                properties: { started: { type: string }, speed: { type: number } }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
 components:
   securitySchemes:
     session:
@@ -284,7 +428,20 @@ components:
       in: cookie
       name: session
       description: Set by POST /login. Also required by the app's WebSocket.
+  parameters:
+    situation_id: { name: situation_id, in: path, required: true, schema: { type: string } }
+    run_id: { name: run_id, in: path, required: true, schema: { type: string } }
   responses:
+    NotFound:
+      description: Unknown id
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: Not possible now (robot busy, not waiting, already chosen)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
     SignedOut:
       description: No valid session cookie
       content:
@@ -397,3 +554,80 @@ components:
         code: { type: string }
         message: { type: string }
         reason: { type: string }
+    Situation:
+      type: object
+      required: [situation_id, kind, trigger, summary, received_at, status, plan]
+      properties:
+        situation_id: { type: string }
+        kind: { type: string, description: 'For example leave_home' }
+        trigger: { type: string, enum: [sensor, time, routine] }
+        summary: { type: string, description: Plain-language sentence }
+        received_at: { type: string, format: date-time }
+        status: { type: string, enum: [received, planning, waiting_for_answer, running, done, needs_attention, suggested, dismissed, cancelled] }
+        plan: { type: array, items: { $ref: '#/components/schemas/PlanItem' } }
+    PlanItem:
+      type: object
+      required: [device_id, mapping_id, action, decision, confidence, method, wireless]
+      properties:
+        device_id: { type: string }
+        name: { type: string }
+        room: { type: string }
+        risk: { type: string, enum: [low, high] }
+        mapping_id: { type: string }
+        routine_id: { type: [string, 'null'], description: The routine it came from; null when made for this situation }
+        action: { type: string, enum: ['on', 'off'] }
+        decision: { type: string, enum: [act, ask, suggest] }
+        confidence: { type: number }
+        method: { type: string, enum: [wireless, press], description: press once wireless failed or there is no channel }
+        wireless:
+          type: object
+          required: [channel, result]
+          properties:
+            channel: { type: [string, 'null'], enum: [IR, WIFI, BT, null] }
+            result: { type: string, enum: [pending, success, failure, no_channel] }
+            reason: { type: [string, 'null'] }
+        run_id: { type: [string, 'null'] }
+        result: { type: [string, 'null'], enum: [success, failure, unsure, cancelled, null] }
+        reason: { type: [string, 'null'] }
+        resolution: { type: [string, 'null'], enum: [retry, leave, null] }
+    Visit:
+      type: object
+      required: [visit_id, order, spot_id, device_id, reason, status]
+      properties:
+        visit_id: { type: string }
+        order: { type: integer, minimum: 1 }
+        situation_id: { type: [string, 'null'] }
+        spot_id: { type: string }
+        control_id: { type: [string, 'null'] }
+        device_id: { type: string }
+        run_id: { type: [string, 'null'] }
+        reason: { type: string, enum: [no_channel, wireless_failed, requested] }
+        status: { type: string, enum: [waiting, moving, pressing, checking, done, failed, cancelled] }
+    Robot:
+      type: object
+      required: [state, spot_id, task, plan, ral]
+      properties:
+        state: { type: string, enum: [idle, moving, scanning, watching, pressing, checking, stopped] }
+        spot_id: { type: string, description: Last spot reached }
+        task:
+          type: [object, 'null']
+          properties:
+            run_id: { type: [string, 'null'] }
+            device_id: { type: [string, 'null'] }
+            stage: { type: [string, 'null'], enum: [S1, S2, S3, S4, S5, S6, S7, null] }
+            step: { type: string, description: Plain words, for example "safety gate - no person in the work area" }
+            method: { type: [string, 'null'], enum: [wireless, press, null] }
+            channel: { type: [string, 'null'], enum: [IR, WIFI, BT, ARM, null] }
+        plan: { type: array, items: { type: string }, description: Spots still ahead, in order }
+        ral:
+          type: object
+          required: [impl, state]
+          properties:
+            impl: { type: string, enum: [linear_actuators, unity_sim, script] }
+            state: { type: string, enum: [idle, busy, stopped, error] }
+    Choice:
+      type: object
+      required: [run_id, choice]
+      properties:
+        run_id: { type: string }
+        choice: { type: string, enum: [retry, leave] }

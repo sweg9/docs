@@ -167,7 +167,7 @@ The web app calls the [backend-server API](/api/backend-server) on the server, a
 
 | Field | Type | Rule |
 |---|---|---|
-| `kind` | `control` `mapping` `routine` `scan` `run.progress` `run.result` `notification` | |
+| `kind` | `control` `mapping` `routine` `scan` `run.progress` `run.result` `notification` `situation` `visits` `robot` | The last three since API 0.4.0: a Situation, `{visits: Visit[]}`, and the Robot |
 | `data` | object | The record or the step, in the API's shapes |
 
 The server pushes it to the app's WebSocket and keeps nothing. A lost `app.event` changes only the screen; the app reads the lists again after a reconnect.
