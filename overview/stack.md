@@ -17,7 +17,7 @@ The team moved the server to AWS on 2026-11-20 (5th meeting). The 2026-11-17 pla
 | AWS: `server` | A pod on k3s on one EC2 instance | Ingress (Traefik, TLS); FastAPI, which relays the hub's requests to the enclave and the app's calls to the hub and puts sealed photos in S3; the web app; Monitoring (Grafana, Loki) | FR-12 (monitoring) |
 | AWS: Nitro Enclave | An isolated enclave on the same EC2 instance, reached only over vsock | ML Engine from `ai-engine` (YOLO11n, Linker, MobileNet, the people detector, the motion planner) and the autonomy Policy | FR-01, FR-02, FR-06, FR-08, FR-09 |
 | AWS: S3 and KMS | Managed services | S3 keeps sealed photos and model files. KMS keeps the key that opens the photos | C-05 |
-| AWS: training instance | A separate EC2 instance, started only to train (offline) | Collect (team dataset and photos), train (PyTorch), publish the model | A-05, A-06 |
+| AWS: training instance | A separate EC2 instance, started only to train (offline) | Collect (the team dataset, synthetic renders and the hub's records), train (PyTorch), publish the model | A-05, A-06 |
 
 - **The hub stays at home and outside Kubernetes** because it needs the webcam and the Arduino's serial port.
 - **The hub keeps the records.** There is no database on AWS. The hub sends the context a decision needs with each request, and the server relays the web app's calls to the hub. So the app works only while the hub is connected.
@@ -138,6 +138,7 @@ The server runs on a one-node k3s cluster on one EC2 instance that supports Nitr
 - **Data.** Loki's files are on the instance's EBS volume. Sealed photos and model files are in S3. Nothing else is kept on AWS.
 - **Settings.** `settings/server.yaml` goes into a ConfigMap. The Policy runs in the enclave, which has no network, so `settings/risk.yaml` and `ai-engine`'s `settings.yaml` go into the ConfigMap too and are passed to it over vsock when it starts. No image holds settings (C-12).
 - **Training** runs on a separate instance with a GPU, started only to train. Its output goes to S3 as a new model and into a new enclave image.
+- **Training data** (decision of 2026-11-24): the team dataset, the synthetic renders and the hub's records, such as verified links for the Linker. The residents' sealed photos are never opened for training. They are opened only in the enclave, which has no GPU. Real before and after pairs for M-S5 come from the team's own recordings of the demo devices, added to the dataset.
 - **Tests** still run with `uv run pytest` outside the cluster.
 - **Setting up the instance** (k3s, the Nitro Enclaves allocator and device plugin, the KMS key policy, the S3 bucket) is in `backend-server/deploy/README.md`.
 
@@ -181,4 +182,3 @@ The hub's SQLite file holds every mapping, routine and run, so the hub backs it 
 |---|---|
 | Which Wi-Fi plug and IR blaster to support | Decides the adapter libraries. The demo device has no wireless channel (see the [live-demo plan](/live-demo/PLAN)), so none is bought for the demo, and the adapters are tested with stubs |
 | The server's domain and TLS certificate | The ingress needs a public name and a certificate, for example from Let's Encrypt |
-| Whether photos may be used for training | Photos are opened only in the enclave, which has no GPU. Training uses the team dataset unless the resident agrees and a separate opening step is designed |

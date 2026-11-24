@@ -44,4 +44,4 @@ Each measure has two thresholds in the settings file: above the upper one the an
 | M-S1a | `controls[].kind` and `bbox` | Exists |
 | M-S1b | `controls[].state` | Missing: no photo has a state yet. Frames from a video of the demo switch, flipped on and off, are the quickest start |
 | M-S2 | `devices[]` with `type` and `bbox` | Missing. Start with the demo devices, a lamp and a fan |
-| M-S5 | Before and after pairs with the real result | Missing. Record the demo devices being switched on and off; used to set the thresholds |
+| M-S5 | Before and after pairs with the real result | Synthetic pairs exist. Real ones are missing: the team records the demo devices being switched on and off and adds them to the dataset. The residents' photos are never used for training (C-05) |
