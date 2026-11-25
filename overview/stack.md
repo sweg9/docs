@@ -13,20 +13,20 @@ The team moved the server to AWS on 2026-11-20 (5th meeting). The 2026-11-17 pla
 | Place | Runs | Parts | Requirements |
 |---|---|---|---|
 | Home: robot | Camera, Arduino Nano, linear actuators | Takes photos on request, presses on command | FR-01, FR-11 |
-| Home: `hub` | A laptop at home, directly (`uv run`), outside Kubernetes | Reader (asks the robot for photos over USB and seals them), SQLite with every record, Mapping Registry, Routine Engine and triggers, Control Orchestrator, channel adapters, Safety Guard, Robot Abstraction Layer, learning and the run log, Dashboard (Streamlit) | FR-02 to FR-05, FR-07, FR-10 to FR-12 |
-| AWS: `server` | A pod on k3s on one EC2 instance | Ingress (Traefik, TLS); FastAPI, which relays the hub's requests to the enclave and the app's calls to the hub and puts sealed photos in S3; the web app; Monitoring (Grafana, Loki) | FR-12 (monitoring) |
-| AWS: Nitro Enclave | An isolated enclave on the same EC2 instance, reached only over vsock | ML Engine from `ai-engine` (YOLO11n, Linker, MobileNet, the people detector, the motion planner) and the autonomy Policy | FR-01, FR-02, FR-06, FR-08, FR-09 |
+| Home: `hub` | A laptop at home, directly (`uv run`), outside Kubernetes | Reader (asks the robot for photos over USB), Encryption (seals each photo before it leaves the home), SQLite with every record, Mapping Registry, Routine Engine and triggers, Control Orchestrator, channel adapters, Safety Guard, Robot Abstraction Layer, learning and the run log, Streamlit (a read-only screen) | FR-02 to FR-05, FR-07, FR-10 to FR-12 |
+| AWS: `server` | A pod on k3s on one EC2 instance | Ingress (Traefik, TLS); FastAPI, which relays the hub's requests to the enclave and the app's calls to the hub and puts sealed photos in S3; the Dashboard (web app); Monitoring (Grafana, Loki) | FR-12 (monitoring) |
+| AWS: Nitro Enclave | An isolated enclave on the same EC2 instance, reached only over vsock | Decryption of the sealed photos, then the ML Engine from `ai-engine` (YOLO11n, Linker, MobileNet, the people detector, the motion planner), then the autonomy Policy | FR-01, FR-02, FR-06, FR-08, FR-09 |
 | AWS: S3 and KMS | Managed services | S3 keeps sealed photos and model files. KMS keeps the key that opens the photos | C-05 |
 | AWS: training instance | A separate EC2 instance, started only to train (offline) | Collect (the team dataset, synthetic renders and the hub's records), train (PyTorch), publish the model | A-05, A-06 |
 
 - **The hub stays at home and outside Kubernetes** because it needs the webcam and the Arduino's serial port.
-- **The hub keeps the records.** There is no database on AWS. The hub sends the context a decision needs with each request, and the server relays the web app's calls to the hub. So the app works only while the hub is connected.
+- **The hub keeps the records.** There is no database on AWS. The hub sends the context a decision needs with each request, and the server relays the Dashboard's calls to the hub. So the app works only while the hub is connected.
 - **The hub connects over TLS.** It opens a WebSocket to the server through the ingress (`wss://`) and keeps it open. Requests and answers go over it (see [Hub messages](/api/hub-messages)).
 
 **The TEE.**
-- The hub seals every photo before it leaves the home: a new data key from KMS for each photo, AES-256-GCM.
+- Encryption on the hub seals every photo before it leaves the home: a new data key from KMS for each photo, AES-256-GCM.
 - FastAPI passes the sealed photo to the enclave over vsock unopened, and puts it in S3 as it is.
-- Inside the enclave, the data key is decrypted by KMS. KMS does this only for an enclave whose attestation matches the published image.
+- Decryption comes first inside the enclave: KMS decrypts the data key, the enclave opens the photo, and only then do the ML Engine and the Policy see it. KMS does this only for an enclave whose attestation matches the published image.
 - So the EC2 instance, its administrators and S3 never see a photo in the clear.
 - No video leaves the home: the hub sends a single photo only when a step needs one.
 
@@ -38,7 +38,7 @@ The team moved the server to AWS on 2026-11-20 (5th meeting). The 2026-11-17 pla
 2. The Policy in the enclave answers act, ask or suggest (FR-06). With ask, the hub waits for the resident's answer in the app.
 3. The hub ranks the channels and sends the command (FR-07). If wireless fails, it re-finds the control and gets a press plan (`refind`), the Safety Guard checks for people (`people`), and the hub presses (FR-09 to FR-11).
 4. The hub sends sealed photos from before and after (`check`). MobileNet in the enclave answers yes, no or unsure (FR-08).
-5. The hub writes the run entry, updates scores and confidence (FR-12), and sends `app.event`. The Dashboard and the web app show the result.
+5. The hub writes the run entry, updates scores and confidence (FR-12), and sends `app.event`. The Streamlit screen and the Dashboard show the result.
 
 If the connection drops, a request without an answer is handled on the safe side: no decision means the system only suggests, no people check means no press, no check means `unsure` (see [Answers that do not come](/api/hub-messages#answers-that-do-not-come)).
 
@@ -57,7 +57,7 @@ If the connection drops, a request without an answer is handled on the safe side
 | TEE | AWS Nitro Enclaves (`nitro-cli`, vsock), AWS KMS | Opens photos only inside the attested enclave (C-05) |
 | Sealing | `cryptography` (AES-256-GCM), KMS data keys | The hub seals each photo before it sends it |
 | Storage | Amazon S3, `boto3` | Sealed photos and model files |
-| Dashboard | Streamlit | On the hub; reads the hub's SQLite and works offline |
+| Local screen | Streamlit | On the hub; reads the hub's SQLite and works offline |
 | Serial | `pyserial` | Hub to Arduino |
 | Wi-Fi plug | `python-kasa` (TP-Link Tapo or Kasa) or `tinytuya` (Tuya) | *Not in the demo*; depends on the plug chosen later |
 | IR | `python-broadlink` (Broadlink RM4 mini) | *Not in the demo*; depends on the blaster chosen later |
@@ -75,7 +75,7 @@ If the connection drops, a request without an answer is handled on the safe side
 
 A line protocol over USB serial at 115200 baud: `PUSH <actuator> <ms>`, `REL <actuator>`, `STOP`, each answered with `OK` or `ERR <reason>`. The firmware itself caps the push time and releases the actuator when the cap is reached or when no command arrives for a set time. The actuator then stops even if the hub crashes (FR-10).
 
-### Web app (live-demo)
+### Dashboard (live-demo)
 
 | Area | Choice | Notes |
 |---|---|---|
@@ -92,7 +92,7 @@ The Unity simulator is a WebSocket client of the hub and uses the same messages 
 
 Requests and answers over the hub's WebSocket:
 - `recognize`, `check`, `refind`, `people` and `decide` go to the enclave through the server, and their answers come back.
-- `app.request` brings the web app's calls down to the hub, which answers with `app.response`.
+- `app.request` brings the Dashboard's calls down to the hub, which answers with `app.response`.
 - `app.event` and the `hub.status` heartbeat go up for the live screen and monitoring.
 - `stop` comes down and is answered with `stop.done`.
 
@@ -104,7 +104,7 @@ The server answers nothing without a sign-in: it is on the internet. The app and
 
 | Who | How | Secret |
 |---|---|---|
-| Web app | One resident account with a password. `POST /login` is relayed to the hub, which checks the password and creates the session; the server sets the cookie: `HttpOnly`, `Secure`, `SameSite=Strict`. Every API call and the app's WebSocket must carry it, or get `401` | `APP_PASSWORD_HASH` (argon2), in the hub's environment |
+| Dashboard | One resident account with a password. `POST /login` is relayed to the hub, which checks the password and creates the session; the server sets the cookie: `HttpOnly`, `Secure`, `SameSite=Strict`. Every API call and the app's WebSocket must carry it, or get `401` | `APP_PASSWORD_HASH` (argon2), in the hub's environment |
 | Hub | `Authorization: Bearer <token>` when it opens its WebSocket. A wrong token closes the connection | `HUB_TOKEN`, in the same Secret and in the hub's environment |
 | Grafana | Its own admin account | `GRAFANA_ADMIN_PASSWORD`, a Kubernetes Secret |
 

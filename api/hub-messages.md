@@ -4,7 +4,7 @@
 A first proposal for the messages between the hub and the server, for the design of 2026-11-20. `backend-server` owns the contract and changes this page as it builds the modes. Numbers are starting values and belong in settings files.
 :::
 
-The hub keeps every record and carries out every run, at home. The server on AWS keeps no records. It is the hub's way to the Nitro Enclave, where the models and the autonomy policy run, and the web app's way to the hub (see [Stack](/overview/stack#where-each-part-runs)).
+The hub keeps every record and carries out every run, at home. The server on AWS keeps no records. It is the hub's way to the Nitro Enclave, where the models and the autonomy policy run, and the Dashboard's way to the hub (see [Stack](/overview/stack#where-each-part-runs)).
 
 The hub opens one WebSocket to the server through the ingress (`wss://`) and keeps it open. It signs in with `HUB_TOKEN` when it connects (see [Sign-in](/overview/stack#sign-in)). This page lists every message on that connection, with its payload. Names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
 
@@ -52,7 +52,7 @@ Every message is one JSON object.
 | hub to server | `decide` | `decide.result` | Act, ask or suggest, for a run that a trigger opened | S4 |
 | hub to server | `app.event` | none | A record changed or a run moved on, for the app's live screen | Any |
 | hub to server | `hub.status` | none | Every 5 s | Any |
-| server to hub | `app.request` | `app.response` | The web app called the API | Any |
+| server to hub | `app.request` | `app.response` | The Dashboard called the API | Any |
 | server to hub | `stop` | `stop.done` | Emergency stop from the app | Any |
 
 The server hands `recognize`, `check`, `refind`, `people` and `decide` to the enclave over vsock, unopened, and sends the enclave's answer back with `re` set. The enclave answers in the same shapes as the [ai-engine interface](/api/ai-engine): every result has `confidence` and `reason` (A-02), and below its threshold a result is `unknown` or `unsure` (A-03).
@@ -154,7 +154,7 @@ The Routine Engine on the hub sends it when a trigger opens a run (FR-05). No ph
 
 ### `app.request` (server to hub)
 
-The web app calls the [backend-server API](/api/backend-server) on the server, and the server relays each call to the hub, which answers from its database.
+The Dashboard (the resident's web app) calls the [backend-server API](/api/backend-server) on the server, and the server relays each call to the hub, which answers from its database.
 
 | Field | Type | Rule |
 |---|---|---|

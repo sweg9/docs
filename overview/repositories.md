@@ -6,16 +6,16 @@ The project is split into seven repos in the [sweg9](https://github.com/sweg9) o
 |---|---|
 | [dataset](https://github.com/sweg9/dataset) | Photos of switch panels and their labels for the detector: collection, drafting boxes, correction |
 | [ai-engine](https://github.com/sweg9/ai-engine) | Recognition and checking, run in the Nitro Enclave on AWS: YOLO11n control detector, Linker (which device a key runs), MobileNet result check, motion planner |
-| [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend in two run modes: `server` (on k3s on AWS EC2) for the API, the web app and monitoring; `hub` (a laptop at home) for the records, the orchestrator, channel adapters, safety gate, dashboard and the hand. The models and the autonomy policy run in a Nitro Enclave on the same EC2 instance. See [Stack](/overview/stack) |
+| [backend-server](https://github.com/sweg9/backend-server) | FastAPI backend in two run modes: `server` (on k3s on AWS EC2) for the API, the Dashboard and monitoring; `hub` (a laptop at home) for the records, the orchestrator, channel adapters, safety gate, Streamlit screen and the hand. The models and the autonomy policy run in a Nitro Enclave on the same EC2 instance. See [Stack](/overview/stack) |
 | [sim-demo](https://github.com/sweg9/sim-demo) | Unity simulator, an auxiliary tool for the rough demo and for tests without the real hardware |
-| [live-demo](https://github.com/sweg9/live-demo) | The one front end: the resident's web app and the presenter's demo screens |
+| [live-demo](https://github.com/sweg9/live-demo) | The one front end: the resident's Dashboard and the presenter's demo screens |
 | [docs](https://github.com/sweg9/docs) | This wiki |
 | [harness](https://github.com/sweg9/harness) | Standards, shared skills, CI/CD, and the test and evaluation harness |
 
 ## How they relate
 
 ```text
-dataset ──> ai-engine ──> backend-server ──> live-demo (web app)
+dataset ──> ai-engine ──> backend-server ──> live-demo (Dashboard)
                                ▲
                                └── sim-demo (WebSocket, stands in for the hand)
 harness: build, test and release checks for every repo

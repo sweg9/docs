@@ -6,9 +6,9 @@
 |---|---|---|
 | Operating systems | Windows, macOS | The team uses both. Code stays cross-platform; the hardware drivers (camera and actuator controller) are tested on both. Speed reference: Windows 11 laptop, 16 GB RAM |
 | Main language | Python 3.11 | Edge hub, AI parts and backend. PyTorch, OpenCV and Ultralytics YOLO are Python libraries |
-| Web app | TypeScript 5, React 18 | Runs in any browser; the resident installs nothing |
+| Dashboard (web app) | TypeScript 5, React 18 | Runs in any browser; the resident installs nothing |
 | Simulator | Unity 6 LTS (C#) | Auxiliary only: switch panel and robot simulator for the rough demo and for tests when the real robot is not available. Connects to the Python hub over a WebSocket |
-| Deployment | Kubernetes (k3s) on AWS EC2, Nitro Enclaves, S3, KMS | The server, the web app and the logging (Loki, Grafana) run as containers on one EC2 instance. The models run in a Nitro Enclave on it. The hub runs on a laptop at home outside k8s, because it needs the webcam and the Arduino on USB (decision of 2026-11-20) |
+| Deployment | Kubernetes (k3s) on AWS EC2, Nitro Enclaves, S3, KMS | The server, the Dashboard and the logging (Loki, Grafana) run as containers on one EC2 instance. The models run in a Nitro Enclave on it. The hub runs on a laptop at home outside k8s, because it needs the webcam and the Arduino on USB (decision of 2026-11-20) |
 | Tools | VS Code, GitHub, Overleaf, Claude Opus 5.5 | Claude Opus 5.5, an AI model from Anthropic, helps draft and review code and documents. Members decide and test everything, and Claude is not part of the product. The code is in public repositories, and the photo dataset and the trained detector are in a private repository |
 
 ## Software in use
@@ -25,10 +25,10 @@ We reuse existing software and build only the parts that connect it.
 | VLA models (RT-2, OpenVLA, π0) | Candidates to replace the motion script later |
 | FastAPI, SQLite | Backend framework on AWS, and the hub's database for the registry, routines and log |
 | AWS EC2, Nitro Enclaves, KMS, S3 | The server, the TEE for the models, the key that only the enclave can use, and the sealed photos |
-| Streamlit | The hub's Dashboard |
+| Streamlit | The hub's local read-only screen |
 | Docker, k3s, kubectl | Container images and a one-node Kubernetes cluster on the EC2 instance |
 | Grafana Loki, Grafana Alloy, Grafana | Collecting, storing and searching the operational logs |
-| React | Web app UI |
+| React | Dashboard UI |
 
 ## Versions
 

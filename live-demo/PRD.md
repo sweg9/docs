@@ -8,7 +8,7 @@
 | Problem | The simulator cannot show how the system behaves with real video, devices and actuators |
 | Solution | Connect to `backend-server` and show results, reasons and failure behavior in one place |
 | Reference | The [proposal](/papers/proposal). This document adds only the screen requirements (LD), each linked to [FR-01 to FR-12](/product/requirements) |
-| Scope | One front end for both the resident (mappings, routines, log, notifications, emergency stop) and the presenter (camera view, stage progress, trigger controls). The resident's web app in the proposal is this front end |
+| Scope | One front end for both the resident (mappings, routines, log, notifications, emergency stop) and the presenter (camera view, stage progress, trigger controls). The resident's Dashboard (the web app in the proposal) is this front end |
 | Stack | TypeScript 5 and React 18, in a browser. See [Development environment](/product/environment) |
 
 ## 2. Screens per stage

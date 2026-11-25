@@ -37,7 +37,7 @@ features:
     linkText: Read the rules
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9 4 12l4 3M16 9l4 3-4 3M13.5 6l-3 12"/></svg>'
     title: API
-    details: The API between the web app and the backend, rendered from OpenAPI.
+    details: The API between the Dashboard and the backend, rendered from OpenAPI.
     link: /api/
     linkText: Browse APIs
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><rect x="8" y="7" width="8" height="10" rx="1.5"/><path d="M8 12h8"/></svg>'

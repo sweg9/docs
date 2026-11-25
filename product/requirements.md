@@ -21,7 +21,7 @@ All numbers are **starting values** to be tuned after the first measurements. Ke
 | FR-11 | Physical execution and result check | S6 | Jemin An |
 | FR-12 | Learning and log | S7 | Jiwon Han (log), Jemin An and Jiwon Han (learning) |
 
-`FR-xx` is requirement *xx* of the paper. The web app screens (Hyunseo Choi) serve FR-02, FR-04, FR-10 and FR-12.
+`FR-xx` is requirement *xx* of the paper. The Dashboard screens (Hyunseo Choi) serve FR-02, FR-04, FR-10 and FR-12.
 
 ## FR-01 Control recognition
 

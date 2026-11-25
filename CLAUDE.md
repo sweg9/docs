@@ -9,6 +9,6 @@ This repo (docs) is the development wiki. Its reference document is the proposal
 - The team changed the proposal twice, and pages describe the result:
   - On 2026-11-17 the cloud VLM was replaced with local models.
   - On 2026-11-20 (5th meeting) the server moved back to AWS EC2 (mode `server`, on k3s), for scalability.
-  - The hub at home keeps the records, the Safety Guard and the Dashboard.
+  - The hub at home keeps the records, the Safety Guard and the Streamlit screen.
   - The models and the autonomy policy run in a Nitro Enclave (TEE) on the EC2 instance. Crops are encrypted at the hub and decrypted only there.
 - Standards and skills live in https://github.com/sweg9/harness. The wiki copies them at build time; do not edit them here.

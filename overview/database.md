@@ -4,7 +4,7 @@
 A first proposal for the hub's tables. `backend-server` owns the schema; Alembic migrations are the source, and this page follows them once they exist.
 :::
 
-The hub keeps everything the system remembers (see [What the system remembers](./architecture#what-the-system-remembers)) in one SQLite file, `app.db`, in WAL mode, at home. The server on AWS keeps no database (decision of 2026-11-20): the hub sends what the enclave needs with each request, and the web app reads the records through the server, which relays its calls to the hub (see [Hub messages](/api/hub-messages)). Field names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
+The hub keeps everything the system remembers (see [What the system remembers](./architecture#what-the-system-remembers)) in one SQLite file, `app.db`, in WAL mode, at home. The server on AWS keeps no database (decision of 2026-11-20): the hub sends what the enclave needs with each request, and the Dashboard reads the records through the server, which relays its calls to the hub (see [Hub messages](/api/hub-messages)). Field names and values follow the [data model](/standards/data-model) and the [run log](/standards/execution-log).
 
 ## Rules for every table
 

@@ -86,7 +86,7 @@ One Python process with `asyncio`. Photos are taken in their own thread, so a sl
 | `learning.py` | Channel scores, mapping confidence and `Stale`, press spot, routine priority, in the run's transaction | FR-12 |
 | `explain.py` | Fixed sentence templates for the plain-language explanation | C-07 |
 | `app.py` | Answers `app.request`: one handler per API route, the session check, login and logout | Sign-in |
-| `dashboard.py` | The Streamlit Dashboard, read-only on the database; works without the server | |
+| `dashboard.py` | The Streamlit screen, read-only on the database; works without the server | |
 | `backup.py` | The daily copy of the database | |
 | `channels/` | `base.py` (`reachable`, `send`), `wifi.py`, `ir.py`, `bt.py`, `stub.py` | FR-03, FR-07 |
 | `ral/` | `base.py` (`go_to_spot`, `press`, `release`, `stop`), `linear_actuators.py` (serial), `unity_sim.py` (WebSocket), `script.py` | FR-11, C-13 |
