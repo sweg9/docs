@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
   title: backend-server
-  version: 0.4.0
+  version: 0.5.0
   x-status: draft
-  description: "API between the resident's web app and the backend server (FastAPI) on AWS EC2 (since 2026-11-20). The server keeps no records; it relays each call to the hub at home and answers 503 while the hub is offline. Draft derived from the proposal, section IV-A. Live updates are pushed over a WebSocket (`/ws/app`, session cookie) as `{kind, data}`: `control`, `mapping`, `routine` (a record changed), `scan`, `run.progress`, `run.result`, `notification`, and since 0.4.0 `situation` (a Situation), `visits` (`{visits: Visit[]}`) and `robot` (a Robot). 0.4.0 adds situations, visits, the robot, retry and leave from openapi/dashboard-proposed.yaml, and the demo scenarios."
+  description: "API between the resident's web app and the backend server (FastAPI) on AWS EC2 (since 2026-11-20). The server keeps no records; it relays each call to the hub at home and answers 503 while the hub is offline. Draft derived from the proposal, section IV-A. Live updates are pushed over a WebSocket (`/ws/app`, session cookie) as `{kind, data}`: `control`, `mapping`, `routine` (a record changed), `scan`, `run.progress`, `run.result`, `notification`, and since 0.4.0 `situation` (a Situation), `visits` (`{visits: Visit[]}`) and `robot` (a Robot), and since 0.5.0 `robot.route` (a RobotRoute). The payloads of `run.progress`, `run.result`, `notification` and `robot.route` are the schemas RunProgress, Run, Notification and RobotRoute; a run's `run.progress` is sent before the `robot` event of the same step. 0.4.0 adds situations, visits, the robot, retry and leave from openapi/dashboard-proposed.yaml, and the demo scenarios. 0.5.0 merges the dashboard's proposal (live-demo docs/proposed-api.md): retry answers the new run and refuses at once what it cannot do, the resident's choice is kept with the run, run.progress has step codes and outcomes, a move order (POST /robot/route), GET /proactive, and a notification after every run of a high-risk device (C-03)."
 servers:
   - url: https://nova.example.com/api
     description: The server on AWS, through the ingress. The domain is still open
@@ -268,6 +268,16 @@ paths:
         '200':
           description: Stopped
   /proactive:
+    get:
+      tags: [Safety]
+      summary: Read whether proactive features are paused
+      x-requirements: [FR-06]
+      responses:
+        '200':
+          description: Setting
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProactiveSetting' }
     put:
       tags: [Safety]
       summary: Pause or resume proactive features
@@ -357,11 +367,43 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Robot' }
+  /robot/route:
+    post:
+      tags: [Robot]
+      summary: Send the robot to one place, or through several in order ("go here", "stop by here, then there")
+      description: >
+        Moving only; nothing is pressed. Each stop is a spot id, a control id (its press spot) or a device id
+        (the press spot of the control its Verified mapping runs, C-08). The safety gate is checked before every
+        leg (C-04); a failed gate ends the order as cancelled with the reason. Progress comes as `robot.route`;
+        the emergency stop cancels it. 409 while the robot is busy (codes robot_busy, not_verified, no_press_spot).
+      x-requirements: [FR-09, FR-10]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RouteOrder' }
+      responses:
+        '202':
+          description: Started
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [route_id, stops]
+                properties:
+                  route_id: { type: string }
+                  stops: { type: array, items: { type: string }, description: The stops as spot ids, in order }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
   /runs/{run_id}/retry:
     post:
       tags: [Runs]
       summary: Try a failed, unsure or cancelled run again by pressing
-      description: The resident's choice after a failure (C-09). A new run starts; the robot visits the press spot.
+      description: >
+        The resident's choice after a failure (C-09). A new run starts at once, `retry_run_id` in the answer,
+        and the robot visits the press spot. 409 when the run succeeded, the resident already chose, the robot
+        is busy, or the device has no Verified mapping any more (codes not_failed, already_chosen, robot_busy,
+        not_verified).
       x-requirements: [FR-11]
       parameters: [{ $ref: '#/components/parameters/run_id' }]
       responses:
@@ -534,6 +576,7 @@ components:
       properties:
         run_id: { type: string }
         trigger: { type: string, enum: [sensor, time, routine] }
+        situation_id: { type: [string, 'null'], description: The situation the run came from }
         intent: { type: string }
         device_id: { type: string }
         confidence: { type: number }
@@ -542,6 +585,16 @@ components:
         reason: { type: string, description: Reason for a cancellation }
         explanation: { type: string, description: Plain-language sentence for the resident }
         started_at: { type: string, format: date-time }
+        resolution:
+          description: What the resident chose after a failed, unsure or cancelled run; null until then
+          oneOf:
+            - type: 'null'
+            - type: object
+              required: [choice, retry_run_id]
+              properties:
+                choice: { type: string, enum: [retry, leave] }
+                retry_run_id: { type: [string, 'null'], description: The run the retry started }
+        retry_of: { type: [string, 'null'], description: The run this one tried again }
     ProactiveSetting:
       type: object
       required: [paused]
@@ -615,7 +668,8 @@ components:
             run_id: { type: [string, 'null'] }
             device_id: { type: [string, 'null'] }
             stage: { type: [string, 'null'], enum: [S1, S2, S3, S4, S5, S6, S7, null] }
-            step: { type: string, description: Plain words, for example "safety gate - no person in the work area" }
+            step: { $ref: '#/components/schemas/Step' }
+            text: { type: string, description: Plain words, for example "safety gate - no person in the work area" }
             method: { type: [string, 'null'], enum: [wireless, press, null] }
             channel: { type: [string, 'null'], enum: [IR, WIFI, BT, ARM, null] }
         plan: { type: array, items: { type: string }, description: Spots still ahead, in order }
@@ -627,7 +681,58 @@ components:
             state: { type: string, enum: [idle, busy, stopped, error] }
     Choice:
       type: object
-      required: [run_id, choice]
+      required: [run_id, choice, retry_run_id]
       properties:
         run_id: { type: string }
         choice: { type: string, enum: [retry, leave] }
+        retry_run_id: { type: [string, 'null'], description: The new run, for retry }
+    Step:
+      type: string
+      enum: [decide, wireless, queued, move, gate, press, check]
+      description: 'S4: decide. S5: wireless. S6: queued (waits for the robot), move, gate, press, check'
+    RunProgress:
+      type: object
+      description: Payload of `run.progress`, one step of one run. The outcome fields are present when they apply
+      required: [run_id, situation_id, device_id, stage, step, text, method, channel]
+      properties:
+        run_id: { type: string }
+        situation_id: { type: [string, 'null'] }
+        device_id: { type: string }
+        stage: { type: string, enum: [S4, S5, S6] }
+        step: { $ref: '#/components/schemas/Step' }
+        text: { type: string, description: Plain words for the screen }
+        method: { type: [string, 'null'], enum: [wireless, press, null] }
+        channel: { type: [string, 'null'], enum: [IR, WIFI, BT, ARM, null] }
+        wireless: { type: string, enum: [success, failure, no_channel], description: 'Step wireless: the outcome' }
+        gate: { type: string, enum: [pass, fail], description: 'Step gate: whether the safety gate passed (C-04)' }
+        answer: { type: string, enum: ['yes', 'no', unsure], description: 'Steps wireless and check: the platform or camera answer' }
+        reason: { type: [string, 'null'] }
+    RouteOrder:
+      type: object
+      required: [stops]
+      properties:
+        stops: { type: array, minItems: 1, maxItems: 10, items: { type: string }, description: Spot, control or device ids, in order }
+    RobotRoute:
+      type: object
+      description: Payload of `robot.route`, sent when the order starts, at every stop reached and when it ends
+      required: [route_id, stops, reached, state, reason]
+      properties:
+        route_id: { type: string }
+        stops: { type: array, items: { type: string }, description: Spot ids, in order }
+        reached: { type: integer, minimum: 0, description: Stops arrived at }
+        state: { type: string, enum: [moving, done, cancelled] }
+        reason: { type: [string, 'null'], description: Why it was cancelled }
+    Notification:
+      type: object
+      description: Payload of `notification`. Topics include situation, question, suggestion, run_failed, high_risk_run (C-03), left_as_is, route_cancelled and stop
+      required: [level, topic, message, at]
+      properties:
+        level: { type: string, enum: [info, warning] }
+        topic: { type: string }
+        message: { type: string, description: From fixed sentence templates (C-07) }
+        at: { type: string, format: date-time }
+        choices: { type: array, items: { type: string, enum: [retry, leave, approve, dismiss] } }
+        run_id: { type: [string, 'null'] }
+        device_id: { type: [string, 'null'] }
+        situation_id: { type: [string, 'null'] }
+        route_id: { type: string }
