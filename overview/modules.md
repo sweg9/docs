@@ -109,7 +109,8 @@ One FastAPI process in one pod. It keeps no database. It logs JSON lines to stdo
 | `auth.py` | The hub token check and the login limit; the session itself is checked by the hub | Sign-in |
 | `live.py` | WebSocket to the app: pushes each `app.event` | |
 | `hub_gateway.py` | WebSocket for the hub: checks the hub token, passes requests to the enclave and the answers back, relays `app.request` and `stop` | Hub messages |
-| `enclave_link.py` | vsock client to the enclave | |
+| `enclave_link.py` | The server's end of the [enclave link](/api/hub-messages#the-enclave-link): vsock, or TCP for development | C-04 |
+| `credentials.py` | The instance role's temporary AWS credentials from IMDSv2, sent to the enclave for KMS | C-05, C-10 |
 | `store.py` | Puts each sealed photo in S3 under its `photo_id` | C-05 |
 
 ## `enclave`
@@ -118,7 +119,7 @@ One process in the Nitro Enclave. It has no network and no disk. It talks only t
 
 | Module | Job | Requirement |
 |---|---|---|
-| `main.py` | vsock server; at start gets `risk.yaml`, `enclave.yaml` and `ai-engine`'s settings over vsock and loads the `Engine` once | C-12 |
+| `main.py` | `backend enclave`: listens on vsock (TCP for development); `init` brings `risk.yaml`, `enclave.yaml`, `ai-engine`'s settings and the AWS credentials, and the `Engine` is loaded once (see [The enclave link](/api/hub-messages#the-enclave-link)) | C-12 |
 | `unseal.py` | Decrypts a sealed photo with KMS, using the enclave's attestation document | C-05 |
 | `handlers.py` | `recognize`, `check`, `refind`, `people`: calls into `ai_engine` | FR-01, FR-02, FR-08 to FR-10 |
 | `policy.py` | Act, ask or suggest from risk and confidence (`decide`) | FR-06, C-03 |

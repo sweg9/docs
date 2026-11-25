@@ -55,7 +55,25 @@ Every message is one JSON object.
 | server to hub | `app.request` | `app.response` | The Dashboard called the API | Any |
 | server to hub | `stop` | `stop.done` | Emergency stop from the app | Any |
 
-The server hands `recognize`, `check`, `refind`, `people` and `decide` to the enclave over vsock, unopened, and sends the enclave's answer back with `re` set. The enclave answers in the same shapes as the [ai-engine interface](/api/ai-engine): every result has `confidence` and `reason` (A-02), and below its threshold a result is `unknown` or `unsure` (A-03).
+The server hands `recognize`, `check`, `refind`, `people` and `decide` to the enclave over vsock ([The enclave link](#the-enclave-link)), unopened, and sends the enclave's answer back with `re` set. The enclave answers in the same shapes as the [ai-engine interface](/api/ai-engine): every result has `confidence` and `reason` (A-02), and below its threshold a result is `unknown` or `unsure` (A-03).
+
+## The enclave link
+
+Between the server and the enclave, on the same EC2 instance. The server connects; the enclave listens on vsock (CID 16, port 5000). For tests and development the same program listens on TCP instead (`backend enclave --tcp`); there KMS opens no sealed photo, so only `decide` answers.
+
+Each frame is a 4-byte big-endian length, then that many bytes of UTF-8 JSON, at most 16 MiB. The `kind` field says which frame it is:
+
+| `kind` | From | Fields | When |
+|---|---|---|---|
+| `init` | server | `risk`, `enclave`, `engine` (the parsed `risk.yaml`, `enclave.yaml` and ai-engine's `settings.yaml`), `credentials` | First, on every new connection. The enclave loads the `Engine` on the first `init`, and again only when the settings changed |
+| `ready` | enclave | | The answer to `init` |
+| `credentials` | server | `credentials` | New temporary AWS credentials of the instance role, before the old ones expire |
+| `ask` | server | `envelope`: a request from the hub, unopened | One at a time |
+| `answer` | enclave | `re`, `envelope` | The answer envelope, or `envelope: null` when the request failed (a model error, a photo that does not open) |
+
+`credentials` holds `access_key_id`, `secret_access_key`, `session_token` and `expires_at`, or is null outside AWS. The enclave keeps them in memory only and uses them for KMS Decrypt with its attestation (C-05, C-10).
+
+On a timeout, a closed connection or a frame that does not fit, the server closes the connection and gives the hub no answer; the next request opens a new connection, with `init` again, so an enclave that restarted gets its settings back. The server's own limit (`enclave_timeout_s`, 12 s) is a little over the hub's longest wait, so the hub's time limit decides first (see [Answers that do not come](#answers-that-do-not-come)). The server reads the hub's other messages while the enclave works, so `stop.done` is never held up (C-04).
 
 ## Requests to the enclave
 
