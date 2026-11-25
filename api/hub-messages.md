@@ -18,7 +18,7 @@ Every message is one JSON object.
 | `type` | string | One of the types below |
 | `id` | string | Unique per message |
 | `re` | string or `null` | In an answer, the `id` of the request it answers |
-| `run_id` | string or `null` | Set on every message that belongs to a run |
+| `run_id` | string or `null` | Set on every message that belongs to a run. Always on `refind`; `decide` comes before the run is opened and `people` also guards a move order, so they may have none |
 | `sent_at` | UTC ISO 8601 | |
 | `payload` | object | Depends on `type` |
 

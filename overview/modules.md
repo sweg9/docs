@@ -72,7 +72,8 @@ One Python process with `asyncio`. Photos are taken in their own thread, so a sl
 | `main.py` | Starts the parts below from `hub.yaml` | |
 | `link.py` | WebSocket client to the server: connect, reconnect, `hub.status` every 5 s, requests with their time limits, `app.request` handed to `app.py` | Hub messages |
 | `seal.py` | Gets a data key from KMS for each photo and encrypts it (AES-256-GCM) | C-05 |
-| `camera.py` | The Reader: asks the robot's camera for a photo when a step needs one | FR-01, FR-08 |
+| `camera.py` | The Reader: one photo from the robot's camera when a step needs one, at most `photo_max_side` px, sealed at once; none is kept or written to disk | FR-01, FR-08, C-05 |
+| `answers.py` | The real answers for the orchestrator over the link: `decide`, the safety gate (`people` on a photo taken just before the press, also the check's `before` photo), the effect check (the platform's report, else `check`). No answer or no photo goes on the safe side | FR-05, FR-06, FR-08, FR-10 |
 | `db/` | SQLAlchemy models of the [database](./database) | FR-12 |
 | `scan.py` | Runs a scan: sends `recognize`, saves clear controls (same control or new one), then watches for a flip and sends `check` with `purpose: map` | FR-01, FR-02 |
 | `registry.py` | Finds or creates the device and creates and updates mappings | FR-02 |
