@@ -21,7 +21,8 @@ backend-server/
 ├── settings/
 │   ├── hub.yaml            spots, rooms, RAL choice, camera, time limits, thresholds, weights, habit rule, backup, time zone
 │   ├── server.yaml         ports, time limits, the S3 bucket
-│   └── risk.yaml           risk sorting of device types (FR-06), passed to the enclave when it starts
+│   ├── risk.yaml           risk sorting of device types (FR-06), passed to the enclave when it starts
+│   └── enclave.yaml        the enclave program's limits (the KMS time limit), passed to it the same way
 ├── src/backend/
 │   ├── cli.py              `backend hub`, `backend server`, `backend enclave`, `backend backup`,
 │   │                       `backend export-runs`, `backend seed-demo`, `backend hash-password`
@@ -117,7 +118,7 @@ One process in the Nitro Enclave. It has no network and no disk. It talks only t
 
 | Module | Job | Requirement |
 |---|---|---|
-| `main.py` | vsock server; at start gets `risk.yaml` and `ai-engine`'s settings over vsock and loads the `Engine` once | C-12 |
+| `main.py` | vsock server; at start gets `risk.yaml`, `enclave.yaml` and `ai-engine`'s settings over vsock and loads the `Engine` once | C-12 |
 | `unseal.py` | Decrypts a sealed photo with KMS, using the enclave's attestation document | C-05 |
 | `handlers.py` | `recognize`, `check`, `refind`, `people`: calls into `ai_engine` | FR-01, FR-02, FR-08 to FR-10 |
 | `policy.py` | Act, ask or suggest from risk and confidence (`decide`) | FR-06, C-03 |
