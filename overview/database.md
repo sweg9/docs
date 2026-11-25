@@ -8,7 +8,7 @@ The hub keeps everything the system remembers (see [What the system remembers](.
 
 ## Rules for every table
 
-- **Identifiers** are text: a prefix and a ULID, for example `ctl_01JD3Q…`. They sort by creation time and are never reused. Prefixes: `ctl` control, `dev` device, `mp` mapping, `rt` routine, `r` run, `sc` scan, `cr` crop, `use` use, `fb` feedback.
+- **Identifiers** are text: a prefix and a ULID, for example `ctl_01JD3Q…`. They sort by creation time and are never reused. Prefixes: `ctl` control, `dev` device, `mp` mapping, `rt` routine, `r` run, `sc` scan, `cr` crop, `use` use, `fb` feedback, `m` message (hub messages), `sit` situation, `vis` visit, `mv` move order (`POST /robot/route`), `ph` sealed photo.
 - **Times** are text, UTC ISO 8601 with milliseconds. The one exception is a routine's time of day, which is local time (`"21:00"`); the time zone is in the hub settings file (`Asia/Seoul`).
 - **Enumerations** are text with a `CHECK` constraint that lists the exact values of the data model.
 - **Lists and small objects** (a box, a point, a list of actions) are JSON text. Anything the hub searches or joins on is a real column.
