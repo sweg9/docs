@@ -30,7 +30,7 @@ The team moved the server to AWS on 2026-11-20 (5th meeting). The 2026-11-17 pla
 - So the EC2 instance, its administrators and S3 never see a photo in the clear.
 - No video leaves the home: the hub sends a single photo only when a step needs one.
 
-![NOVA architecture: the robot and the hub at home; on AWS, S3, KMS and one EC2 instance with k3s (ingress, FastAPI, monitoring) and a Nitro Enclave (ML Engine, Policy); a separate EC2 instance for offline training](/architecture.png)
+![NOVA architecture: the robot and the hub at home, where the hub encrypts each photo before it leaves; on AWS, S3, KMS and one EC2 instance with k3s (ingress, FastAPI, monitoring) and a Nitro Enclave (decryption, then the ML Engine, then the Policy); a separate EC2 instance for offline training](/architecture.png)
 
 ### One run, end to end
 
