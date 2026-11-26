@@ -195,7 +195,7 @@ Sections in `ai-engine`'s `settings.yaml`. Values below are starting values. The
 | `fingerprint.similarity_to_refind` | 0.7 | `refind_control` |
 | `refind.max_shift`, `refind.require_fingerprint` | 0.1, `true` | `refind_control` |
 | `press.planner` | `script` | `plan_press`: which planner answers (C-13). An unknown name fails `load` |
-| `press.push_ms` | `{switch: 400, toggle: 400, power_strip: 400}` | `plan_press` |
+| `press.push_ms` | `{switch: 2000, toggle: 2000, power_strip: 2000}` | `plan_press` |
 
 Model files used by the enclave go in `models/` with a model card each (A-05); `runs/` stays for training output.
 
