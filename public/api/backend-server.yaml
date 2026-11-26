@@ -447,7 +447,7 @@ paths:
   /scenarios/{name}/start:
     post:
       tags: [Demo]
-      summary: Play a demo scenario (new_control, leave_home)
+      summary: Play a demo scenario (new_control, one_press, leave_home)
       description: Fixed answers stand in for the sensors, the enclave, the wireless platforms and the camera; the runs, records and events are the hub's own. Watch it on /ws/app.
       parameters:
         - { name: name, in: path, required: true, schema: { type: string } }
