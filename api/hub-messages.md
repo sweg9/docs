@@ -122,7 +122,7 @@ On a timeout, a closed connection or a frame that does not fit, the server close
 | Field | Type | Rule |
 |---|---|---|
 | `change` | `off_to_on` `on_to_off` `none` | What changed. `map`: the direction of `measure_change` on the whole photo. `verify`: from `check_effect`, `none` unless the answer is `yes`. The learned MobileNet check (M-S5) is not wired in yet |
-| `answer` | `yes` `no` `unsure` or `null` | For `verify`: did the command work. `null` for `map` |
+| `answer` | `yes` `no` `unsure` or `null` | For `verify`: did the command work. `null` for `map`. When the lamp area and the whole room disagree, `unsure`: a wrong `no` would make the hub press again (FR-11) |
 | `device_box` | box or `null` | The region that changed |
 | `device_type` | device type or `null` | `null` when no device was found in the region; then a mapping cannot become `Verified` (C-08) |
 | `confidence`, `reason` | | A-02 |
