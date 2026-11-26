@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
   title: backend-server
-  version: 0.5.0
+  version: 0.6.0
   x-status: draft
-  description: "API between the resident's Dashboard (web app) and the backend server (FastAPI) on AWS EC2 (since 2026-11-20). The server keeps no records; it relays each call to the hub at home and answers 503 while the hub is offline. Draft derived from the proposal, section IV-A. Live updates are pushed over a WebSocket (`/ws/app`, session cookie) as `{kind, data}`: `control`, `mapping`, `routine` (a record changed), `scan`, `run.progress`, `run.result`, `notification`, and since 0.4.0 `situation` (a Situation), `visits` (`{visits: Visit[]}`) and `robot` (a Robot), and since 0.5.0 `robot.route` (a RobotRoute). The payloads of `run.progress`, `run.result`, `notification` and `robot.route` are the schemas RunProgress, Run, Notification and RobotRoute; a run's `run.progress` is sent before the `robot` event of the same step. 0.4.0 adds situations, visits, the robot, retry and leave from openapi/dashboard-proposed.yaml, and the demo scenarios. 0.5.0 merges the dashboard's proposal (live-demo docs/proposed-api.md): retry answers the new run and refuses at once what it cannot do, the resident's choice is kept with the run, run.progress has step codes and outcomes, a move order (POST /robot/route), GET /proactive, and a notification after every run of a high-risk device (C-03)."
+  description: "API between the resident's Dashboard (web app) and the backend server (FastAPI) on AWS EC2 (since 2026-11-20). The server keeps no records; it relays each call to the hub at home and answers 503 while the hub is offline. Draft derived from the proposal, section IV-A. Live updates are pushed over a WebSocket (`/ws/app`, session cookie) as `{kind, data}`: `control`, `mapping`, `routine` (a record changed), `scan`, `run.progress`, `run.result`, `notification`, and since 0.4.0 `situation` (a Situation), `visits` (`{visits: Visit[]}`) and `robot` (a Robot), and since 0.5.0 `robot.route` (a RobotRoute). The payloads of `run.progress`, `run.result`, `notification` and `robot.route` are the schemas RunProgress, Run, Notification and RobotRoute; a run's `run.progress` is sent before the `robot` event of the same step. 0.4.0 adds situations, visits, the robot, retry and leave from openapi/dashboard-proposed.yaml, and the demo scenarios. 0.5.0 merges the dashboard's proposal (live-demo docs/proposed-api.md): retry answers the new run and refuses at once what it cannot do, the resident's choice is kept with the run, run.progress has step codes and outcomes, a move order (POST /robot/route), GET /proactive, and a notification after every run of a high-risk device (C-03). 0.6.0 adds GET /map in the Dashboard's HomeLayout shape (live-demo src/api/proposed.ts)."
 servers:
   - url: https://nova.example.com/api
     description: The server on AWS, through the ingress. The domain is still open
@@ -367,6 +367,23 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Robot' }
+  /map:
+    get:
+      tags: [Robot]
+      summary: The home as the Dashboard draws it, for the map and the robot's route
+      description: >
+        Centimetres on the floor, x to the right, y down, seen from above. Each control stands at its spot;
+        `spot_id` is the id Robot.spot_id, Visit.spot_id and RobotRoute use, and the dock's spot is `dock`. Names,
+        kinds, states, statuses and risk come from the lists (GET /controls, /devices, /mappings). A control or
+        device whose position is not known yet is left out. Numbers only, no photos (C-05). The positions of the
+        demo home are estimates until the map team marks them on the scan.
+      x-requirements: [FR-09]
+      responses:
+        '200':
+          description: HomeLayout
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HomeLayout' }
   /robot/route:
     post:
       tags: [Robot]
@@ -643,6 +660,64 @@ components:
         result: { type: [string, 'null'], enum: [success, failure, unsure, cancelled, null] }
         reason: { type: [string, 'null'] }
         resolution: { type: [string, 'null'], enum: [retry, leave, null] }
+    Point:
+      type: object
+      required: [x, y]
+      properties:
+        x: { type: number, description: cm, to the right }
+        y: { type: number, description: cm, down }
+    HomeLayout:
+      type: object
+      required: [rooms, controls, devices, dock]
+      properties:
+        rooms:
+          type: array
+          items:
+            type: object
+            required: [room, x, y, w, h]
+            properties:
+              room: { type: string }
+              x: { type: number }
+              y: { type: number }
+              w: { type: number }
+              h: { type: number }
+              label: { type: boolean, description: false to leave the name out (a second box of the same room) }
+        controls:
+          type: array
+          items:
+            type: object
+            required: [control_id, at, press_spot, spot_id]
+            properties:
+              control_id: { type: string }
+              at: { $ref: '#/components/schemas/Point' }
+              press_spot: { $ref: '#/components/schemas/Point' }
+              spot_id: { type: string }
+        devices:
+          type: array
+          items:
+            type: object
+            required: [device_id, at]
+            properties:
+              device_id: { type: string }
+              at: { $ref: '#/components/schemas/Point' }
+        dock: { $ref: '#/components/schemas/Point' }
+        walls:
+          type: array
+          description: Straight walls [x1, y1, x2, y2, thickness]; gaps are doors
+          items: { type: array, items: { type: number }, minItems: 5, maxItems: 5 }
+        furniture:
+          type: array
+          items:
+            type: object
+            required: [kind, x, y, w, d, h]
+            properties:
+              kind: { type: string, enum: [bed, desk, wardrobe, shelf] }
+              x: { type: number }
+              y: { type: number }
+              w: { type: number }
+              d: { type: number }
+              h: { type: number, description: height in cm }
+        ceiling: { type: number, description: ceiling height in cm }
     Visit:
       type: object
       required: [visit_id, order, spot_id, device_id, reason, status]
