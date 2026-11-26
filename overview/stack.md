@@ -73,7 +73,7 @@ If the connection drops, a request without an answer is handled on the safe side
 
 ### Arduino firmware
 
-A line protocol over USB serial at 115200 baud: `PUSH <actuator> <ms>`, `REL <actuator>`, `STOP`, each answered with `OK` or `ERR <reason>`. The firmware itself caps the push time and releases the actuator when the cap is reached or when no command arrives for a set time. The actuator then stops even if the hub crashes (FR-10).
+A line protocol over USB serial at 115200 baud: `PRESS <actuator> <ms>`, `RELEASE <actuator>`, `STOP`, `RESET`, `PING`, each answered with `OK <command> [<actuator>]` or `ERR <command> [<actuator>] <reason>`. The firmware itself caps the push time (2 s), pulls an actuator back when it is held out for 5 s without a `RELEASE`, and refuses `PRESS` after `STOP` until `RESET`. The actuator then stops even if the hub crashes (FR-10). Full table: [backend-server `firmware/README.md`](https://github.com/sweg9/backend-server/blob/main/firmware/README.md).
 
 ### Dashboard (live-demo)
 
