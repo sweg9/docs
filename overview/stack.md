@@ -116,7 +116,13 @@ The server answers nothing without a sign-in: it is on the internet. The app and
 
 ## Deployment on AWS
 
-The server runs on a one-node k3s cluster on one EC2 instance that supports Nitro Enclaves (4 vCPUs or more, for example `m5.xlarge`; burstable `t3` types do not). The manifests are in `backend-server/deploy/k8s/` and are applied with `kubectl apply -k`.
+The server runs on a one-node k3s cluster on one EC2 instance that supports Nitro Enclaves (4 vCPUs or more, for example `m6i.xlarge`; burstable `t3` types do not). The manifests are in `backend-server/deploy/k8s/` and are applied with `kubectl apply -k`.
+
+**Tested on real AWS on 2026-11-26** (`backend-server/deploy/aws-test`, about an hour of `m6i.xlarge`, then deleted): a photo from the laptop camera was sealed with KMS on the hub, passed through the server pod on k3s unopened, and opened only inside a real Nitro Enclave (KMS checked its PCR0); the enclave's YOLO found the person at the laptop, so the safety gate cancelled the move (C-04, C-05, FR-10). Not run yet: TLS and the domain, the Dashboard pod, Loki and Grafana, the Nitro Enclaves device plugin (the test started the enclave from systemd on the host) and the images from GHCR. What the test showed:
+
+- **The event loop.** The server runs on the standard asyncio loop; uvloop can neither connect nor stream a vsock socket.
+- **Enclave size.** 2 vCPUs and 8 GiB for the enclave, as in the test (torch and the models; 4 GiB was never tried). The enclave image stays under 2 GiB (CPU-only torch), or `nitro-cli build-enclave` fails. Building it needs about 5 GB of free RAM next to the allocator.
+- **Instance role.** The server hands the role's temporary credentials to the enclave, so the instance metadata hop limit is 2.
 
 | Workload | Kind | Image | Notes |
 |---|---|---|---|

@@ -59,7 +59,7 @@ The server hands `recognize`, `check`, `refind`, `people` and `decide` to the en
 
 ## The enclave link
 
-Between the server and the enclave, on the same EC2 instance. The server connects; the enclave listens on vsock (CID 16, port 5000). For tests and development the same program listens on TCP instead (`backend enclave --tcp`); there KMS opens no sealed photo, so only `decide` answers.
+Between the server and the enclave, on the same EC2 instance. The server connects; the enclave listens on vsock (CID 16, port 5000). For tests and development the same program listens on TCP instead (`backend enclave --tcp`); there KMS opens no sealed photo, so only `decide` answers. The server runs on the standard asyncio event loop: uvloop can neither connect nor stream a vsock socket (found on real Nitro, 2026-11-26).
 
 Each frame is a 4-byte big-endian length, then that many bytes of UTF-8 JSON, at most 16 MiB. The `kind` field says which frame it is:
 
