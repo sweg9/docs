@@ -834,7 +834,7 @@ components:
         reason: { type: [string, 'null'], description: Why it was cancelled }
     Notification:
       type: object
-      description: Payload of `notification`. Topics include situation, question, suggestion, run_failed, high_risk_run (C-03), left_as_is, route_cancelled and stop
+      description: Payload of `notification`. Topics include situation, question, suggestion, run_failed, high_risk_run (C-03), left_as_is, route_cancelled, stop and task_failed (the hub hit an error, so the hand stopped and the runs going on were cancelled, C-04)
       required: [level, topic, message, at]
       properties:
         level: { type: string, enum: [info, warning] }
@@ -846,3 +846,4 @@ components:
         device_id: { type: [string, 'null'] }
         situation_id: { type: [string, 'null'] }
         route_id: { type: string }
+        task: { type: string, description: 'task_failed only: the task that failed, for example leave_home or route' }
