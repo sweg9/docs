@@ -63,13 +63,13 @@ Proactive Home, Smart Home, Service Robot, Vision-Language Model, Computer Visio
 \hline
 \centering\textbf{\scriptsize Roles} & \centering\textbf{\scriptsize Name} & \centering\arraybackslash\textbf{\scriptsize Task description and etc.}\\
 \hline
-\scriptsize AI Developer & \scriptsize Geonhak Lee & \scriptsize An AI Developer builds the vision and language parts: control detection, the VLM that reads controls and infers intent, and the CV state check. The role also builds the robot motion planner and tunes recognition accuracy.\\
+\scriptsize Backend Developer & \scriptsize Geonhak Lee & \scriptsize A Backend Developer builds the server on AWS, the Nitro Enclave and the photo sealing, the Mapping Registry, the Routine Engine, the database, the API for the Dashboard and the run log, and deploys the system. The role also writes tests.\\
 \hline
-\scriptsize Backend Developer & \scriptsize Jemin An & \scriptsize A Backend Developer builds the Control Orchestrator, the IR, Wi-Fi and Bluetooth channel adapters and the Robot Abstraction Layer, and handles the safety gate and the learning updates. The role also writes tests.\\
+\scriptsize Backend Developer & \scriptsize Jemin An & \scriptsize A Backend Developer builds the run path on the hub: the Control Orchestrator, the channel adapters, the Robot Abstraction Layer and the Arduino firmware, the autonomy policy, the Safety Guard and the learning updates. The role also writes tests.\\
 \hline
-\scriptsize Backend Developer & \scriptsize Jiwon Han & \scriptsize A Backend Developer builds the Mapping Registry, the Routine Engine, the database and the APIs for the app, and writes the execution logging. The role also integrates the cloud VLM service and writes tests.\\
+\scriptsize Frontend Developer & \scriptsize Jiwon Han & \scriptsize A Frontend Developer builds the resident's Dashboard: the emergency stop and pause, the live view of a run, mapping confirmation on a map, routine feedback, Try again and Leave it after a failure, and the plain-language history. The role connects it to the backend API.\\
 \hline
-\scriptsize Frontend Developer & \scriptsize Hyunseo Choi & \scriptsize A Frontend Developer builds the resident's app: the screens for reviewing routines and giving feedback, confirming mappings and receiving notifications, the setup guide, the plain-language execution log, and the switches that pause proactive features. The role connects the UI to the backend APIs.\\
+\scriptsize AI Developer & \scriptsize Hyunseo Choi & \scriptsize An AI Developer builds the models in the Nitro Enclave: the YOLO11n control detector, the Linker that guesses which device a key runs, the before-and-after check, the people detector and the motion planner. The role also builds the photo dataset and trains the models.\\
 \hline
 \end{tabular}
 
@@ -94,11 +94,11 @@ We propose a system that uses a camera to find controls, works out what each con
 
 \textit{What we assume about the robot.} We assume a general-purpose home robot, with a camera head, arms and a mobile base (wheels, tracks or legs), that can move to a control, see both the control and its own hand, and press it. The robot receives a target position and an action, such as press or flip, and does nothing more. It is hidden behind a Robot Abstraction Layer (RAL), so a different robot, a simulator or a simple script can be swapped in. In the prototype, we stand in for such a robot with linear actuators that push straight, carried on a wheeled cart that is positioned by hand (Section III). The robot is kept simple on purpose: finding the control, deciding how to operate it and checking the result are done by the system.
 
-\textit{Phase 1, setup (S1 to S3).} In S1, the system finds and registers the controls in the home. An object detector that works from text descriptions looks for wall switches, toggles and power strips in the robot's camera feed. A VLM reads the type and state of each one, and depth data, if the camera provides it, helps place it. Each control is saved as a record, together with a picture fingerprint (an embedding), so that it can be recognized again later. In S2, the system links each control to a device. It can watch as the resident uses the control, or press it and compare the device before and after by camera. A link is confirmed only when the change is clear in the picture and the VLM agrees. For each device, the system also sends a test command through each wireless channel (IR, Wi-Fi, Bluetooth) and keeps only the channels that work, so a device can be reached both wirelessly and through the control that the actuator can press. In S3, confirmed links are used to build routines. The system creates one from repeated habits and registers it automatically, and the resident can also build one by hand. The resident is told right away and can give feedback at any time: keep the routine, change it or remove it.
+\textit{Phase 1, setup (S1 to S3).} In S1, the system finds and registers the controls in the home. An object detector that works from text descriptions looks for wall switches, toggles and power strips in the robot's camera feed. A small classifier reads the state of each one, and depth data, if the camera provides it, helps place it. Each control is saved as a record, together with a picture fingerprint (an embedding), so that it can be recognized again later. In S2, the system links each control to a device. It can watch as the resident uses the control, or press it and compare the device before and after by camera. A link is confirmed only when the change is clear in the picture and a device detector finds a device where it happened. For each device, the system also sends a test command through each wireless channel (IR, Wi-Fi, Bluetooth) and keeps only the channels that work, so a device can be reached both wirelessly and through the control that the actuator can press. In S3, confirmed links are used to build routines. The system creates one from repeated habits and registers it automatically, and the resident can also build one by hand. The resident is told right away and can give feedback at any time: keep the routine, change it or remove it.
 
-\textit{Phase 2, runtime (S4 to S6).} In S4, a sensor, a time or a routine starts a run, and a cloud VLM works out what the resident wants (the intent) and which device is the target. In S5, the system looks up the saved link, ranks the device's wireless channels by a score learned from past results, sends the command through the best one, and checks the result. For Wi-Fi and Bluetooth, it uses the state and errors that the device platform reports. For IR, which gives no reply, the camera checks it: the main check is whether the device itself changed, and as a second check, the system looks for changes around the device, such as the room getting brighter. If every wireless channel fails, or the device has none, S6 begins. CV finds the control, a motion planner (a VLA model or a simple script) plans the movement, a safety check looks for people and obstacles, and only then does the robot press the control, and the camera checks the result. If the safety check fails, the action is cancelled and the resident is told. Whether the device was operated wirelessly or by the robot, the checked result is written to a log the resident can read, and the resident can choose whether to be notified of successful runs as well as failed ones.
+\textit{Phase 2, runtime (S4 to S6).} In S4, a sensor, a time or a routine starts a run, and the Routine Engine takes what the resident wants (the intent) and the target device from the routine that fired. In S5, the system looks up the saved link, ranks the device's wireless channels by a score learned from past results, sends the command through the best one, and checks the result. For Wi-Fi and Bluetooth, it uses the state and errors that the device platform reports. For IR, which gives no reply, the camera checks it: the main check is whether the device itself changed, and as a second check, the system looks for changes around the device, such as the room getting brighter. If every wireless channel fails, or the device has none, S6 begins. CV finds the control, a motion planner (a VLA model or a simple script) plans the movement, a safety check looks for people and obstacles, and only then does the robot press the control, and the camera checks the result. If the safety check fails, the action is cancelled and the resident is told. Whether the device was operated wirelessly or by the robot, the checked result is written to a log the resident can read, and the resident can choose whether to be notified of successful runs as well as failed ones.
 
-\textit{Phase 3, learning (S7).} Every run, even a cancelled one, teaches the system. It updates how often each channel works, how sure it is about each link, and how useful each routine is. In the next run, the earlier phases use these values. The camera feed from inside a home is private, so frames are processed at the edge (inside the home), only small crops of controls and short notes go to the cloud, and proactive features stay off until the resident turns them on.
+\textit{Phase 3, learning (S7).} Every run, even a cancelled one, teaches the system. It updates how often each channel works, how sure it is about each link, and how useful each routine is. In the next run, the earlier phases use these values. The camera feed from inside a home is private, so frames are processed at the edge (inside the home), only single sealed photos and short notes leave the home, opened only inside a sealed enclave on the server, and proactive features stay off until the resident turns them on.
 
 \subsection{Research on Related Software}
 Several existing platforms and research systems cover a part of this problem. We describe each one and say what it leaves open.
@@ -131,14 +131,14 @@ As far as we know, none of these systems combines recognition of non-connected c
 
 %=====================================================================
 \section{Requirements}\label{sec:req}
-This section lists what the system must do. The \emph{resident} gives feedback on routines and has the final say. The \emph{robot} moves to a control and presses it when needed. The \emph{cloud VLM} works out the intent. The \emph{smart-home hub} sends IR, Wi-Fi and Bluetooth commands.
+This section lists what the system must do. The \emph{resident} gives feedback on routines and has the final say. The \emph{robot} moves to a control and presses it when needed. The \emph{server} on AWS runs our models and the autonomy policy. The \emph{smart-home hub} sends IR, Wi-Fi and Bluetooth commands.
 
 \begin{enumerate}
 \itemhead{Control Recognition}
 From the robot's camera feed, the system finds wall switches, toggles and power strips and decides the type of each one. For every control it saves a record with the type, the visible state, the possible actions, its position and a picture fingerprint (an embedding), so the same control is recognized later and no duplicate is created. A control that cannot be told clearly is skipped until a clearer frame is available.
 
 \itemhead{Device Mapping}
-The system suggests which device each control operates. It can watch: when the resident uses a control and a nearby device visibly changes (a switch is flipped and a fan starts to turn), that pair becomes a candidate. It can also test: the robot presses the control and the system compares the device before and after by camera. Each candidate is saved as Pending with a confidence value. A mapping becomes Verified only when the observed change is clear and the VLM agrees that it belongs to the mapped device. The resident can reject a mapping at any time. If a control looks different or has moved, its mapping becomes Stale and is verified again before use.
+The system suggests which device each control operates. It can watch: when the resident uses a control and a nearby device visibly changes (a switch is flipped and a fan starts to turn), that pair becomes a candidate. It can also test: the robot presses the control and the system compares the device before and after by camera. Each candidate is saved as Pending with a confidence value. A mapping becomes Verified only when the observed change is clear and a device detector finds a device of a known type where the change happened. The resident can reject a mapping at any time. If a control looks different or has moved, its mapping becomes Stale and is verified again before use.
 
 \itemhead{Control-Method Registration}
 For each device, the system registers the control methods that might work: IR, Wi-Fi, Bluetooth, or a physical press by the actuator. It sends a test command by each wireless method and keeps a method only if state verification (Requirement 8) reports success: by the state the platform reports for Wi-Fi and Bluetooth, or by the camera for IR. A device with no working wireless method is saved as a target for the actuator. If registration fails, the system retries a few times and then asks the resident to choose a method or check the device by hand.
@@ -147,7 +147,7 @@ For each device, the system registers the control methods that might work: IR, W
 A verified mapping can be used in a routine, and such a routine can be registered without waiting for approval. When the system notices a repeated habit, such as switching on the living-room light at about the same time every day, it registers a routine and tells the resident what was added. The resident can also build a routine by hand from any verified control. After that, the resident can keep it, change it, remove it, or change how independently it acts. Routines the resident often rejects get lower priority, and accepted routines get higher priority.
 
 \itemhead{Trigger and Intent}
-The system accepts sensor events, time events and routine events as triggers and attaches the current situation to each one: the time, the room and the state of nearby devices. Duplicate triggers within a short time are merged, and each trigger starts one run with its own identifier. The Routine Engine sends the situation and a camera image, limited to crops of the relevant controls, to the cloud VLM, which returns the intent, the target device and a confidence value. If the cloud cannot be reached, the system does not act on its own and only suggests.
+The system accepts sensor events, time events and routine events as triggers and attaches the current situation to each one: the time, the room and the state of nearby devices. Duplicate triggers within a short time are merged, and each trigger starts one run with its own identifier. The Routine Engine takes the intent and the target device from the routine that fired and computes a confidence value. If the server cannot be reached, the system does not act on its own and only suggests.
 
 \itemhead{Autonomy by Risk}
 What the system does depends on how risky the device is, how confident it is, and whether the action turns the device on or off. For low-risk devices such as lights, fans, a TV or an air purifier, it acts and then notifies the resident when confidence is high, asks first when it is medium, and only suggests when it is low. High-risk devices such as heaters, electric blankets, microwaves and power strips that feed them can also be added to routines, but the resident sees a warning when the routine is registered, and every run sends a clear notification. Turning such a device off follows the same rules as a low-risk device. Turning it on always needs the resident's approval first, and the system does nothing if there is no answer. If the resident keeps rejecting a routine, its independence goes down one step.
@@ -195,7 +195,7 @@ macOS is Apple's operating system, with a Unix-based command line and the Homebr
 \par\smallskip\noindent\textbf{2 Programming Languages}
 \begin{enumerate}
 \itemhead{Python 3.11}
-Python is the main language of the project. It is used for the edge hub (camera, channel adapters and actuator control), the AI parts (detector, VLM calls, state checks) and the backend. We choose it because PyTorch, OpenCV and the Ultralytics YOLO package are all Python libraries.
+Python is the main language of the project. It is used for the edge hub (camera, channel adapters and actuator control), the AI parts (detector, Linker, state checks) and the backend. We choose it because PyTorch, OpenCV and the Ultralytics YOLO package are all Python libraries.
 
 \itemhead{TypeScript 5}
 TypeScript is JavaScript with types, which catches many errors before the program runs. We use it with React to write the resident's web app: the screens for confirming mappings, giving feedback on routines, reading the log and pressing the emergency stop. The app runs in any browser, so the resident installs nothing.
@@ -208,7 +208,7 @@ Unity is a real-time 3D engine. We use it only as an auxiliary tool: a simulator
 \par\smallskip\noindent\textbf{3 Cloud Infrastructure}
 \begin{enumerate}
 \itemhead{Amazon EC2 (AWS)}
-Amazon Web Services (AWS) is Amazon's cloud platform, where computing power is rented and paid for by use. EC2 gives us virtual machines. One small machine runs the backend, which holds the Mapping Registry, the routines and the log and makes the VLM calls. A GPU machine is rented only for the hours we need to tune the detector.
+Amazon Web Services (AWS) is Amazon's cloud platform, where computing power is rented and paid for by use. EC2 gives us virtual machines. One machine runs the server on k3s and, in a Nitro Enclave, a sealed part of the same machine, our models and the autonomy policy. A GPU machine is rented only for the hours we need to train the models.
 
 \end{enumerate}
 
@@ -224,7 +224,7 @@ GitHub is a cloud platform for version control and teamwork, built on Git. We ke
 Overleaf is an online LaTeX editor. We write the proposal and later documents together in it, starting from the IEEE conference template.
 
 \itemhead{Claude Opus 5.5 (AI tool)}
-Claude Opus 5.5 is an AI model from Anthropic. We use it during development to draft and review code, explain error messages and check our documents. The members decide and test everything, and Claude is not a part of the product. The cloud VLM of the product is chosen separately after testing.
+Claude Opus 5.5 is an AI model from Anthropic. We use it during development to draft and review code, explain error messages and check our documents. The members decide and test everything, and Claude is not a part of the product.
 
 \end{enumerate}
 
@@ -260,7 +260,7 @@ Total & & 8,095,240\\
 \par\smallskip\noindent\textbf{6 Versions and Computing Resources}
 \begin{itemize}
 \item Main versions: Python 3.11, PyTorch 2, Ultralytics YOLO, OpenCV 4, FastAPI, Node.js 20, TypeScript 5, React 18 and Unity 6 LTS, pinned in the repository.
-\item Fine-tuning of the detector runs on a rented cloud GPU. We expect the small detector to run on a laptop CPU, since the scene is mostly still, and we will measure this.
+\item Fine-tuning of the detector runs on a rented cloud GPU. We expect the small detector to run on a CPU, since the scene is mostly still, and we will measure this.
 \end{itemize}
 
 \subsection{Software in Use}
@@ -272,8 +272,8 @@ A fast object detector. We fine-tune it on our own photos of switch panels to fi
 \itemhead{Grounding DINO and OWL-ViT}
 Open-vocabulary detectors that find objects from a text query such as ``wall switch'', without retraining. We use them to draft labels and to find controls before any training.
 
-\itemhead{Cloud VLM (through an API)}
-An existing vision-language model that reads the type and state of a control, infers the resident's intent and answers yes-or-no questions when we check a result. We do not train it.
+\itemhead{AWS Nitro Enclaves and KMS}
+A Nitro Enclave is a sealed part of an EC2 machine with no disk and no network. Our models and the autonomy policy run in it. KMS keeps the key that opens the photos and gives it only to that enclave.
 
 \itemhead{DINOv2}
 A pretrained image encoder. Its embedding of a control's picture is the fingerprint that lets the system recognize the same control again.
@@ -300,49 +300,74 @@ Related commercial products (LG ThinQ ON, Homey, SwitchBot Bot, SwitchBot AI Hub
 \subsection{Task Distribution}
 The roles are those in the table on the first page. By requirement:
 \begin{itemize}
-\item AI developer (Geonhak Lee): Requirements 1, 8 and 9, which are recognition, visual checking and the robot motion planner.
-\item Jemin An: Requirements 3, 6, 7, 10 and 11, which are channels, autonomy policy, command sending, safety and physical execution.
-\item Jiwon Han: Requirements 2, 4, 5 and the log in Requirement 12, which are mapping, routines, triggers and logging.
-\item Hyunseo Choi: the app screens for confirming mappings, giving feedback on routines and reading the log.
-\item The learning updates in Requirement 12 are shared by the two backend developers. We will refine all of this in the design phase.
+\item AI developer (Hyunseo Choi): Requirements 1, 8 and 9, which are recognition, visual checking and the robot motion planner, and the models that Requirements 2 and 10 use: the Linker and the people detector.
+\item Jemin An: Requirements 3, 6, 7, 10 and 11, which are channels, autonomy policy, command sending, safety and physical execution, including the Arduino firmware of the actuators.
+\item Geonhak Lee: Requirements 2, 4, 5 and the log in Requirement 12, which are mapping, routines, triggers and logging, and the server on AWS, the Nitro Enclave, the photo sealing and the deployment that all requirements run on.
+\item Jiwon Han: the Dashboard screens through which the resident takes part in Requirements 2, 4, 6, 8, 10, 11 and 12: confirming mappings, routine feedback, answering when the system asks, Try again or Leave it after a failure, the emergency stop and pause, and the log.
+\item The learning updates in Requirement 12 are shared by the two backend developers.
 \end{itemize}
-
-
-%=====================================================================
 \section{Specifications}
-This section explains in plain words how each requirement will be built. The numbers in the lists are first proposals that we tune after the first measurements.
+This section explains in plain words how each requirement is built in the prototype. The numbers are starting values. They are kept in settings files, not in the program, and we tune them after measuring.
+
+\subsection{Where Each Part Runs}
+\begin{itemize}
+\item The hub, a laptop at home, runs in Python and keeps every record in an SQLite database: controls, devices, mappings, channels, routines and the run log. It also runs the Reader, which takes a photo from the webcam when a step needs one, the Routine Engine, the Control Orchestrator, the channel adapters, the Safety Guard, the Robot Abstraction Layer (RAL) and the learning updates. A read-only Streamlit screen on the hub shows the records even without the internet.
+\item The server is FastAPI on k3s on one AWS EC2 instance. It keeps no database. It passes the hub's requests to the enclave and the Dashboard's calls to the hub, keeps sealed photos in S3 and serves the Dashboard. Grafana and Loki on the same instance show the operating logs of the hub and the server.
+\item The Nitro Enclave on the same instance opens the photos and runs the ML Engine (YOLO11n, Linker, MobileNet, the people detector and the motion planner) and the autonomy policy. It has no disk and no network, and the server reaches it only through a local socket (vsock).
+\item A separate EC2 instance is started only to train. It uses the team's photo dataset, synthetic renders and the hub's records, never the residents' photos, and publishes a new model into the enclave image.
+\end{itemize}
 
 \subsection{What the System Remembers and How the Parts Talk}
 \begin{itemize}
-\item Controls: for each control, its type, how it looks now, what can be done with it, where it is on the panel, a picture ``fingerprint'', and the spot where the robot stands to press it.
+\item Controls: for each control, its type, its last state, what can be done with it, where it is on the panel, a picture ``fingerprint'', and the spot where the robot stands to press it.
 \item Devices: name, type, room, how risky the device is, and which channels can operate it.
-\item Mappings: which control operates which device, the spot from which the robot saw the device change when the link was verified, a confidence score and a status: Pending (waiting for proof), Verified (confirmed), Rejected (by the resident) or Stale (must be checked again).
+\item Mappings: which control operates which device, the spot from which the robot saw the device change, a confidence score and a status: Pending (waiting for proof), Verified (confirmed), Rejected (by the resident) or Stale (must be checked again).
 \item Channels: for each device and channel (IR, Wi-Fi, Bluetooth or the actuator), how often it works and how fast it is.
 \item Routines and runs: a routine keeps the habit, its priority and how independently it acts. A run is one action from start to finish and keeps what triggered it, the intent, the channel used, the result and, if it was cancelled, the reason.
-\item The web app asks the backend for the lists of controls, mappings and routines, and sends the resident's choices: confirm or reject a mapping, feedback on a routine, and the emergency stop. The backend pushes live updates to the app, such as a new control, a new routine or the progress of a run.
-\item The robot is used through one common interface (go to a spot, press, release, stop), so the linear actuators on the cart, the Unity simulator or a simple script can be swapped in. In the prototype, ``go to a spot'' asks a team member to push the cart there. Each wireless channel is a small adapter with the same two abilities: tell whether the device can be reached, and send a command and return the state or error the platform reports, if any.
+\item The hub keeps one WebSocket open to the server over TLS and signs in with a token. Requests for the models (recognize, check, refind, people) and for a decision (decide) go up through it, and their answers come back. The Dashboard's calls come down through it, and live events of a run go up.
+\item A request with no answer in time is handled on the safe side: no decision means the system only suggests, no people check means no press, and no check means unsure.
+\item The robot is used through one common interface (go to a spot, press, release, stop), so the linear actuators on the cart, the Unity simulator or a simple script can be swapped in, chosen in a settings file. In the prototype, ``go to a spot'' asks a team member to push the cart there. Each wireless channel is a small adapter with the same two abilities: tell whether the device can be reached, and send a command and return the state or error the platform reports, if any.
+\end{itemize}
+
+\subsection{Privacy of Photos}
+\begin{itemize}
+\item No video leaves the home. The hub sends a single photo only when a step needs one, at most 1,280 pixels on its longest side.
+\item The hub seals every photo before it leaves the home, with a new data key from AWS KMS for each photo (AES-256-GCM).
+\item The server puts the sealed photo in S3 and passes it to the enclave unopened. KMS gives the key only to an enclave whose attestation matches our published image, so the EC2 instance, its administrators and S3 never see a photo in the clear.
+\item A decision request carries no photo: only the device type and risk, the mapping status and confidence, and the routine's independence and how often the resident accepted it.
+\end{itemize}
+
+\subsection{The Resident's Dashboard}
+\begin{itemize}
+\item A web app in React and TypeScript, served by the same host as the API, so the resident installs nothing. One resident account signs in with a password, and the session lasts 30 days.
+\item Every screen has the emergency stop and a switch that pauses proactive features.
+\item Home shows the situation, the robot and the run in progress: the plan, a yes-or-no question when the system asks first, the wireless result for each device and each press.
+\item Other screens confirm or reject mappings by room and on a 2D or 3D map of the home, keep, change or remove routines and set how independently each acts, answer a failure with Try again or Leave it, send the robot to chosen spots, and read the history and statistics in plain language.
+\item There is no live camera view, because video never leaves the home. A browser mock answers every call with demo data, so the app can be shown without a server.
 \end{itemize}
 
 \subsection{Control Recognition (Requirement 1)}
-The edge hub looks at the robot's camera feed, finds each control and remembers it so that it can be recognized later.
+The hub sends a photo from the robot's camera to the enclave, which finds each control, and the hub remembers it so that it can be recognized later.
 \textbf{How it works:}
 \begin{itemize}
-\item A small YOLO detector, fine-tuned on our own photos, looks for three kinds of control: wall switch, toggle and power strip. It checks every fifth frame to save computing power.
-\item Our photos show real wall switches, toggles and power strips in different places, from different angles and in different light. A tool drafts the boxes first and we correct them by hand.
-\item We take the photos in sessions. One session is one visit to one place at one time of day, with its own light and angles. The photos are split 8 to 2: 80\% is used to revise the prompts and the labels, and 20\% is kept only for evaluation and never used for revision.
-\item The evaluation 20\% is not taken from a single session. Every session gives 20\% of its own photos, so the evaluation set has the same mix of places and light as all the data. Photos taken within a few seconds of each other go to the same side, so an almost identical picture is never in both. The 20\% is used only to measure the result, for example how many controls are found with the right type and state.
-\item Each control found is cropped and shown to the VLM, which tells its type, its state (for example on or off) and whether the picture is clear enough.
-\item A picture fingerprint of the crop is compared with the saved ones. If it is very similar to a saved control, it is the same control and is not added twice.
+\item A YOLO11n detector, fine-tuned at 640 pixels on our own photos and on synthetic Blender renders, looks for three kinds of control: switch, toggle and power strip. It runs on the CPU in the enclave, and boxes below 0.3 confidence are dropped.
+\item Our photos show real wall switches, toggles and power strips in different places, from different angles and in different light. A tool drafts the boxes first and we correct them by hand. The photos are kept in a private repository.
+\item We take the photos in sessions. One session is one visit to one place at one time of day, with its own light and angles. The photos are split 8 to 2: 80\% is used to train and revise, and 20\% is kept only for evaluation.
+\item The evaluation 20\% is not taken from a single session. Every session gives 20\% of its own photos, so the evaluation set has the same mix of places and light as all the data. Photos taken within a few seconds of each other go to the same side, so an almost identical picture is never in both. A new model is adopted only if it is not worse than the previous one on this set.
+\item A detection counts as clear when its confidence is at least 0.5 and the crop is sharp enough (variance of the Laplacian at least 80). An unclear one is skipped until a clearer photo comes.
+\item A small classifier on the crop reads the state (on or off). Below 0.7 confidence the state is unknown, and until the classifier is trained every state is unknown.
+\item A picture fingerprint of the crop (DINOv2 small, planned) is compared with the saved ones, so the same control is not added twice.
 \end{itemize}
 
 \subsection{Device Mapping (Requirement 2)}
-The system finds out which device each control operates, by watching the resident or by trying it, and accepts a link only when the evidence is clear.
+The system finds out which device each control operates, by guessing first, then by watching the resident or by trying it, and accepts a link only when the evidence is clear.
 \textbf{How it works:}
 \begin{itemize}
-\item Watching: after the resident uses a control, the system compares the camera pictures of nearby devices for about 3 seconds.
-\item Trying: the robot presses the control and the system compares the device before and after (see State Verification).
-\item Candidates are ranked by simple hints: the same room, a short distance in the picture, and whether the VLM thinks the change fits the device. Each candidate starts as Pending.
-\item A link becomes Verified only when the change is clear and the VLM agrees. The resident can reject a link at any time. If the control looks different or has moved, the link becomes Stale and is checked again.
+\item Guessing: the Linker, a probability table built from simple rules and the team's labels, suggests the most likely device for each key from the room type, the number of keys on the plate and the key's position. A guess is only a starting point and stays Pending.
+\item Watching: after the resident uses a control, the hub compares photos of the nearby devices taken before and after.
+\item Trying: the robot presses the control, and the enclave compares the device before and after (see State Verification).
+\item A change is clear when at least 30\% of the cells of an 8 by 8 grid over the region changed in brightness by 0.06 or more.
+\item A link becomes Verified only when the change is clear and a device detector finds a device of a known type where the change happened. Until that detector is trained, no link becomes Verified by itself. The resident can confirm or reject a link in the Dashboard at any time. If the control looks different or has moved, the link becomes Stale and is checked again.
 \item When a link becomes Verified, the spot from which the robot saw the change is saved with it.
 \end{itemize}
 
@@ -350,45 +375,47 @@ The system finds out which device each control operates, by watching the residen
 For each device, the system finds out which ways of control really work.
 \textbf{How it works:}
 \begin{itemize}
-\item IR goes through a Wi-Fi IR blaster, Wi-Fi through a smart plug or bulb, and Bluetooth through a Python Bluetooth library.
+\item IR goes through a Wi-Fi IR blaster (python-broadlink), Wi-Fi through a smart plug (python-kasa or tinytuya), and Bluetooth through the bleak library.
 \item The system sends one test command per method, waits up to about 5 seconds and keeps the method only if the result is a success: the platform reports the new state (Wi-Fi, Bluetooth) or the camera sees the change (IR).
-\item A failed test is retried up to 3 times. After that, the app asks the resident to pick a method or check the device by hand.
+\item A failed test is retried up to 3 times. After that, the Dashboard asks the resident to pick a method or check the device by hand.
 \item If no wireless method works, the actuator is the only way, and the device is marked as an actuator target.
+\item The demo devices have no wireless channel, so no plug or blaster is bought for the prototype, and the adapters are tested with stand-ins.
 \end{itemize}
 
 \subsection{Routine Registration and Feedback (Requirement 4)}
 Repeated habits become routines on their own, and the resident can change them at any time.
 \textbf{How it works:}
 \begin{itemize}
-\item A habit is the same device and action at about the same time of day (within a 30-minute window) on at least 3 days.
-\item A routine remembers the link, the time, a priority and how independently it acts: do it and tell the resident, ask first, or only suggest.
-\item When a routine is added, the app shows it, and the resident can keep, change or remove it.
+\item The hub records each time the resident uses a device. Every night at 04:00 it looks at the last 14 days, and a habit is the same device and action at about the same time of day (within a 30-minute window) on at least 3 days.
+\item A routine remembers the link, the time, a priority and how independently it acts: do it and tell the resident, ask first, or only suggest. A routine found from a habit starts at ask first.
+\item When a routine is added, the Dashboard shows it, and the resident can keep it, change its time, remove it or change how independently it acts. A removed habit is not suggested again for 30 days.
 \item If the resident rejects a routine three times in a row, it becomes one step less independent.
 \end{itemize}
 
 \subsection{Trigger and Intent (Requirement 5)}
-Events start runs, and a cloud VLM works out what the resident wants.
+Events start runs, and the Routine Engine works out what the resident wants.
 \textbf{How it works:}
 \begin{itemize}
-\item Events come from sensors, a clock and routines. The same event arriving twice within 10 seconds is counted once.
+\item Events come from sensors, a clock on the hub (APScheduler), routines and the resident in the Dashboard. The same event arriving twice within 10 seconds is counted once.
 \item Each run gets its own ID and a short description of the situation: the time, the room and the state of nearby devices.
-\item The VLM receives that description and up to 3 small crops, and answers with the intent, the target device and a confidence value. It has about 8 seconds to answer.
-\item The final confidence mixes three things: the VLM's own confidence, how reliable the trigger is, and how often the resident accepted this routine before.
-\item If the cloud is slow or cannot be reached, the system only makes a suggestion.
+\item The intent and the target device come from the routine that fired, so no model is needed for this step.
+\item The final confidence mixes how reliable the trigger is and how often the resident accepted this routine before.
+\item If the hub cannot reach the server, or no decision comes within 5 seconds, the system only makes a suggestion.
 \end{itemize}
 
 \subsection{Autonomy by Risk (Requirement 6)}
-A fixed policy decides whether to act, ask or only suggest.
+A fixed policy in the enclave decides whether to act, ask or only suggest.
 \textbf{How it works:}
 \begin{itemize}
-\item Devices are sorted into low risk (lights, fans, TV, air purifier) and high risk (heaters, electric blankets, microwaves and the power strips that feed them). The sorting is kept in a settings file, so it can be changed without touching the program.
+\item Devices are sorted into low risk (lights, fans, TV, air purifier) and high risk (heaters, electric blankets, microwaves and the power strips that feed them). Any type not in the list counts as high risk. The sorting is kept in a settings file that is passed to the enclave when it starts, so it can be changed without touching the program.
 \item There are two confidence levels, a high one (0.8) and a low one (0.5) as starting values.
 \item Low risk: act and tell the resident when confidence is high, ask first when it is medium, otherwise only suggest.
 \item High risk: a warning is shown when the routine is registered, and every run sends a notification. Turning the device off follows the low-risk rules. Turning it on always asks first and does nothing without an answer.
+\item When the rules point different ways, the most careful answer wins, and a link that is not Verified leads only to a suggestion.
 \end{itemize}
 
 \subsection{Channel Selection and Wireless Command (Requirement 7)}
-The Control Orchestrator looks up the link, ranks the device's wireless channels and tries them in order.
+The Control Orchestrator on the hub looks up the link, ranks the device's wireless channels and tries them in order.
 \textbf{How it works:}
 \begin{itemize}
 \item It first looks up the link. Without a confirmed link the system does not act, unless the resident agrees to map the device first.
@@ -403,40 +430,44 @@ The way of checking depends on the channel. In the camera check, a main check on
 \begin{itemize}
 \item Wi-Fi and Bluetooth (platforms such as ThinQ or Matter): the state and errors the platform reports are used, with no camera. An error, or no report within 5 seconds, is a failure.
 \item IR and physical press: the camera check is used. For IR, unless the device is already in view, the robot first goes to the spot saved with the mapping. After a press, the robot is already at the control.
-\item Main check: the camera crops the device and the VLM answers a yes-or-no question about what should have happened (for example ``is the lamp on?''). The picture is also compared with the one before.
-\item Second check: whether the room became brighter.
-\item The system waits up to 3 seconds for the effect to appear, for example for a fan to start.
-\item The second check decides only when the main check is unsure, and any disagreement is written to the log. If the result is still unsure, the system waits about 3 more seconds and checks once more, without operating the device again. If it is still unsure, the run stops, and the resident gets a picture of the device and chooses whether to try again or leave it as it is.
+\item The Reader takes the photos before and after with the camera's exposure locked, so that the camera's own brightness correction does not look like a change. The hub seals them and sends them to the enclave.
+\item Main check, on the device crop: for a light, how much brighter or darker it became (yes above 0.25, no at or below 0.05). For a fan, how much it moves; its thresholds are measured on the demo fan, and the answer is unsure until then. Other device types are unsure, and the resident is asked.
+\item Second check, on the whole photo: whether the room became brighter (yes above 0.08, no at or below 0.02). It decides only when the main check is unsure. When the two disagree, the result is unsure, and the disagreement is written to the log.
+\item A small MobileNetV3 network that compares the two photos is trained on synthetic before-and-after pairs. It is used once it is checked on real photos of the demo devices.
+\item The system waits up to 3 seconds for the effect to appear. If the result is unsure, it waits about 3 more seconds and checks once more, without operating the device again. If it is still unsure, or no answer comes within 10 seconds, the run stops, and the resident gets a picture of the device and chooses Try again or Leave it.
 \end{itemize}
 
 \subsection{Robot Motion Planning (Requirement 9)}
-The robot goes to the control, finds it again in the current picture and turns it into something the actuator can act on.
+The robot goes to the control, finds it again in the current photo and turns it into something the actuator can act on.
 \textbf{How it works:}
 \begin{itemize}
-\item The robot goes to the control's saved press spot.
-\item The control is searched near its saved place by comparing fingerprints. If it is not similar enough (0.7 as a starting value), the run is cancelled and the resident is told.
-\item How deep to press is set for each kind of control.
+\item The robot goes to the control's saved press spot. In the prototype, the hub asks a team member to push the cart there.
+\item The enclave searches for the control near its saved place: its center may move up to 10\% of the photo. Once fingerprints exist, it must also be similar enough (0.7 as a starting value). If it is not found, or no answer comes within 10 seconds, the run is cancelled and the resident is told.
+\item Each actuator faces one part of the camera's view, set in the hub's settings (the left half for A1, the right half for A2). The planner picks the actuator that faces the control. There is no path to plan.
+\item How long to push is set for each kind of control: 400 ms, about 3 mm, as a starting value tuned on the panel.
 \item The planner is a swappable part. A simple script is used, and a VLA model could replace it later.
-\item The cart is placed so that one actuator faces the control, and the system only chooses which actuator to use. There is no path to plan.
 \end{itemize}
 
 \subsection{Safety Gate (Requirement 10)}
-Every movement passes a gate, and an emergency stop is always available.
+Every movement passes the Safety Guard on the hub, and an emergency stop is always available.
 \textbf{How it works:}
 \begin{itemize}
-\item A camera model looks for people and pets along the robot's route and in the work area of the actuators, before and during the movement.
-\item The linear actuators have a short stroke and a limited force. They press high-risk devices only when the risk policy (Requirement 6) allows it.
-\item The emergency stop can be started from a button in the app or from a key. It turns off the motors of the robot at once. The power adapter can also be switched off by hand.
+\item Before each press, the hub sends a photo of the work area, and a pretrained YOLO model in the enclave looks for people. Its threshold is low on purpose (0.25), because a missed person is worse than a cancelled press. With no answer within 3 seconds, there is no press.
+\item The press must also be allowed by the risk policy (Requirement 6), and the control's position must be reliable (Requirement 9). If any check fails, the action is cancelled and the resident is told why.
+\item The emergency stop can be started from the button on every screen of the Dashboard or from a key on the hub. It turns off every actuator at once. The power adapter can also be switched off by hand.
+\item The Arduino protects the hand by itself, so it stops even if the hub or the USB link fails: a push is cut at 2 seconds, an actuator held out for 5 seconds goes back on its own, and after a stop nothing moves until the hub sends a reset.
+\item The linear actuators have a short stroke and a limited force.
 \end{itemize}
 
 \subsection{Physical Execution and Result Check (Requirement 11)}
 The robot presses the control with an actuator, and the result is checked again.
 \textbf{How it works:}
 \begin{itemize}
-\item The actuator facing the control pushes out, holds briefly and pulls back.
+\item The hub talks to the Arduino Nano over USB serial (115,200 baud), one command per line: PRESS with the actuator and the push time, RELEASE, STOP, RESET and PING. The Arduino answers each one with OK or ERR and a reason, and drives the BTS7960 motor driver.
+\item The actuator facing the control pushes out, holds briefly and pulls back all the way, so its position does not drift.
 \item The linear actuators, the Unity simulator (for the rough demo and tests) or a simple script can be used, chosen in a settings file.
-\item There are at most 2 tries, made only after a failed check; an unsure result never leads to another press. The safety gate runs before each try, and the state check runs after each.
-\item If it still fails, the run is cancelled and the resident is told.
+\item There are at most 2 tries, made only after a failed check; an unsure result never leads to another press. The Safety Guard runs before each try, and the state check runs after each.
+\item If it still fails, the run is cancelled, and the resident chooses Try again or Leave it in the Dashboard.
 \end{itemize}
 
 \subsection{Learning and Log (Requirement 12)}
@@ -446,8 +477,9 @@ Every run updates the channel scores and the link confidence and leaves a log en
 \item For each channel, the system keeps a running average of how often it works and how fast it is, and the newest result counts most (30 percent).
 \item A link's confidence goes up a little (0.05) when a later check after a press agrees and down when it disagrees. If it falls below 0.2, or the resident rejects a result, the link becomes Stale.
 \item After a successful press, the spot where the robot stood becomes the control's new press spot.
-\item Every run, even a cancelled one, is written to the log with what triggered it, what was intended, which channel was used, the result and whether the result came from the platform or the camera.
+\item Every run, even a cancelled one, is written to the run log on the hub with what triggered it, what was intended, which channel was used, the result of each stage, whether the result came from the platform or the camera, the main and second checks and the reason for any cancellation.
 \item Explanations for the resident use fixed sentence templates, for example: ``I switched on the fan at 21:05 by IR because of your evening routine. Checked: it worked.''
+\item The run log stays at home. Only the operating logs of the programs, with no photos, go to Loki on AWS for finding faults.
 \end{itemize}
 
 \end{document}

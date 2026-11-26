@@ -8,20 +8,20 @@ All numbers are **starting values** to be tuned after the first measurements. Ke
 
 | ID | Requirement | Stage | Owner |
 |---|---|---|---|
-| FR-01 | Control recognition | S1 | Geonhak Lee |
-| FR-02 | Device mapping | S2 | Jiwon Han |
+| FR-01 | Control recognition | S1 | Hyunseo Choi |
+| FR-02 | Device mapping | S2 | Geonhak Lee (Linker model: Hyunseo Choi) |
 | FR-03 | Control-method registration | Setup | Jemin An |
-| FR-04 | Routine registration and feedback | S3 | Jiwon Han |
-| FR-05 | Trigger and intent | S4 | Jiwon Han |
+| FR-04 | Routine registration and feedback | S3 | Geonhak Lee |
+| FR-05 | Trigger and intent | S4 | Geonhak Lee |
 | FR-06 | Autonomy by risk | Runtime | Jemin An |
 | FR-07 | Channel selection and wireless command | S5 | Jemin An |
-| FR-08 | State verification | S5, S6 | Geonhak Lee |
-| FR-09 | Robot motion planning | S6 | Geonhak Lee |
-| FR-10 | Safety gate | S6 | Jemin An |
+| FR-08 | State verification | S5, S6 | Hyunseo Choi |
+| FR-09 | Robot motion planning | S6 | Hyunseo Choi |
+| FR-10 | Safety gate | S6 | Jemin An (people detector: Hyunseo Choi) |
 | FR-11 | Physical execution and result check | S6 | Jemin An |
-| FR-12 | Learning and log | S7 | Jiwon Han (log), Jemin An and Jiwon Han (learning) |
+| FR-12 | Learning and log | S7 | Geonhak Lee (log), Jemin An and Geonhak Lee (learning) |
 
-`FR-xx` is requirement *xx* of the paper. The Dashboard screens (Hyunseo Choi) serve FR-02, FR-04, FR-10 and FR-12.
+`FR-xx` is requirement *xx* of the paper. The Dashboard screens (Jiwon Han) serve FR-02, FR-04, FR-06, FR-08, FR-10, FR-11 and FR-12.
 
 ## FR-01 Control recognition
 
