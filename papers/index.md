@@ -2,7 +2,7 @@
 
 | Paper | Description |
 |---|---|
-| [Proposal](./proposal) | NOVA: Non-connected Object Vision and Actuation for Smart Home Routines. Motivation, client needs, related software, requirements, development environment and specifications (IEEE format, 8 pages). This is the reference document for the whole wiki |
+| [Proposal](./proposal) | NOVA: Non-connected Object Vision and Actuation for Proactive Smart Homes. Motivation, client needs, related software, requirements, development environment and specifications (IEEE format, 8 pages). This is the reference document for the whole wiki |
 
 ## Add a paper
 

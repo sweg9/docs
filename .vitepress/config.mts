@@ -15,7 +15,7 @@ function skillItems() {
 
 export default defineConfig({
   title: 'NOVA Docs',
-  description: 'Development wiki for NOVA: Non-connected Object Vision and Actuation for Smart Home Routines',
+  description: 'Development wiki for NOVA: Non-connected Object Vision and Actuation for Proactive Smart Homes',
   base,
   cleanUrls: true,
   lastUpdated: true,
