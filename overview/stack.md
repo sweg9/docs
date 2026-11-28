@@ -30,7 +30,7 @@ The team moved the server to AWS on 2026-11-20 (5th meeting). The 2026-11-17 pla
 - So the EC2 instance, its administrators and S3 never see a photo in the clear.
 - No video leaves the home: the hub sends a single photo only when a step needs one.
 
-![NOVA architecture: the robot and the hub at home. The hub encrypts each photo before it leaves and sends records from SQLite over TLS; the Orchestrator asks the cloud for a decision and hands it to the Safety Guard, then the press. On AWS, S3, KMS and one EC2 instance with k3s (the ingress sends /api to FastAPI, / to the Dashboard and a subdomain to Grafana and Loki); the user opens the Dashboard in a browser over HTTPS and a Nitro Enclave (decryption, then the ML Engine, then the Policy); a separate EC2 instance for offline training](/architecture.png?v=8)
+![NOVA architecture: at home, the Actuator (camera, Arduino Nano, linear actuator) and the Hub, where OpenCV reads a photo every 0.5 s, SQLite keeps the records and the Control Module sends the press command. The hub seals each photo and talks to AWS over HTTPS, and the decision comes back. On AWS, one EC2 instance (Amazon Linux) holds S3 for the encrypted photos, k3s (Traefik sends requests to React and FastAPI) and a Nitro Enclave, reached over vsock, that runs YOLO11n, MobileNet and the rule-based Linker with PyTorch. The user opens the React dashboard. Offline training on a laptop (Apple M2 Pro) with PyTorch, from the dataset on GitHub, gives the enclave its new model](/architecture.png?v=10)
 
 ### One run, end to end
 
