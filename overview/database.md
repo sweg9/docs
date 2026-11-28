@@ -128,7 +128,7 @@ The Channel record of the data model. One row per device and channel that FR-03 
 | `tries` | integer | |
 | `updated_at` | time | |
 
-The Control Orchestrator tries the device's wireless rows best first; `ARM`, the physical press, always comes last (C-09).
+The Control Module tries the device's wireless rows best first; `ARM`, the physical press, always comes last (C-09).
 
 ## Routines: S3 and S4
 
@@ -192,7 +192,7 @@ A run has two parts in the database. While it is going on, it is a row in `open_
 | `action` | `on` `off` | |
 | `decision` | `act` `ask` `suggest` | |
 | `confidence`, `risk` | | As decided at the start |
-| `phase` | `waiting_answer` `running` | `waiting_answer` while an `ask` waits for the resident; `running` once the Control Orchestrator has it |
+| `phase` | `waiting_answer` `running` | `waiting_answer` while an `ask` waits for the resident; `running` once the Control Module has it |
 | `started_at` | time | |
 | `dedup_key` | text | Trigger and routine; a second trigger with the same key within 10 s joins this run (FR-05) |
 

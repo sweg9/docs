@@ -6,7 +6,7 @@
       <title id="ad-title">Main flow between the parts</title>
       <desc id="ad-desc">
         A trigger on the hub reaches the Routine Engine, which sends the context to the autonomy policy in the Nitro
-        Enclave on AWS. The decision goes to the Control Orchestrator on the hub, which tries the wireless channel
+        Enclave on AWS. The decision goes to the Control Module on the hub, which tries the wireless channel
         adapters first, then passes the Safety Guard and the motion planner to press through the RAL. Recognition and
         the State Verifier also run in the enclave on encrypted camera crops; the result goes to learning on the hub,
         which updates the Mapping Registry.
@@ -70,7 +70,7 @@
       <text class="sd-sub" x="302" y="351">YOLO11n, Linker · FR-01</text>
       <rect class="sd-box sd-strong" x="490" y="310" width="210" height="56" rx="8" />
       <use href="#ad-l-split" class="sd-line-icon" x="502" y="327" width="22" height="22" />
-      <text class="sd-title" x="532" y="334">Orchestrator</text>
+      <text class="sd-title" x="532" y="334">Control Module</text>
       <text class="sd-sub" x="532" y="351">channel order · FR-07</text>
       <rect class="sd-box sd-enclave" x="44" y="400" width="186" height="56" rx="8" />
       <use href="#ad-l-badge-check" class="sd-line-icon" x="56" y="417" width="22" height="22" />

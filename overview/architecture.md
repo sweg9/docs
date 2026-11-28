@@ -4,7 +4,7 @@
 
 | Place | What runs there |
 |---|---|
-| Edge hub (inside the home, Python) | Reader (asks the robot for photos), Encryption (seals each photo before it leaves the home), the records in SQLite (Mapping Registry, routines, the log), Routine Engine and triggers, Control Orchestrator, channel adapters (IR, Wi-Fi, Bluetooth), control of the hand through the Robot Abstraction Layer, Safety Guard, learning, Streamlit (a read-only screen on the hub). No video leaves the hub |
+| Edge hub (inside the home, Python) | Reader (asks the robot for photos), Encryption (seals each photo before it leaves the home), the records in SQLite (Mapping Registry, routines, the log), Routine Engine and triggers, Control Module, channel adapters (IR, Wi-Fi, Bluetooth), control of the hand through the Robot Abstraction Layer, Safety Guard, learning, Streamlit (a read-only screen on the hub). No video leaves the hub |
 | Server (AWS EC2, FastAPI on k3s) | The API for the Dashboard, relayed to the hub; the way from the hub to the enclave; the Dashboard and monitoring. Keeps no database (decision of 2026-11-20, for scalability) |
 | Nitro Enclave (on the same EC2 instance) | Decryption, then the ML Engine (YOLO11n, Linker, MobileNet, the people detector, the motion planner), then the autonomy policy. Photos are opened only here, with a KMS key released to the attested enclave |
 | S3 | Sealed photos and model files |
@@ -25,7 +25,7 @@ Only sealed photos and short notes go to the server. Both the edge hub and the b
 | Channel adapters | One small adapter per wireless channel | 3, 7 |
 | Routine Engine | Creates routines from habits, handles feedback, starts runs | 4, 5 |
 | Autonomy policy | Decides act, ask or suggest from risk and confidence | 6 |
-| Control Orchestrator | Looks up the mapping, ranks channels, sends commands, falls back to the physical press | 7 |
+| Control Module (`orchestrator.py`) | Looks up the mapping, ranks channels, sends commands, falls back to the physical press | 7 |
 | State Verifier | Decides each command's result: the state the platform reports for a device that reports one; for IR and every physical press, a camera check (main check on the device, second check on its surroundings, such as the room getting brighter) | 8 |
 | Motion planner | Picks the actuator that faces the control and how long to push; no path to plan. A simple script now, swappable for a VLA model later | 9 |
 | Safety Guard | Checks people, pets, risk class and position before any movement; emergency stop | 10 |

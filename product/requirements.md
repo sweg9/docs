@@ -91,7 +91,7 @@ Thresholds start at 0.8 (high) and 0.5 (low). The risk sorting lives in a settin
 
 ## FR-07 Channel selection and wireless command
 
-The Control Orchestrator looks up the target in the Mapping Registry. Without a verified mapping the system does not act, unless the resident agrees to map the device first. It ranks the wireless channels, preferring ones that often worked and are fast, sends through the best one, and tries the next if the result is a failure (FR-08). The physical press is used only when the device has no wireless channel or every channel failed.
+The Control Module looks up the target in the Mapping Registry. Without a verified mapping the system does not act, unless the resident agrees to map the device first. It ranks the wireless channels, preferring ones that often worked and are fast, sends through the best one, and tries the next if the result is a failure (FR-08). The physical press is used only when the device has no wireless channel or every channel failed.
 
 | How | Value |
 |---|---|
