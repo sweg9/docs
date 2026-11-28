@@ -225,7 +225,7 @@ The times are in the hub settings.
 
 ## Traffic
 
-Photos go up only when a step needs one: each photo of a scan, one photo every `watch_interval_s` while watching for uses (FR-04), and the photos of a run's press and check. If the connection is too slow, `watch_interval_s` is raised first (5th meeting); scans and runs are not slowed down.
+Photos go up only when a step needs one: each photo of a scan, one photo every `watch_interval_s` (0.5 s) while watching for uses (FR-04), and the photos of a run's press and check. If the connection is too slow, `watch_interval_s` is raised first (5th meeting); scans and runs are not slowed down.
 
 ## When the connection drops
 

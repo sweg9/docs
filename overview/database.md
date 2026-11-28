@@ -134,7 +134,7 @@ The Control Orchestrator tries the device's wireless rows best first; `ARM`, the
 
 ### `uses`
 
-Each time the resident is seen using a device by hand: while watching, the hub sends a photo every `watch_interval_s` (`recognize` with `purpose: watch`) and counts a flip when the new state is read the same way twice in a row. The habit finder of FR-04 reads this table.
+Each time the resident is seen using a device by hand: while watching, the hub sends a photo every `watch_interval_s` (0.5 s; `recognize` with `purpose: watch`) and counts a flip when the new state is read the same way twice in a row. The habit finder of FR-04 reads this table.
 
 | Column | Type | Rule |
 |---|---|---|

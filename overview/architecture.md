@@ -8,7 +8,7 @@
 | Server (AWS EC2, FastAPI on k3s) | The API for the Dashboard, relayed to the hub; the way from the hub to the enclave; the Dashboard and monitoring. Keeps no database (decision of 2026-11-20, for scalability) |
 | Nitro Enclave (on the same EC2 instance) | Decryption, then the ML Engine (YOLO11n, Linker, MobileNet, the people detector, the motion planner), then the autonomy policy. Photos are opened only here, with a KMS key released to the attested enclave |
 | S3 | Sealed photos and model files |
-| Training instance (AWS EC2, offline) | Collects the team dataset, synthetic renders and the hub's records (never the residents' photos), trains, publishes a new model to the enclave image |
+| Offline training (a team laptop) | Trains once, on the team dataset and the synthetic renders, with PyTorch; the trained models are built into the enclave image. No continuous training: the hub's records and the residents' photos are never used to train |
 | Logging (Loki and Grafana on k3s) | The operational logs of the hub and the server, for finding faults. The run log of FR-12 stays in the hub's database |
 | Private GitHub repository | Photo dataset |
 | Dashboard (web app, React, TypeScript) | The resident's screens: mappings, routine feedback, log, notifications, emergency stop |

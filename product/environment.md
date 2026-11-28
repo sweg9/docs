@@ -34,7 +34,7 @@ We reuse existing software and build only the parts that connect it.
 
 Python 3.11, PyTorch 2, Ultralytics YOLO, OpenCV 4, FastAPI, Node.js 20, TypeScript 5, React 18, Unity 6 LTS, Kubernetes 1.31 (k3s), Grafana Loki 3, pinned in each repository.
 
-Fine-tuning runs on a separate AWS training instance with a GPU, or on a team laptop's GPU (Apple `mps`) during development. The small detector runs on the enclave's CPU because the scene is mostly still; this will be measured.
+Training runs once, offline, on a team laptop's GPU (Apple M2 Pro, `mps`); there is no AWS training instance and no continuous training. The small detector runs on the enclave's CPU because the scene is mostly still; this will be measured.
 
 ## Prototype cost (KRW)
 
@@ -49,7 +49,7 @@ Fine-tuning runs on a separate AWS training instance with a GPU, or on a team la
 | USB webcam (C270) | Camera feed | 23,040 |
 | Shipping | For the parts above | 8,700 |
 | Software | VS Code, GitHub, Overleaf, Unity (free plans); Docker, k3s, Loki, Grafana (open source) | 0 |
-| AWS | EC2 with Nitro Enclaves, the training instance, S3, KMS | To be estimated |
+| AWS | EC2 with Nitro Enclaves, S3, KMS | To be estimated |
 | **Total** (without AWS) | | **8,095,240** |
 
 Each of the four members counts one laptop of 2,000,000 KRW. The software tools are free or open source. The prices of the actuator, the controller parts and the webcam are those in our shopping cart before purchase (November 2026), and the shipping cost of that order is included.
